@@ -15,8 +15,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
   "Uitnodigen" (e-mailadres) kan iemand inloggen; toegang intrekken laat iemand in team en planning staan.
-  Per leiding een veld Verlof/afwezig met icoontje op basis van de tekst (`awayIcon`: 🤰 zwanger, 👶 ouderschap,
-  💍 trouwen, 🏖️ vakantie, 🏥 ziekenhuis, 🤒 ziek, 📚 studie, 💼 werk, anders 🗓️) en snelknoppen. Inloggen: alleen op uitnodiging; Inloggen gaat met een 6-cijferige code uit de mail (werkt ook in de geïnstalleerde
+  Per leiding een veld Verlof/afwezig met icoontje op basis van de tekst (`awayIcon`, bewust maar 4 soorten:
+  🤰 zwangerschap, 🤒 ziek, 🏖️ vakantie, 🗓️ overig) en snelknoppen. Inloggen: alleen op uitnodiging; Inloggen gaat met een 6-cijferige code uit de mail (werkt ook in de geïnstalleerde
   iPhone-app, een link niet).
 
 ## Techniek (nu)

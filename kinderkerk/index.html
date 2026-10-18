@@ -383,7 +383,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 15';
+const APP_VERSION = '2026-10-18 · 16';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1281,11 +1281,9 @@ function renderMeer(){
 
 /* ---------- Planning: thema en leiding per zondag ---------- */
 /* Icoontje bij afwezigheid, op basis van de tekst die is ingevuld */
-const AWAY_ICONS = [[/zwanger/i,'🤰'],[/ouderschap|baby|geboorte|bevalling/i,'👶'],[/trouw|bruiloft|huwelijk/i,'💍'],
-  [/vakantie|reis/i,'🏖️'],[/ziekenhuis|operatie|herstel/i,'🏥'],[/ziek/i,'🤒'],[/studie|examen|school|stage/i,'📚'],
-  [/werk|dienst/i,'💼'],[/rouw|overl/i,'🕊️']];
+const AWAY_ICONS = [[/zwanger/i,'🤰'],[/ziek|operatie|herstel/i,'🤒'],[/vakantie|reis/i,'🏖️']];   // al het andere: overig
 const awayIcon = text => text ? (AWAY_ICONS.find(([re]) => re.test(text)) || [, '🗓️'])[1] : '';
-const AWAY_PRESETS = ['Zwangerschapsverlof','Ouderschapsverlof','Vakantie','Ziek','Studie'];
+const AWAY_PRESETS = ['Zwangerschapsverlof','Ziek','Vakantie','Afwezig'];
 function leaderNames(ids){
   const l = ids.map(leaderById).filter(Boolean);
   return l.length ? l.map(x => (x.id === db.session ? '<span class="me-tag">Jij</span>' : esc(x.name)) + (x.away ? ` <span title="${esc(x.away)}">${awayIcon(x.away)}</span>` : '')).join(', ') : '<span class="muted">nog niemand</span>';
@@ -1444,7 +1442,7 @@ function openEditLeader(id){
       <label class="field"><span>Groep</span>${groupSelect('ld-group', l.group)}</label>
       <label class="field"><span>E-mailadres</span><input id="ld-email" type="email" value="${esc(l.email || '')}" autocomplete="off" placeholder="naam@voorbeeld.nl" ${l.userId ? 'disabled' : ''}></label>
       <label class="field"><span>Verlof / afwezig <span class="muted" style="font-weight:400">(leeg = beschikbaar)</span></span><input id="ld-away" data-input="away" value="${esc(l.away || '')}" autocomplete="off" placeholder="Bijv. zwangerschapsverlof tot maart">
-        <span class="away-presets">${AWAY_PRESETS.map(t => `<button type="button" class="chip" data-action="setAway" data-id="${t}">${awayIcon(t)} ${t}</button>`).join('')}
+        <span class="away-presets">${AWAY_PRESETS.map(t => `<button type="button" class="chip" data-action="setAway" data-id="${t}">${awayIcon(t)} ${t === 'Afwezig' ? 'Overig' : t}</button>`).join('')}
           <button type="button" class="chip" data-action="setAway" data-id="">✕ Beschikbaar</button></span></label>
       <label class="field"><span>Rol</span><select id="ld-role" ${self ? 'disabled' : ''}>
         <option value="leiding" ${l.role !== 'beheerder' ? 'selected' : ''}>Leiding</option>
