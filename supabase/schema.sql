@@ -114,6 +114,12 @@ create table public.actions (
   created_at timestamptz not null default now()
 );
 
+-- Instellingen, bijv. hoeveel punten een kind krijgt (key 'points')
+create table public.settings (
+  key   text primary key,
+  value jsonb not null
+);
+
 create table public.illnesses (
   id     uuid primary key default gen_random_uuid(),
   name   text not null,
@@ -189,6 +195,7 @@ alter table public.periods         enable row level security;
 alter table public.meetings        enable row level security;
 alter table public.agenda_items    enable row level security;
 alter table public.actions         enable row level security;
+alter table public.settings        enable row level security;
 
 create policy "leiding ziet leiding" on public.leaders
   for select to authenticated using (public.is_leader());
@@ -230,6 +237,11 @@ create policy "leiding ziet periodes" on public.periods
 create policy "beheerder beheert periodes" on public.periods
   for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
+create policy "leiding ziet instellingen" on public.settings
+  for select to authenticated using (public.is_leader());
+create policy "beheerder past instellingen aan" on public.settings
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
 create policy "leiding ziet ziektes" on public.illnesses
   for select to authenticated using (public.is_leader());
 create policy "beheerder beheert ziektes" on public.illnesses
@@ -243,7 +255,7 @@ revoke all on all tables in schema public from anon;
 alter publication supabase_realtime add table
   public.leaders, public.kids, public.checkins, public.leader_checkins,
   public.notes, public.rosters, public.illnesses, public.sundays, public.periods,
-  public.meetings, public.agenda_items, public.actions;
+  public.meetings, public.agenda_items, public.actions, public.settings;
 
 -- ---------- Eerste beheerder ----------
 -- Vervang het e-mailadres hieronder door dat van jezelf. De rest van de leiding

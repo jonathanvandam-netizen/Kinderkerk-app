@@ -167,6 +167,11 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .away-presets .chip{padding:5px 10px;font-size:13.5px}
 .check-line{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin:-4px 0 14px;cursor:pointer}
 .check-line input{width:20px;height:20px;accent-color:var(--brand);flex:none}
+.points-card{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:14px;background:var(--surface-2)}
+.points-card b{font-size:24px;font-weight:800}
+.pts{color:var(--warn-text);font-weight:700;white-space:nowrap}
+table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{text-transform:none;letter-spacing:0;font-size:13px}table.t.pt-table td:first-child,table.t.pt-table th:first-child{padding-left:14px;white-space:nowrap}
+.pt-table input{width:52px;text-align:center;font:inherit;font-weight:700;border:1px solid var(--border);border-radius:10px;padding:8px 6px;background:var(--input);color:var(--text)}
 .hint.soft{font-weight:600;font-size:14px;padding:10px 12px}
 /* Vergadering */
 .eyebrow{display:block;font-size:12px;font-weight:800;color:var(--brand);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
@@ -383,7 +388,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 17';
+const APP_VERSION = '2026-10-18 · 18';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -452,6 +457,18 @@ const ITEMS = [
   { id:'bijbeltekst', emoji:'💬', label:'Bijbeltekst', boven:true },
 ];
 const itemEmoji = id => ITEMS.find(i => i.id === id)?.emoji || '';
+/* Punten: alleen om te weten hoeveel (fysieke) punten een kind krijgt. Een beheerder past de waarden aan onder Meer → Punten.
+   Startwaarden afgeleid uit Zap!. */
+const DEFAULT_POINTS = {
+  onder:{ aanwezig:5, bijbel:5, werkblad:10, geld:5 },
+  boven:{ aanwezig:5, bijbel:5, werkblad:5, geld:0, bijbeltekst:5 },
+  bezoeker:{ aanwezig:5, bijbel:5, werkblad:10, geld:5 },
+};
+const pointsCfg = () => ({ ...DEFAULT_POINTS, ...(db.settings?.points || {}) });
+function pointsFor(group, items){
+  const c = pointsCfg()[group] || pointsCfg().onder;
+  return (c.aanwezig || 0) + items.reduce((sum, id) => sum + (c[id] || 0), 0);
+}
 
 /* ---------- Demodata (verzonnen namen) ---------- */
 const PRAYERS = ['Voor opa die in het ziekenhuis ligt','Dat mijn kat weer beter wordt','Voor mijn toets op school deze week','Dat mijn vriendin naar de kinderkerk komt',
@@ -511,6 +528,7 @@ function seed(){
     rosters:{ sheets:roster(0), bidden:roster(5) },
     sundays:seedSundays(T).map(x => Object.assign(x, dienst(x.date, leaders, anchor))),
     periods:seedPeriods(T),
+    settings:{},
     ...seedMeetings(T, leaders),
     illnesses:[
       ['Hand-, voet- en mondziekte','ok','Mag komen, mits fit genoeg om mee te doen.'],
@@ -584,7 +602,7 @@ const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
 const STORE_KEY = 'kinderkerk-demo-v8';
-const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[] });
+const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[], settings:{} });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
@@ -617,13 +635,14 @@ async function fetchAll(table, order){
   }
 }
 async function loadCloud(){
-  const [leaders, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions] = await Promise.all([
+  const [leaders, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions, settingRows] = await Promise.all([
     fetchAll('leaders', ['id']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
     fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start']),
-    fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id'])]);
+    fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id']), fetchAll('settings', ['key'])]);
   notes.forEach(n => delete n.created_at);
   const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses };
+  db = { session:db.session, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses,
+    settings:Object.fromEntries(settingRows.map(r => [r.key, r.value])) };
   [...agenda, ...actions].forEach(x => delete x.created_at);
 }
 /* Opnieuw ophalen (na een wijziging van iemand anders); niet tekenen terwijl iemand typt of een venster open heeft */
@@ -735,7 +754,7 @@ const NAV = [
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
-const MEER_ROUTES = ['meer','import','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
@@ -743,7 +762,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -1048,7 +1067,7 @@ function openWhoIsIn(){
   const section = grp => { const l = cs.filter(x => x.k.group === grp); if (!l.length) return '';
     return `<div class="list-head">${GROUPS[grp]} · ${l.length}</div>` + l.map(({c,k}) => `
       <button class="row" data-action="openCheckin" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
-        <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${c.items.map(itemEmoji).join(' ') || '—'}${c.prayer ? ' · 🙏 gebed' : ''}</span></span>${icon('chev','chev')}</button>`).join(''); };
+        <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${c.items.map(itemEmoji).join(' ') || '—'}${c.prayer ? ' · 🙏 gebed' : ''} · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span></span></span>${icon('chev','chev')}</button>`).join(''); };
   openModal(`
     <div class="modal-head"><div><h2>Wie is ingecheckt?</h2><span class="muted">${cs.length} kinderen vandaag</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -1086,7 +1105,7 @@ function renderKidList(){
   kids.sort(byName);
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) ? ' · 🎂' : '');
+    const sub = (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) ? ' · 🎂' : '');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
@@ -1123,6 +1142,7 @@ function openCheckin(kidId, date = todayISO()){
           `<button type="button" class="chip ${items.has(i.id) ? 'on' : ''}" data-action="toggleChip" data-id="${i.id}">${i.emoji} ${i.label}<span class="tick">✓</span></button>`).join('')}</div></div>
       <label class="field"><span>Gebedsverlangens</span><textarea id="ci-prayer" rows="3" placeholder="Vul hier eventueel gebedsverlangens in">${esc(ex?.prayer || '')}</textarea></label>
       <div class="hint soft">${icon('help')} Vraag of ${esc(firstName(k.name))} naar de wc moet</div>
+      <div class="points-card" id="ci-points" data-group="${k.group}"><span class="muted">${esc(firstName(k.name))} krijgt</span><b><span id="ci-points-n">${pointsFor(k.group, [...items])}</span> punten</b></div>
       <div style="text-align:center"><a class="textlink" href="#/ziektes">${icon('thermo')} Kind ziek? Klik hier.</a></div>
     </div>
     <div class="modal-foot">
@@ -1263,6 +1283,7 @@ function renderMeer(){
     ['roosters','Roosters','Sheets en bidden bovenbouw','calendar'],
     ['gebed','Gebedslijst','Alle gebedsverlangens','heart'],
     ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
+    ['punten','Punten','Hoeveel punten een kind krijgt','check'],
     ...(isAdmin() ? [['import','Kinderen importeren','Echte kinderen in één keer toevoegen','users']] : []),
   ];
   app.innerHTML = `
@@ -1277,6 +1298,26 @@ function renderMeer(){
         <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Zet alles terug naar de verzonnen voorbeelddata (ook geïmporteerde kinderen gaan weg)'}</span></span></button>
     </div>` : ''}
     <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
+  </div>`;
+}
+
+/* ---------- Punten instellen ---------- */
+function renderPunten(){
+  const c = pointsCfg(), edit = isAdmin();
+  const rows = [['aanwezig','✅ Aanwezig'], ...ITEMS.map(i => [i.id, `${i.emoji} ${i.label}`])];
+  const cell = (g, id) => g === 'onder' && id === 'bijbeltekst' || g === 'bezoeker' && id === 'bijbeltekst' ? '<span class="muted">–</span>'
+    : edit ? `<input type="number" inputmode="numeric" min="0" max="99" data-group="${g}" data-item="${id}" value="${c[g]?.[id] ?? 0}">` : `<b>${c[g]?.[id] ?? 0}</b>`;
+  app.innerHTML = `
+  <div class="page">
+    <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
+    <div class="page-head"><h1>Punten</h1></div>
+    <div class="banner" style="margin:0 0 16px">${icon('info')}<span>Bij het inchecken laat de app zien hoeveel punten een kind krijgt: punten voor <b>aanwezig zijn</b>, plus punten voor elk ding dat het heeft meegenomen. De punten zelf deel je uit zoals altijd.</span></div>
+    <div class="card list" style="overflow-x:auto"><table class="t pt-table">
+      <thead><tr><th></th><th class="c">Onder</th><th class="c">Boven</th><th class="c">Bezoek</th></tr></thead>
+      <tbody>${rows.map(([id, label]) => `<tr><td><b>${label}</b></td><td class="c">${cell('onder', id)}</td><td class="c">${cell('boven', id)}</td><td class="c">${cell('bezoeker', id)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    ${edit ? `<div class="btn-row" style="margin-top:12px"><button class="btn btn-outline" data-action="resetPoints">Terug naar startwaarden</button><button class="btn btn-primary" data-action="savePoints">Opslaan</button></div>`
+      : '<p class="muted" style="font-size:14px">Alleen een beheerder kan de punten aanpassen.</p>'}
   </div>`;
 }
 
@@ -1671,7 +1712,21 @@ const actions = {
     save(); render(); openLeaderCheckin();
   },
   openCheckin: d => openCheckin(d.id),
-  toggleChip: (d, el) => el.classList.toggle('on'),
+  toggleChip: (d, el) => {
+    el.classList.toggle('on');
+    const pc = $('#ci-points');   // inchecken: punten meteen bijwerken
+    if (pc) $('#ci-points-n').textContent = pointsFor(pc.dataset.group, [...document.querySelectorAll('.modal .chip.on')].map(c => c.dataset.id));
+  },
+  savePoints: () => {
+    if (!isAdmin()) return;
+    const pts = JSON.parse(JSON.stringify(pointsCfg()));
+    document.querySelectorAll('.pt-table input').forEach(i => { (pts[i.dataset.group] ||= {})[i.dataset.item] = Math.max(0, parseInt(i.value, 10) || 0); });
+    db.settings = { ...db.settings, points:pts }; put('settings', { key:'points', value:pts }); save(); toast('Punten opgeslagen');
+  },
+  resetPoints: () => {
+    if (!isAdmin() || !confirm('Alle punten terugzetten naar de startwaarden?')) return;
+    db.settings = { ...db.settings, points:DEFAULT_POINTS }; put('settings', { key:'points', value:DEFAULT_POINTS }); save(); render(); toast('Startwaarden teruggezet');
+  },
   doImport: () => {
     if (!isAdmin()) return;
     const rows = parseImport($('#im-text').value, $('#im-group').value, !!$('#im-clear')?.checked).filter(r => !r.dup);
