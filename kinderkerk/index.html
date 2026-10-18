@@ -161,6 +161,10 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .datebar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;margin-bottom:16px;color:var(--muted);font-size:14px}
 .datebar span{display:flex;align-items:center;gap:6px}
 .datebar svg.i{width:18px;height:18px}
+.av-wrap{position:relative;flex:none;display:flex}
+.away-badge{position:absolute;right:-6px;bottom:-5px;width:24px;height:24px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:14px;box-shadow:0 0 0 2px var(--card)}
+.away-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.away-presets .chip{padding:5px 10px;font-size:13.5px}
 .check-line{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin:-4px 0 14px;cursor:pointer}
 .check-line input{width:20px;height:20px;accent-color:var(--brand);flex:none}
 .hint.soft{font-weight:600;font-size:14px;padding:10px 12px}
@@ -379,7 +383,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 14';
+const APP_VERSION = '2026-10-18 · 15';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1032,7 +1036,7 @@ function openLeaderCheckin(){
     <div class="list">${sorted.map(l => { const on = leaderIn(l.id, T); return `
       <button class="row" data-action="toggleLeader" data-id="${l.id}">
         <span class="av av-leiding">${initials(l.name)}</span>
-        <span class="row-main"><b>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</b><span class="muted">${GROUPS[l.group] || 'Algemeen'}${l.away ? ' · ' + esc(l.away) : ''}</span></span>
+        <span class="row-main"><b>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</b><span class="muted">${GROUPS[l.group] || 'Algemeen'}${l.away ? ` · ${awayIcon(l.away)} ${esc(l.away)}` : ''}</span></span>
         ${on ? `<span class="badge ok">${icon('check')} Aanwezig</span>` : `<span class="btn btn-soft sm">Inchecken</span>`}
       </button>`; }).join('')}</div>
     <div class="modal-foot"><button class="btn btn-primary" data-action="closeModal">Klaar</button></div>`);
@@ -1276,9 +1280,15 @@ function renderMeer(){
 }
 
 /* ---------- Planning: thema en leiding per zondag ---------- */
+/* Icoontje bij afwezigheid, op basis van de tekst die is ingevuld */
+const AWAY_ICONS = [[/zwanger/i,'🤰'],[/ouderschap|baby|geboorte|bevalling/i,'👶'],[/trouw|bruiloft|huwelijk/i,'💍'],
+  [/vakantie|reis/i,'🏖️'],[/ziekenhuis|operatie|herstel/i,'🏥'],[/ziek/i,'🤒'],[/studie|examen|school|stage/i,'📚'],
+  [/werk|dienst/i,'💼'],[/rouw|overl/i,'🕊️']];
+const awayIcon = text => text ? (AWAY_ICONS.find(([re]) => re.test(text)) || [, '🗓️'])[1] : '';
+const AWAY_PRESETS = ['Zwangerschapsverlof','Ouderschapsverlof','Vakantie','Ziek','Studie'];
 function leaderNames(ids){
   const l = ids.map(leaderById).filter(Boolean);
-  return l.length ? l.map(x => x.id === db.session ? '<span class="me-tag">Jij</span>' : esc(x.name)).join(', ') : '<span class="muted">nog niemand</span>';
+  return l.length ? l.map(x => (x.id === db.session ? '<span class="me-tag">Jij</span>' : esc(x.name)) + (x.away ? ` <span title="${esc(x.away)}">${awayIcon(x.away)}</span>` : '')).join(', ') : '<span class="muted">nog niemand</span>';
 }
 function topicBlock(date){
   const o = sundayTopic(date, 'onder'), b = sundayTopic(date, 'boven');
@@ -1361,7 +1371,7 @@ function openEditPeriod(id){
 function openEditPlan(date){
   const s = sundayOf(date), w = weekInfo(date), split = w && periodSplit(w.p);
   const chips = (grp, on) => [...db.leaders].sort((a,b) => (a.group === grp ? 0 : 1) - (b.group === grp ? 0 : 1) || byName(a,b)).map(l =>
-    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away ? `title="${esc(l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' 🌙' : ''}<span class="tick">✓</span></button>`).join('');
+    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away ? `title="${esc(l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' ' + awayIcon(l.away) : ''}<span class="tick">✓</span></button>`).join('');
   openModal(`
     <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">${(w => w ? `Week ${w.week} van ${PERIOD_WEEKS} · ${esc(periodLabel(w.p))}` : 'Thema en leiding')(weekInfo(date))}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -1385,9 +1395,9 @@ function renderTeam(){
   const T = todayISO();
   const section = (grp, label) => { const l = db.leaders.filter(x => (x.group || '') === grp).sort(byName); if (!l.length) return '';
     return `<div class="list-head">${label} · ${l.length}</div>` + l.map(x => {
-      const sub = [x.away ? `<span style="color:var(--warn-text);font-weight:700">${esc(x.away)}</span>` : '',
+      const sub = [x.away ? `<span style="color:var(--warn-text);font-weight:700">${awayIcon(x.away)} ${esc(x.away)}</span>` : '',
         isAdmin() ? leaderAccess(x) : ''].filter(Boolean).join(' · ') || label;
-      return `<button class="row ${isAdmin() ? '' : 'static'}" ${isAdmin() ? `data-action="editLeader" data-id="${x.id}"` : ''}><span class="av av-leiding" ${x.away ? 'style="opacity:.55"' : ''}>${initials(x.name)}</span>
+      return `<button class="row ${isAdmin() ? '' : 'static'}" ${isAdmin() ? `data-action="editLeader" data-id="${x.id}"` : ''}><span class="av-wrap"><span class="av av-leiding" ${x.away ? 'style="opacity:.55"' : ''}>${initials(x.name)}</span>${x.away ? `<span class="away-badge">${awayIcon(x.away)}</span>` : ''}</span>
         <span class="row-main"><b>${esc(x.name)}${x.role === 'beheerder' ? '<span class="role">Beheerder</span>' : ''}</b><span class="muted">${sub}</span></span>
         ${leaderIn(x.id, T) ? `<span class="badge ok">${icon('check')} Vandaag</span>` : ''}${isAdmin() ? icon('chev','chev') : ''}</button>`; }).join(''); };
   app.innerHTML = `
@@ -1433,7 +1443,9 @@ function openEditLeader(id){
       <label class="field"><span>Naam</span><input id="ld-name" value="${esc(l.name)}" autocomplete="off"></label>
       <label class="field"><span>Groep</span>${groupSelect('ld-group', l.group)}</label>
       <label class="field"><span>E-mailadres</span><input id="ld-email" type="email" value="${esc(l.email || '')}" autocomplete="off" placeholder="naam@voorbeeld.nl" ${l.userId ? 'disabled' : ''}></label>
-      <label class="field"><span>Verlof / afwezig <span class="muted" style="font-weight:400">(leeg = beschikbaar)</span></span><input id="ld-away" value="${esc(l.away || '')}" autocomplete="off" placeholder="Bijv. zwangerschapsverlof tot maart"></label>
+      <label class="field"><span>Verlof / afwezig <span class="muted" style="font-weight:400">(leeg = beschikbaar)</span></span><input id="ld-away" data-input="away" value="${esc(l.away || '')}" autocomplete="off" placeholder="Bijv. zwangerschapsverlof tot maart">
+        <span class="away-presets">${AWAY_PRESETS.map(t => `<button type="button" class="chip" data-action="setAway" data-id="${t}">${awayIcon(t)} ${t}</button>`).join('')}
+          <button type="button" class="chip" data-action="setAway" data-id="">✕ Beschikbaar</button></span></label>
       <label class="field"><span>Rol</span><select id="ld-role" ${self ? 'disabled' : ''}>
         <option value="leiding" ${l.role !== 'beheerder' ? 'selected' : ''}>Leiding</option>
         <option value="beheerder" ${l.role === 'beheerder' ? 'selected' : ''}>Beheerder (mag leiding toevoegen en beheren)</option></select></label>
@@ -1615,6 +1627,7 @@ const actions = {
   },
   openCheckin: d => openCheckin(d.id),
   toggleChip: (d, el) => el.classList.toggle('on'),
+  setAway: d => { const i = $('#ld-away'); i.value = d.id; i.focus(); },
   openMeeting: d => { const m = ensureMeeting(d.date, d.kind); location.hash = '#/vergadering/' + m.id; },
   addAgenda: d => {
     const input = $('#ag-new'), title = input.value.trim(); if (!title) return input.focus();
