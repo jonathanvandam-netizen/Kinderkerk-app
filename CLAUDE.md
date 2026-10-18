@@ -10,7 +10,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).
 - Navigatie: op de website (groot scherm) bovenin; op telefoon en als geïnstalleerde app een zwevende
-  "liquid glass"-balk onderin (Home, Check-in, Vergadering, Meer).
+  "liquid glass"-balk onderin (Home, Check-in, Planning, Vergadering, Meer).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Inloggen: alleen op uitnodiging; iedereen met een account is automatisch leiding; beheerders nodigen uit
@@ -48,7 +48,7 @@ leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"),
 bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen), gebedslijst.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
-Planning (Meer → Planning): per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw; iedereen
+Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt" met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; iedereen
 mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
 Periodes (Planning, alleen beheerder): 7 weken, thema per groep (bovenbouw leeg = zelfde als onderbouw); week 6 = bidden, week 7 =
 puntenwinkeltje + vergadering, om en om klein/groot (nieuwe periode stelt start +7 weken en de andere vergadering voor).

@@ -92,6 +92,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
   border:1px solid var(--glass-border);
   box-shadow:0 10px 34px rgba(20,30,60,.18),0 2px 6px rgba(20,30,60,.08),inset 0 1px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-lo)}
 .bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;border-radius:24px;font-size:11px;font-weight:700;color:var(--nav-text);min-width:0;white-space:nowrap;text-decoration:none;transition:background .2s,color .2s}
+@media(max-width:374px){.bottomnav{gap:2px;padding:5px}.bottomnav a{font-size:9.5px;letter-spacing:-.2px}}
 .bottomnav a.active{color:var(--brand);background:var(--glass-active);box-shadow:0 1px 4px rgba(20,30,60,.12),inset 0 1px 0 var(--glass-hi)}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
 body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
@@ -376,7 +377,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 12';
+const APP_VERSION = '2026-10-18 · 13';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -707,16 +708,17 @@ const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.ond
 function rosterToday(key){ const T = todayISO(); return db.rosters[key].find(r => r.date === T) || db.rosters[key].find(r => r.date > T); }
 
 /* ---------- UI-state ---------- */
-const state = { planCount:8, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { planCount:8, planMine:false, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
   { id:'home', label:'Home', icon:'home' },
   { id:'checkin', label:'Check-in', icon:'checkin' },
+  { id:'planning', label:'Planning', icon:'calendar' },
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
-const MEER_ROUTES = ['meer','planning','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
@@ -1232,7 +1234,6 @@ function openProfile(){
    ===================================================================== */
 function renderMeer(){
   const items = [
-    ['planning','Planning','Thema en leiding per zondag','book'],
     ['team','Team','Alle leiding per groep','users'],
     ['historie','Historie','Aantallen en wie er regelmatig komt','chart'],
     ['roosters','Roosters','Sheets en bidden bovenbouw','calendar'],
@@ -1272,22 +1273,27 @@ function planCard(date, compact){
     ${weekTags(date)}
     ${topicBlock(date)}
     <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span>
-      ${compact ? ['sheets','bidden'].map(key => { const r = db.rosters[key].find(x => x.date === date), k = r && kidById(r.kidId);
-        return `<span>${key === 'sheets' ? 'Sheets' : 'Bidden'}</span><span>${k ? esc(k.name) : '<span class="muted">niemand</span>'}</span>`; }).join('') : ''}</div>
+      ${['sheets','bidden'].map(key => { const r = db.rosters[key].find(x => x.date === date), k = r && kidById(r.kidId);
+        return `<span>${key === 'sheets' ? 'Sheets' : 'Bidden'}</span><span>${k ? esc(k.name) : '<span class="muted">niemand</span>'}</span>`; }).join('')}</div>
     ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
   </a>`;
 }
 function renderPlanning(){
   const first = nextSunday(todayISO());
-  const dates = Array.from({ length:state.planCount }, (_, i) => addDays(first, 7*i));
+  let dates = Array.from({ length:state.planCount }, (_, i) => addDays(first, 7*i));
+  if (state.planMine){   // alleen zondagen waarop ik leiding heb (tot een jaar vooruit)
+    const mine = d => { const s = sundayOf(d); return s.onder.includes(db.session) || s.boven.includes(db.session); };
+    dates = Array.from({ length:52 }, (_, i) => addDays(first, 7*i)).filter(mine).slice(0, state.planCount);
+  }
   app.innerHTML = `
   <div class="page">
-    <div class="page-head"><h1>Planning</h1><span class="muted">Thema en leiding per zondag</span></div>
+    <div class="page-head"><h1>Planning</h1></div>
     ${periodBlock()}
-    <h3 class="section-title">Zondagen</h3>
-    <div class="stack">${dates.map(d => planCard(d)).join('')}</div>
-    <button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>
-    <div class="banner">${icon('info')}<span>Tik op een zondag om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in.</span></div>
+    <div class="page-head" style="margin:22px 0 10px"><h3 class="section-title" style="margin:0">Wie is wanneer aan de beurt</h3>
+      <button class="chip ${state.planMine ? 'on' : ''}" data-action="planMine">Alleen mijn beurten<span class="tick">✓</span></button></div>
+    <div class="stack">${dates.map(d => planCard(d)).join('') || '<div class="card empty">Je bent het komende jaar nog niet ingepland.</div>'}</div>
+    ${!state.planMine || dates.length >= state.planCount ? `<button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>` : ''}
+    <div class="banner">${icon('info')}<span>Tik op een zondag om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Sheets en bidden pas je aan bij <a href="#/roosters">Roosters</a>.</span></div>
   </div>`;
 }
 function periodBlock(){
@@ -1696,6 +1702,7 @@ const actions = {
     if (!isAdmin() || !p || !confirm(`Periode "${p.theme}" verwijderen?`)) return;
     db.periods = db.periods.filter(x => x.id !== p.id); drop('periods', { id:p.id }); save(); closeModal(); render();
   },
+  planMine: () => { state.planMine = !state.planMine; render(); },
   morePlan: () => { state.planCount += 8; render(); },
   savePlan: d => {
     const ids = sel => [...document.querySelectorAll(sel + ' .chip.on')].map(c => c.dataset.id);
