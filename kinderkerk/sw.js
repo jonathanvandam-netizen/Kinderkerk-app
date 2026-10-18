@@ -1,7 +1,7 @@
 // Bewaart de app op het toestel, zodat hij ook zonder (goed) internet opent.
 // Eerst het netwerk proberen, anders de bewaarde versie.
-const CACHE = 'kinderkerk-v2';
-const FILES = ['./', 'index.html', 'config.js', 'vendor/supabase.js', 'manifest.webmanifest', 'logo-192.png', 'logo-512.png'];
+const CACHE = 'kinderkerk-v3';
+const FILES = ['./', 'index.html', 'config.js', 'vendor/supabase.js', 'manifest.webmanifest', 'logo-192.png', 'logo-512.png', 'apple-touch-icon.png', 'icon-maskable-192.png', 'icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

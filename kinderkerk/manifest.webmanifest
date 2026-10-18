@@ -1,12 +1,19 @@
 {
-  "name": "Kinderkerk De Deur",
+  "id": "./",
+  "name": "Kinderkerk",
   "short_name": "Kinderkerk",
+  "description": "App voor de leiding van de kinderkerk van Evangeliegemeente De Deur",
+  "lang": "nl",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f4f7",
+  "orientation": "any",
+  "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
-    { "src": "logo-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "logo-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

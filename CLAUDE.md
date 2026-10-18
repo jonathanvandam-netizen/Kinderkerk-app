@@ -27,7 +27,10 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - `supabase/schema.sql` = tabellen, regels en triggers; `supabase/INSTALLEREN.md` = stappenplan voor Jonathan.
   Het schema is getest op een lokale Postgres met een nagebootst `auth`-schema.
 - `kinderkerk/vendor/supabase.js` = supabase-js 2.45.4 (UMD), in de repo zodat de app ook offline opent.
-- `kinderkerk/manifest.webmanifest` voor installeren als app, `kinderkerk/sw.js` zodat de app ook zonder internet opent.
+- `kinderkerk/manifest.webmanifest` voor installeren als app (naam "Kinderkerk"), `kinderkerk/sw.js` zodat de app ook
+  zonder internet opent. Iconen: `apple-touch-icon.png` (iPhone, 180px) en `icon-maskable-*.png` (Android, logo met
+  witte rand). Knop "Installeer de app" op inlogscherm, Home (wegklikbaar) en Meer: Android = installatievenster,
+  iPhone/iPad = uitleg via Safari → Deel → Zet op beginscherm.
 - Lokaal bekijken: `node kinderkerk/serve.js` → http://localhost:5173
 - Online via GitHub Pages: https://jonathanvandam-netizen.github.io/Kinderkerk-app/ — `.github/workflows/pages.yml`
   publiceert de map `kinderkerk/` bij elke push naar `main`. De repository is daarvoor openbaar gemaakt.
