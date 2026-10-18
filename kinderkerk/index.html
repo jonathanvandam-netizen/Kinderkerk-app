@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>Kinderkerk</title>
 <meta name="application-name" content="Kinderkerk">
@@ -28,6 +28,9 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
+/* Geen inzoomen: geen dubbeltik-zoom, en invulvelden op 16px zodat de iPhone niet inzoomt bij het tikken */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+input,textarea,select{font-size:16px !important}
 body{font-family:"Nunito Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);
   -webkit-font-smoothing:antialiased;font-size:15px;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 body.noscroll{overflow:hidden}
@@ -1421,6 +1424,9 @@ document.addEventListener('submit', e => {
   e.preventDefault(); actions[k]?.();
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+// iPhone negeert user-scalable=no in Safari; knijp-zoom daarom ook hier tegenhouden
+['gesturestart','gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive:false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive:false });
 if (window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.documentElement.classList.add('standalone');
 window.addEventListener('hashchange', router);
 
