@@ -38,7 +38,10 @@ bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpas
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep wijzigen, laatste keren; verwijderen alleen beheerder.
 
 ## Open vragen / volgende stappen
-- Jonathan heeft een Supabase-account. Hij volgt `supabase/INSTALLEREN.md` en geeft URL en anon key door;
-  die komen in `kinderkerk/config.js`.
+- Supabase-project bestaat al (eu-west-1, Ierland); de Project URL staat in `kinderkerk/config.js`.
+  Nog te doen (stap 2–4 van `supabase/INSTALLEREN.md`): `schema.sql` draaien in de SQL Editor (eigen e-mail onderaan
+  invullen), inlogmails met `{{ .Token }}`, en de anon/publishable key in `config.js`. Plakken in de SQL Editor lukte
+  niet op de iPhone; dit doet Jonathan later op een laptop. Zolang de key leeg is, draait de app in demomodus.
+  Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan het schema niet zelf uitvoeren.
 - Daarna: app online zetten (bijv. GitHub Pages of Netlify), eigen SMTP voor de inlogmails,
   en pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
