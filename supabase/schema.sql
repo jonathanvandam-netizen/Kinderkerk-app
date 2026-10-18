@@ -88,6 +88,35 @@ create table public.periods (
   meeting text not null default 'klein' check (meeting in ('klein','groot'))
 );
 
+-- Vergaderingen met agendapunten (+ notulen) en actiepunten
+create table public.meetings (
+  id   uuid primary key default gen_random_uuid(),
+  date date not null unique,
+  kind text not null default 'klein' check (kind in ('klein','groot'))
+);
+
+create table public.agenda_items (
+  id         uuid primary key default gen_random_uuid(),
+  meeting_id uuid not null references public.meetings(id) on delete cascade,
+  title      text not null,
+  notes      text not null default '',
+  author     text not null default '',
+  sort       bigint not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table public.actions (
+  id         uuid primary key default gen_random_uuid(),
+  meeting_id uuid references public.meetings(id) on delete set null,
+  agenda_id  uuid references public.agenda_items(id) on delete set null,
+  text       text not null,
+  who        uuid references public.leaders(id) on delete set null,
+  due        date,
+  done       boolean not null default false,
+  author     text not null default '',
+  created_at timestamptz not null default now()
+);
+
 create table public.illnesses (
   id     uuid primary key default gen_random_uuid(),
   name   text not null,
@@ -162,6 +191,9 @@ alter table public.rosters         enable row level security;
 alter table public.illnesses       enable row level security;
 alter table public.sundays         enable row level security;
 alter table public.periods         enable row level security;
+alter table public.meetings        enable row level security;
+alter table public.agenda_items    enable row level security;
+alter table public.actions         enable row level security;
 
 create policy "beheerders beheren uitnodigingen" on public.invites
   for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -192,6 +224,12 @@ create policy "leiding" on public.rosters
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
 create policy "leiding" on public.sundays
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
+create policy "leiding" on public.meetings
+  for all to authenticated using (public.is_leader()) with check (public.is_leader());
+create policy "leiding" on public.agenda_items
+  for all to authenticated using (public.is_leader()) with check (public.is_leader());
+create policy "leiding" on public.actions
+  for all to authenticated using (public.is_leader()) with check (public.is_leader());
 
 create policy "leiding ziet periodes" on public.periods
   for select to authenticated using (public.is_leader());
@@ -210,7 +248,8 @@ revoke all on all tables in schema public from anon;
 -- Zo ziet alle leiding een check-in meteen verschijnen.
 alter publication supabase_realtime add table
   public.invites, public.leaders, public.kids, public.checkins, public.leader_checkins,
-  public.notes, public.rosters, public.illnesses, public.sundays, public.periods;
+  public.notes, public.rosters, public.illnesses, public.sundays, public.periods,
+  public.meetings, public.agenda_items, public.actions;
 
 -- ---------- Eerste beheerder ----------
 -- Vervang het e-mailadres hieronder door dat van jezelf.

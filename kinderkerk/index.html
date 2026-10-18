@@ -137,6 +137,9 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .stack{display:flex;flex-direction:column;gap:12px}
 
 .home-grid{display:grid;gap:16px}
+.home-grid > *{min-width:0}   /* anders duwen brede tabbladen de pagina breder dan het scherm */
+@media(max-width:1000px){.home-tabs .tab svg.i{display:none}}
+@media(max-width:480px){.home-tabs .tab{padding:10px 7px;font-size:14.5px;gap:4px}}
 @media(min-width:760px){.home-grid{grid-template-columns:300px 1fr;align-items:start}.home-grid aside{position:sticky;top:84px}}
 /* Begroeting bovenaan Home */
 .hello{padding:16px}
@@ -159,6 +162,31 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .datebar span{display:flex;align-items:center;gap:6px}
 .datebar svg.i{width:18px;height:18px}
 .hint.soft{font-weight:600;font-size:14px;padding:10px 12px}
+/* Vergadering */
+.eyebrow{display:block;font-size:12px;font-weight:800;color:var(--brand);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.meet-next .big{font-size:20px;font-weight:800}
+.meet-next .btn{margin-top:14px}
+.addrow{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);margin:0}
+.list .addrow:first-child{border-top:0}
+.addrow input{flex:1;font:inherit;border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:var(--input);color:var(--text);min-width:0;outline:0}
+.addrow input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.check{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:grid;place-items:center;cursor:pointer;color:transparent;flex:none;padding:0}
+.check svg.i{width:16px;height:16px;stroke-width:2.8}
+.check.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.action .row-main{cursor:pointer}
+.action .row-main b{white-space:normal}
+.action.done .row-main b{text-decoration:line-through;color:var(--muted)}
+.icon-btn.sm{width:32px;height:32px}
+.icon-btn.sm svg.i{width:17px;height:17px}
+.agenda{padding:14px 16px}
+.agenda .ag-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.agenda .num{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:800;display:grid;place-items:center;flex:none;font-size:14px}
+.agenda .ag-title{flex:1;font:inherit;font-weight:800;border:0;background:transparent;color:var(--text);padding:4px 0;min-width:0;outline:0}
+.agenda textarea{width:100%;font:inherit;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--input);color:var(--text);resize:none;min-height:84px;outline:0;display:block}
+.agenda textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.agenda .acts{margin:10px -16px 0;border-top:1px solid var(--border)}
+.agenda .acts .row{padding-left:16px;padding-right:12px}
+.agenda .add-act{margin-top:10px;font-size:14px;color:var(--brand)}
 .hero{padding:28px 20px 20px;text-align:center}
 .hero-logo{width:104px;height:104px;margin:0 auto 14px;border-radius:50%;border:4px solid var(--brand-soft);overflow:hidden}
 .hero h1{font-size:22px;font-weight:800;margin-bottom:4px}
@@ -349,7 +377,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 10';
+const APP_VERSION = '2026-10-18 · 11';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -473,6 +501,7 @@ function seed(){
     rosters:{ sheets:roster(0), bidden:roster(5) },
     sundays:planLeaders(seedSundays(T), leaders),
     periods:seedPeriods(T),
+    ...seedMeetings(T, leaders),
     illnesses:[
       ['Hand-, voet- en mondziekte','ok','Mag komen, mits fit genoeg om mee te doen.'],
       ['Ringworm','ok','Mag komen, mits fit genoeg. Plek bij voorkeur bedekt.'],
@@ -498,6 +527,28 @@ function seedPeriods(T){
 }
 const WEEK_TOPICS = [['Dag 1 t/m 3: licht, lucht en land','Genesis 1:1–13'],['Dag 4 t/m 6: zon, dieren en mensen','Genesis 1:14–31'],
   ['Dag 7: God rust','Genesis 2:1–3'],['De hof van Eden','Genesis 2:4–25'],['De zondeval','Genesis 3'],['',''],['',''],['','']];
+/* Vergaderingen: de vorige (klein) en de volgende (groot, week 7 van deze periode) */
+function seedMeetings(T, leaders){
+  const cur = addDays(nextSunday(T), -7);
+  const prev = { id:newId(), date:addDays(cur, -7), kind:'klein' }, next = { id:newId(), date:addDays(cur, 7*(PERIOD_WEEKS-1)), kind:'groot' };
+  const L = n => leaders.find(l => l.name === n)?.id || null;
+  const ag = (m, title, notes, author, sort) => ({ id:newId(), meetingId:m.id, title, notes, author, sort });
+  const agenda = [
+    ag(prev, 'Terugblik periode Jozef', 'Kinderen waren erg betrokken bij het verhaal. Verkleden werkte goed, volgende keer vaker doen.', 'Jonathan', 1),
+    ag(prev, 'Rooster sheets bovenbouw', 'Iedereen van de bovenbouw komt aan de beurt. Rooster loopt tot eind november.', 'Jonathan', 2),
+    ag(prev, 'Kerstviering', 'Idee: de kinderen doen een stukje in de dienst. Esther maakt een eerste opzet.', 'Esther', 3),
+    ag(next, 'Evaluatie Scheppingsverhaal', '', 'Esther', 1),
+    ag(next, 'Planning kerstviering', '', 'Jonathan', 2),
+    ag(next, 'Thema volgende periode kiezen', '', 'Mark', 3),
+  ];
+  const act = (m, a, text, who, due, done) => ({ id:newId(), meetingId:m.id, agendaId:a ? a.id : null, text, who, due, done, author:'Jonathan' });
+  const actions = [
+    act(prev, agenda[2], 'Opzet kerstviering maken', L('Esther'), addDays(cur, 28), false),
+    act(prev, agenda[1], 'Rooster sheets uitbreiden tot eind december', L('Jonathan'), null, true),
+    act(prev, null, 'Nieuwe kleurpotloden kopen', L('Mark'), addDays(cur, 14), false),
+  ];
+  return { meetings:[prev, next], agenda, actions };
+}
 function seedSundays(T){
   const S = nextSunday(T);
   return WEEK_TOPICS.map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage, themeBoven:'', passageBoven:'',
@@ -518,21 +569,23 @@ function planLeaders(sundays, leaders){
 const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
-const STORE_KEY = 'kinderkerk-demo-v5';
-const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], illnesses:[] });
+const STORE_KEY = 'kinderkerk-demo-v6';
+const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
 if (!db){ db = seed(); save(); }
 
 /* Veldnamen in de app ↔ kolommen in de database */
-const COLS = { kidId:'kid_id', leaderId:'leader_id', group:'groep', invitedBy:'invited_by', by:'checked_by', themeBoven:'theme_boven', passageBoven:'passage_boven' };
+const COLS = { kidId:'kid_id', leaderId:'leader_id', group:'groep', invitedBy:'invited_by', by:'checked_by', themeBoven:'theme_boven', passageBoven:'passage_boven', meetingId:'meeting_id', agendaId:'agenda_id' };
 const REV = Object.fromEntries(Object.entries(COLS).map(([a,b]) => [b,a]));
 const toRow = o => Object.fromEntries(Object.entries(o).map(([k,v]) => [COLS[k] || k, v]));
 const fromRow = o => Object.fromEntries(Object.entries(o).map(([k,v]) => [REV[k] || k, v]));
+/* Schrijfacties één voor één versturen, zodat bijv. een vergadering bestaat vóór het eerste agendapunt */
+let writeQueue = Promise.resolve();
 function remote(q){
   if (!CLOUD) return;
-  q.then(({ error }) => { if (error){ console.error(error); toast('Opslaan mislukt, probeer het opnieuw'); refresh(); } });
+  writeQueue = writeQueue.then(() => q).then(({ error }) => { if (error){ console.error(error); toast('Opslaan mislukt, probeer het opnieuw'); refresh(); } }).catch(e => console.error(e));
 }
 const put = (table, rows) => remote(sb?.from(table).upsert([].concat(rows).map(toRow)));
 const upd = (table, o) => remote(sb?.from(table).update(toRow(o)).eq('id', o.id));
@@ -550,12 +603,14 @@ async function fetchAll(table, order){
   }
 }
 async function loadCloud(){
-  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods] = await Promise.all([
+  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions] = await Promise.all([
     fetchAll('leaders', ['id']), fetchAll('invites', ['email']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
-    fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start'])]);
+    fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start']),
+    fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id'])]);
   notes.forEach(n => delete n.created_at);
   const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, illnesses };
+  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses };
+  [...agenda, ...actions].forEach(x => delete x.created_at);
 }
 /* Opnieuw ophalen (na een wijziging van iemand anders); niet tekenen terwijl iemand typt of een venster open heeft */
 let refreshTimer;
@@ -663,16 +718,17 @@ const NAV = [
 ];
 const MEER_ROUTES = ['meer','planning','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
-  const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
+  const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'vergadering' ? 'home' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $('#mainnav').innerHTML = html;
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
-  const r = location.hash.replace(/^#\/?/, '').split('/')[0] || 'home';
-  state.route = routes[r] ? r : 'home';
+  const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
+  state.meetingId = sub || null;
+  state.route = routes[r || 'home'] ? r || 'home' : 'home';
   closeModal();
   render();
   window.scrollTo(0, 0);
@@ -758,11 +814,12 @@ function renderHome(){
       ${installCard(true)}
     </aside>
     <section>
-      <div class="tabs">
-        ${[['vandaag','Vandaag','calendar'],['gebed','Gebed','heart'],['notities','Notities','note']].map(([id,l,ic]) =>
-          `<button class="tab ${state.homeTab === id ? 'active' : ''}" data-action="homeTab" data-id="${id}">${icon(ic)} ${l}${id === 'gebed' && prayers ? ` <span class="count">${prayers}</span>` : ''}</button>`).join('')}
+      <div class="tabs home-tabs">
+        ${[['vandaag','Vandaag','calendar'],['gebed','Gebed','heart'],['notities','Notities','note'],['vergadering','Vergadering','users']].map(([id,l,ic]) => {
+          const n = id === 'gebed' ? prayers : id === 'vergadering' ? db.actions.filter(a => !a.done).length : 0;
+          return `<button class="tab ${state.homeTab === id ? 'active' : ''}" data-action="homeTab" data-id="${id}">${icon(ic)} ${l}${n ? ` <span class="count">${n}</span>` : ''}</button>`; }).join('')}
       </div>
-      <div id="hometab">${ { vandaag:homeVandaag, gebed:homeGebed, notities:homeNotities }[state.homeTab]() }</div>
+      <div id="hometab">${ { vandaag:homeVandaag, gebed:homeGebed, notities:homeNotities, vergadering:homeVergadering }[state.homeTab]() }</div>
     </section>
   </div></div>`;
 }
@@ -803,6 +860,134 @@ function homeGebed(){
       : `<div class="empty">Nog geen gebedsverlangens vandaag.<br>Die vul je in bij het inchecken van een kind.</div>`}</div>
     <a class="btn btn-outline btn-block" style="margin-top:12px" href="#/gebed">${icon('arrow')} Naar de gebedslijst</a>`;
 }
+/* =====================================================================
+   VERGADERING
+   Volgende vergadering = week 7 van de periode (of een zelf geplande).
+   Agendapunten vooraf, notulen per agendapunt, actiepunten met wie en wanneer.
+   ===================================================================== */
+const meetingKindLabel = k => k === 'groot' ? 'Grote vergadering' : 'Kleine vergadering';
+function nextMeetingInfo(){
+  const T = todayISO();
+  const list = db.meetings.filter(m => m.date >= T).map(m => ({ date:m.date, kind:m.kind, m }));
+  const p = periodsSorted().find(x => periodEnd(x) >= T);
+  if (p && !list.some(x => x.date === periodEnd(p))) list.push({ date:periodEnd(p), kind:p.meeting, m:null });
+  return list.sort((a,b) => a.date.localeCompare(b.date))[0] || null;
+}
+function ensureMeeting(date, kind){
+  let m = db.meetings.find(x => x.date === date);
+  if (!m){ m = { id:newId(), date, kind:kind || 'klein' }; db.meetings.push(m); put('meetings', m); save(); }
+  return m;
+}
+const agendaOf = id => db.agenda.filter(a => a.meetingId === id).sort((a,b) => a.sort - b.sort);
+const byDue = (a,b) => (a.due || '9999').localeCompare(b.due || '9999');
+function actionRow(a, showMeeting){
+  const who = leaderById(a.who), m = showMeeting && db.meetings.find(x => x.id === a.meetingId);
+  const meta = [who ? (who.id === db.session ? 'Jij' : esc(who.name)) : 'Nog niemand',
+    a.due ? `vóór ${fmtDate(a.due, {day:'numeric', month:'short'})}` : '',
+    m ? `uit ${meetingKindLabel(m.kind).toLowerCase()} ${fmtDate(m.date, {day:'numeric', month:'short'})}` : ''].filter(Boolean).join(' · ');
+  const late = !a.done && a.due && a.due < todayISO();
+  return `<div class="row static action ${a.done ? 'done' : ''}">
+    <button class="check ${a.done ? 'on' : ''}" title="${a.done ? 'Weer open zetten' : 'Afvinken'}" data-action="toggleAction" data-id="${a.id}">${icon('check')}</button>
+    <span class="row-main" data-action="editAction" data-id="${a.id}"><b>${esc(a.text)}</b><span class="muted" ${late ? 'style="color:var(--bad)"' : ''}>${meta}</span></span>
+  </div>`;
+}
+const agendaAddForm = (date, kind) => `<form class="addrow" data-submit="addAgenda" data-date="${date}" data-kind="${kind}">
+  <input id="ag-new" placeholder="Nieuw agendapunt…" autocomplete="off"><button class="btn btn-primary sm" type="submit">${icon('plus')} Toevoegen</button></form>`;
+function homeVergadering(){
+  const T = todayISO(), n = nextMeetingInfo();
+  const m = n && (n.m || db.meetings.find(x => x.date === n.date));
+  const items = m ? agendaOf(m.id) : [];
+  const open = db.actions.filter(a => !a.done).sort(byDue);
+  const past = db.meetings.filter(x => x.date < T).sort((a,b) => b.date.localeCompare(a.date));
+  const days = n ? Math.round((new Date(n.date + 'T12:00:00') - new Date(T + 'T12:00:00')) / 864e5) : 0;
+  return `
+    ${n ? `<div class="card pad meet-next">
+        <span class="eyebrow">Volgende vergadering</span>
+        <div class="big">${meetingKindLabel(n.kind)}</div>
+        <div class="muted">${cap(fmtDate(n.date, {weekday:'long', day:'numeric', month:'long'}))} · ${days === 0 ? 'vandaag' : days === 1 ? 'morgen' : `over ${days} dagen`}</div>
+        <button class="btn ${days === 0 ? 'btn-primary' : 'btn-soft'} btn-block" data-action="openMeeting" data-date="${n.date}" data-kind="${n.kind}">${icon('note')} ${days === 0 ? 'Vergadering starten' : 'Agenda en notulen openen'}</button>
+      </div>` : `<div class="card empty">Nog geen vergadering gepland.<br>Stel een periode in onder Planning, of plan hieronder zelf een vergadering.</div>`}
+    ${n ? `<h3 class="section-title">Agendapunten</h3>
+    <div class="card list">${items.map(a => `<div class="row static"><span class="row-icon" style="width:32px;height:32px;border-radius:50%;font-weight:800;font-size:14px">${items.indexOf(a) + 1}</span>
+        <span class="row-main"><b style="white-space:normal">${esc(a.title)}</b><span class="muted">door ${esc(a.author || '—')}</span></span>
+        <button class="icon-btn sm" title="Verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>`).join('')}
+      ${agendaAddForm(n.date, n.kind)}</div>` : ''}
+    <h3 class="section-title">Open actiepunten</h3>
+    <div class="card list">${open.map(a => actionRow(a, true)).join('') || '<div class="empty">Geen open actiepunten. 🎉</div>'}</div>
+    <button class="btn btn-soft btn-block" style="margin-top:10px" data-action="addAction" data-meeting="${m ? m.id : ''}">${icon('plus')} Actiepunt toevoegen</button>
+    ${past.length ? `<h3 class="section-title">Eerdere vergaderingen</h3>
+    <div class="card list">${past.map(x => { const ag = agendaOf(x.id).length, oa = db.actions.filter(a => a.meetingId === x.id && !a.done).length; return `
+      <a class="row" href="#/vergadering/${x.id}"><span class="row-icon">${icon('note')}</span>
+        <span class="row-main"><b>${meetingKindLabel(x.kind)} · ${fmtDate(x.date, {day:'numeric', month:'long', year:'numeric'})}</b>
+        <span class="muted">${ag} agendapunt${ag === 1 ? '' : 'en'}${oa ? ` · ${oa} actiepunt${oa === 1 ? '' : 'en'} open` : ''}</span></span>${icon('chev','chev')}</a>`; }).join('')}</div>` : ''}
+    <button class="btn btn-outline btn-block" style="margin-top:16px" data-action="newMeeting">${icon('calendar')} Andere vergadering plannen</button>`;
+}
+function renderVergadering(){
+  const m = db.meetings.find(x => x.id === state.meetingId);
+  const back = `<a class="textlink" href="#/home" data-action="homeTab" data-id="vergadering" style="margin-bottom:12px">← Terug</a>`;
+  if (!m){ app.innerHTML = `<div class="page">${back}<div class="card empty">Deze vergadering bestaat niet (meer).</div></div>`; return; }
+  const items = agendaOf(m.id), loose = db.actions.filter(a => a.meetingId === m.id && !a.agendaId);
+  app.innerHTML = `
+  <div class="page">
+    ${back}
+    <div class="page-head"><div><h1>${meetingKindLabel(m.kind)}</h1><span class="muted">${cap(fmtDate(m.date, {weekday:'long', day:'numeric', month:'long', year:'numeric'}))}</span></div>
+      <button class="btn btn-outline sm" data-action="shareMeeting" data-id="${m.id}">${icon('share')} Delen</button></div>
+    <div class="stack">${items.map((a, i) => `
+      <div class="card agenda">
+        <div class="ag-head"><span class="num">${i + 1}</span>
+          <input class="ag-title" data-input="agTitle" data-id="${a.id}" value="${esc(a.title)}" aria-label="Agendapunt">
+          <button class="icon-btn sm" title="Agendapunt verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>
+        <textarea data-input="agNotes" data-id="${a.id}" placeholder="Notulen bij dit punt…">${esc(a.notes || '')}</textarea>
+        ${(acts => acts.length ? `<div class="acts">${acts.map(x => actionRow(x)).join('')}</div>` : '')(db.actions.filter(x => x.agendaId === a.id).sort(byDue))}
+        <button class="textlink add-act" data-action="addAction" data-meeting="${m.id}" data-agenda="${a.id}">${icon('plus')} Actiepunt</button>
+      </div>`).join('') || '<div class="card empty">Nog geen agendapunten. Voeg ze hieronder toe.</div>'}</div>
+    <div class="card list" style="margin-top:12px">${agendaAddForm(m.date, m.kind)}</div>
+    <h3 class="section-title">Overige actiepunten</h3>
+    <div class="card list">${loose.sort(byDue).map(x => actionRow(x)).join('') || '<div class="empty">Geen overige actiepunten.</div>'}</div>
+    <button class="btn btn-soft btn-block" style="margin-top:10px" data-action="addAction" data-meeting="${m.id}">${icon('plus')} Actiepunt toevoegen</button>
+    <div class="banner">${icon('info')}<span>Notulen worden vanzelf opgeslagen terwijl je typt. Iedereen van de leiding kan meelezen en aanvullen.</span></div>
+    ${isAdmin() ? `<button class="btn btn-danger btn-block" style="margin-top:16px" data-action="delMeeting" data-id="${m.id}">${icon('trash')} Vergadering verwijderen</button>` : ''}
+  </div>`;
+  growAll();
+}
+/* Tekstvakken groeien mee met de tekst */
+function grow(el){ el.style.height = 'auto'; el.style.height = el.scrollHeight + 2 + 'px'; }
+function growAll(){ document.querySelectorAll('.agenda textarea').forEach(grow); }
+/* Opslaan tijdens het typen: lokaal meteen, naar de database na een korte pauze */
+const saveTimers = {};
+function autosave(table, obj){ save(); clearTimeout(saveTimers[obj.id]); saveTimers[obj.id] = setTimeout(() => put(table, obj), 700); }
+function openActionForm(a, meetingId, agendaId){
+  const x = a || { id:'', text:'', who:'', due:'', meetingId, agendaId };
+  const ag = db.agenda.find(y => y.id === (x.agendaId || agendaId));
+  openModal(`
+    <div class="modal-head"><div><h2>${a ? 'Actiepunt' : 'Nieuw actiepunt'}</h2><span class="muted">${ag ? 'Bij: ' + esc(ag.title) : 'Wie doet wat, en wanneer?'}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="field"><span>Wat moet er gebeuren?</span><textarea id="ac-text" rows="2" placeholder="Bijv. Opzet kerstviering maken">${esc(x.text)}</textarea></label>
+      <label class="field"><span>Wie</span><select id="ac-who"><option value="">Nog niemand</option>
+        ${[...db.leaders].sort(byName).map(l => `<option value="${l.id}" ${l.id === x.who ? 'selected' : ''}>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</option>`).join('')}</select></label>
+      <label class="field"><span>Vóór <span class="muted" style="font-weight:400">(mag leeg)</span></span><input type="date" id="ac-due" value="${x.due || ''}"></label>
+    </div>
+    <div class="modal-foot">
+      ${a ? `<button class="btn btn-danger" data-action="delAction" data-id="${a.id}">${icon('trash')} Verwijderen</button>` : ''}
+      <button class="btn btn-primary" data-action="saveAction" data-id="${x.id}" data-meeting="${x.meetingId || ''}" data-agenda="${x.agendaId || ''}">Opslaan</button>
+    </div>`);
+  if (!a) setTimeout(() => $('#ac-text')?.focus(), 50);
+}
+function meetingText(m){
+  const lines = [`${meetingKindLabel(m.kind)} kinderkerk – ${fmtDate(m.date, {weekday:'long', day:'numeric', month:'long', year:'numeric'})}`, ''];
+  const act = x => { const w = leaderById(x.who); return `   ${x.done ? '☑' : '☐'} ${x.text}${w ? ` (${w.name}` : ' ('}${x.due ? `${w ? ', ' : ''}vóór ${fmtDate(x.due, {day:'numeric', month:'short'})}` : ''})`.replace(' ()', ''); };
+  agendaOf(m.id).forEach((a, i) => {
+    lines.push(`${i + 1}. ${a.title}`);
+    if (a.notes) a.notes.split('\n').forEach(l => lines.push('   ' + l));
+    db.actions.filter(x => x.agendaId === a.id).forEach(x => lines.push(act(x)));
+    lines.push('');
+  });
+  const loose = db.actions.filter(x => x.meetingId === m.id && !x.agendaId);
+  if (loose.length){ lines.push('Actiepunten'); loose.forEach(x => lines.push(act(x))); }
+  return lines.join('\n').trim();
+}
+
 function homeNotities(){
   const notes = [...db.notes].reverse().sort((a,b) => b.date.localeCompare(a.date));
   return `
@@ -1375,7 +1560,7 @@ const actions = {
   go: d => { location.hash = '#/' + d.to; },
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
   closeModal: () => closeModal(),
-  homeTab: d => { state.homeTab = d.id; render(); },
+  homeTab: d => { state.homeTab = d.id; if (state.route === 'home') render(); },
   ciTab: d => { state.ciTab = d.id; render(); },
   rosterTab: d => { state.rosterTab = d.id; render(); },
   toggleAll: () => { state.showAll = !state.showAll; renderKidList(); },
@@ -1390,6 +1575,62 @@ const actions = {
   },
   openCheckin: d => openCheckin(d.id),
   toggleChip: (d, el) => el.classList.toggle('on'),
+  openMeeting: d => { const m = ensureMeeting(d.date, d.kind); location.hash = '#/vergadering/' + m.id; },
+  addAgenda: d => {
+    const input = $('#ag-new'), title = input.value.trim(); if (!title) return input.focus();
+    const m = ensureMeeting(d.date, d.kind);
+    const a = { id:newId(), meetingId:m.id, title, notes:'', author:me().name, sort:Date.now() };
+    db.agenda.push(a); put('agenda_items', a); save(); render();
+    setTimeout(() => $('#ag-new')?.focus(), 30);
+  },
+  delAgenda: d => {
+    const a = db.agenda.find(x => x.id === d.id);
+    if (!a || !confirm(`Agendapunt "${a.title}" verwijderen?${a.notes ? ' De notulen gaan ook weg.' : ''}`)) return;
+    db.agenda = db.agenda.filter(x => x.id !== a.id);
+    db.actions.forEach(x => { if (x.agendaId === a.id) x.agendaId = null; });
+    drop('agenda_items', { id:a.id }); save(); render();
+  },
+  addAction: d => openActionForm(null, d.meeting || null, d.agenda || null),
+  editAction: d => openActionForm(db.actions.find(x => x.id === d.id)),
+  saveAction: d => {
+    const text = $('#ac-text').value.trim(); if (!text) return $('#ac-text').focus();
+    const old = db.actions.find(x => x.id === d.id);
+    const a = Object.assign(old || { id:newId(), meetingId:d.meeting || null, agendaId:d.agenda || null, done:false, author:me().name },
+      { text, who:$('#ac-who').value || null, due:$('#ac-due').value || null });
+    if (!old) db.actions.push(a);
+    put('actions', a); save(); closeModal(); render(); toast(old ? 'Actiepunt opgeslagen' : 'Actiepunt toegevoegd');
+  },
+  toggleAction: d => { const a = db.actions.find(x => x.id === d.id); if (!a) return; a.done = !a.done; put('actions', a); save(); render(); if (a.done) toast('Afgevinkt ✓'); },
+  delAction: d => {
+    if (!confirm('Actiepunt verwijderen?')) return;
+    db.actions = db.actions.filter(x => x.id !== d.id); drop('actions', { id:d.id }); save(); closeModal(); render();
+  },
+  newMeeting: () => openModal(`
+    <div class="modal-head"><div><h2>Vergadering plannen</h2><span class="muted">Bijvoorbeeld een extra overleg</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="field"><span>Datum</span><input type="date" id="mt-date" value="${nextSunday(todayISO())}"></label>
+      <label class="field"><span>Soort</span><select id="mt-kind"><option value="klein">Kleine vergadering</option><option value="groot">Grote vergadering</option></select></label>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" data-action="saveMeeting">Plannen</button></div>`),
+  saveMeeting: () => {
+    const date = $('#mt-date').value; if (!date) return $('#mt-date').focus();
+    const m = ensureMeeting(date, $('#mt-kind').value); closeModal(); location.hash = '#/vergadering/' + m.id;
+  },
+  delMeeting: d => {
+    const m = db.meetings.find(x => x.id === d.id);
+    if (!isAdmin() || !m || !confirm('Deze vergadering met alle agendapunten en notulen verwijderen? Actiepunten blijven bestaan.')) return;
+    db.meetings = db.meetings.filter(x => x.id !== m.id);
+    db.agenda = db.agenda.filter(x => x.meetingId !== m.id);
+    db.actions.forEach(x => { if (x.meetingId === m.id){ x.meetingId = null; x.agendaId = null; } });
+    drop('meetings', { id:m.id }); save(); state.homeTab = 'vergadering'; location.hash = '#/home';
+  },
+  shareMeeting: async d => {
+    const m = db.meetings.find(x => x.id === d.id); if (!m) return;
+    const text = meetingText(m);
+    if (navigator.share){ try { await navigator.share({ title:meetingKindLabel(m.kind), text }); return; } catch(e){ if (e.name === 'AbortError') return; } }
+    try { await navigator.clipboard.writeText(text); toast('Notulen gekopieerd'); } catch(e){ toast('Kopiëren lukte niet'); }
+  },
   setTheme: (d, el) => {
     try { if (d.id === 'auto') localStorage.removeItem('kk-theme'); else localStorage.setItem('kk-theme', d.id); } catch(e){}
     applyTheme();
@@ -1618,13 +1859,18 @@ document.addEventListener('input', e => {
   const k = e.target.dataset?.input;
   if (k === 'search'){ state.search = e.target.value; renderKidList(); }
   if (k === 'zsearch'){ state.zSearch = e.target.value; renderZList(); }
+  if (k === 'agTitle' || k === 'agNotes'){
+    const a = db.agenda.find(x => x.id === e.target.dataset.id); if (!a) return;
+    if (k === 'agTitle') a.title = e.target.value; else { a.notes = e.target.value; grow(e.target); }
+    autosave('agenda_items', a);
+  }
 });
 document.addEventListener('change', e => {
   if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || todayISO());
 });
 document.addEventListener('submit', e => {
   const k = e.target.dataset?.submit; if (!k) return;
-  e.preventDefault(); actions[k]?.();
+  e.preventDefault(); actions[k]?.(e.target.dataset, e.target, e);
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 // iPhone negeert user-scalable=no in Safari; knijp-zoom daarom ook hier tegenhouden

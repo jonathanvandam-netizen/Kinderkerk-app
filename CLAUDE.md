@@ -20,7 +20,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS).
 - Twee modi, gekozen via `kinderkerk/config.js`:
-  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v5`), inloggen nagebootst.
+  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v6`), inloggen nagebootst.
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
@@ -55,6 +55,10 @@ puntenwinkeltje + vergadering, om en om klein/groot (nieuwe periode stelt start 
 Per zondag onderwerp + Bijbelgedeelte per groep (leeg = periodethema; bovenbouw leeg = als onderbouw, tenzij de
 periode voor bovenbouw een eigen thema heeft). Echte stand: periode "Scheppingsverhaal" begon 11-10-2026
 (18-10 = week 2, 22-11 = week 7 met grote vergadering; de vorige vergadering was klein). De demodata volgt dit.
+Vergadering (Home → tab Vergadering): volgende vergadering = week 7 van de periode (of zelf gepland), agendapunten
+vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
+afvinken; open actiepunten op de tab), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
+Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Open vragen / volgende stappen
