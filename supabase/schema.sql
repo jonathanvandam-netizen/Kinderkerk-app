@@ -72,16 +72,19 @@ create table public.sundays (
   date    date primary key,
   theme   text not null default '',
   passage text not null default '',
+  theme_boven   text not null default '',   -- leeg = zelfde als onderbouw
+  passage_boven text not null default '',
   prep    text not null default '',
   onder   uuid[] not null default '{}',
   boven   uuid[] not null default '{}'
 );
 
--- Periodes van 7 weken met één thema; week 7 = vergadering (klein/groot, om en om)
+-- Periodes van 7 weken met een thema per groep; week 7 = vergadering (klein/groot, om en om)
 create table public.periods (
   id      uuid primary key default gen_random_uuid(),
   start   date not null unique,
-  theme   text not null,
+  theme   text not null,                    -- thema onderbouw (of beide)
+  theme_boven text not null default '',     -- leeg = zelfde als onderbouw
   meeting text not null default 'klein' check (meeting in ('klein','groot'))
 );
 
