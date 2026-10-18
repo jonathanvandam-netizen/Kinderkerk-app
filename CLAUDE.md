@@ -29,6 +29,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - `kinderkerk/vendor/supabase.js` = supabase-js 2.45.4 (UMD), in de repo zodat de app ook offline opent.
 - `kinderkerk/manifest.webmanifest` voor installeren als app, `kinderkerk/sw.js` zodat de app ook zonder internet opent.
 - Lokaal bekijken: `node kinderkerk/serve.js` → http://localhost:5173
+- Online via GitHub Pages: https://jonathanvandam-netizen.github.io/Kinderkerk-app/ — `.github/workflows/pages.yml`
+  publiceert de map `kinderkerk/` bij elke push naar `main`. De repository is daarvoor openbaar gemaakt.
 
 ## Functies
 Home (Vandaag/Gebed/Notities, aantallen, rooster van vandaag), check-in per kind (Bijbel/Werkblad/Geld,
@@ -47,5 +49,5 @@ Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen ge
   invullen), inlogmails met `{{ .Token }}`, en de anon/publishable key in `config.js`. Plakken in de SQL Editor lukte
   niet op de iPhone; dit doet Jonathan later op een laptop. Zolang de key leeg is, draait de app in demomodus.
   Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan het schema niet zelf uitvoeren.
-- Daarna: app online zetten (bijv. GitHub Pages of Netlify), eigen SMTP voor de inlogmails,
+- Daarna: eigen SMTP voor de inlogmails,
   en pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
