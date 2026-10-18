@@ -1,6 +1,6 @@
 // Mini-server om het prototype lokaal te bekijken: node serve.js  →  http://localhost:5173
 const http = require('http'), fs = require('fs'), path = require('path');
-const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png' };
+const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.webmanifest':'application/manifest+json' };
 http.createServer((req, res) => {
   const p = path.join(__dirname, decodeURIComponent(req.url.split('?')[0]).replace(/\/$/, '/index.html'));
   if (!p.startsWith(__dirname)) { res.writeHead(403); return res.end(); }

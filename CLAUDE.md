@@ -17,14 +17,15 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS), demodata in `localStorage` (`kinderkerk-demo-v2`).
-- `kinderkerk/manifest.webmanifest` voor installeren als app.
+- `kinderkerk/manifest.webmanifest` voor installeren als app, `kinderkerk/sw.js` zodat de app ook zonder internet opent.
 - Lokaal bekijken: `node kinderkerk/serve.js` → http://localhost:5173
 
 ## Functies
 Home (Vandaag/Gebed/Notities, aantallen, rooster van vandaag), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
 leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), roosters (sheets en bidden
-bovenbouw, uitbreiden, CSV), kinderziektes, gebedslijst.
+bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen), gebedslijst.
+Kindgegevens (potloodje in check-in, of klik in historie): naam/groep wijzigen, laatste keren; verwijderen alleen beheerder.
 
 ## Open vragen / volgende stappen
 - Kleuren: mint/zachtblauw van het logo, of donkerblauw van de kerkapp houden?
