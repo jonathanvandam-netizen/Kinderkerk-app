@@ -20,7 +20,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS).
 - Twee modi, gekozen via `kinderkerk/config.js`:
-  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v3`), inloggen nagebootst.
+  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v4`), inloggen nagebootst.
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
@@ -47,6 +47,10 @@ Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboorteda
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
 Planning (Meer → Planning): per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw; iedereen
 mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
+Periodes (Planning, alleen beheerder): 7 weken met één thema voor onder- en bovenbouw; week 6 = bidden, week 7 =
+puntenwinkeltje + vergadering, om en om klein/groot (nieuwe periode stelt start +7 weken en de andere vergadering voor).
+Per zondag een eigen onderwerp (anders het periodethema). Echte stand: periode "Scheppingsverhaal" begon 11-10-2026
+(18-10 = week 2, 22-11 = week 7 met grote vergadering; de vorige vergadering was klein). De demodata volgt dit.
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Open vragen / volgende stappen

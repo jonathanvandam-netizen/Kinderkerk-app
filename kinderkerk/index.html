@@ -244,6 +244,12 @@ table.t tr.click:hover td{background:#fafbfc}
 .plan .lead span:nth-child(odd){color:var(--muted);font-weight:700}
 .plan .prep{margin-top:10px;font-size:14px;color:#6b4b00;background:var(--warn-soft);border-radius:10px;padding:8px 10px;white-space:pre-wrap}
 .me-tag{font-weight:800;color:var(--brand)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 6px}
+.tag{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:#eef0f4;color:var(--muted)}
+.tag.brand{background:var(--brand-soft);color:var(--brand)}
+.tag.warn{background:var(--warn-soft);color:#8a5d00}
+.period{padding:18px 16px}
+.period .big{font-size:20px;font-weight:800;margin:2px 0 4px}
 .hero-duty{margin-top:12px;font-size:13.5px;background:var(--brand-soft);color:#24345f;border-radius:10px;padding:8px 10px}
 .bday{background:#fdeef6;color:#8a2a5a}
 .install-logo{width:40px;height:40px;border-radius:10px;overflow:hidden;flex:none;border:1px solid var(--border)}
@@ -280,7 +286,7 @@ table.t tr.click:hover td{background:#fafbfc}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 6';
+const APP_VERSION = '2026-10-18 · 7';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -340,6 +346,7 @@ const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hi
 const logoImg = () => `<img src="logo-512.png" alt="Kinderkerk De Deur" width="100%" height="100%" style="display:block;background:#fff">`;
 
 /* ---------- Vaste waarden ---------- */
+const PERIOD_WEEKS = 7;   // een periode met één thema duurt 7 weken
 const GROUPS = { onder:'Onderbouw', boven:'Bovenbouw', bezoeker:'Bezoeker' };
 const ITEMS = [
   { id:'bijbel', emoji:'📖', label:'Bijbel' },
@@ -402,6 +409,7 @@ function seed(){
     ],
     rosters:{ sheets:roster(0), bidden:roster(5) },
     sundays:planLeaders(seedSundays(T), leaders),
+    periods:seedPeriods(T),
     illnesses:[
       ['Hand-, voet- en mondziekte','ok','Mag komen, mits fit genoeg om mee te doen.'],
       ['Ringworm','ok','Mag komen, mits fit genoeg. Plek bij voorkeur bedekt.'],
@@ -419,12 +427,18 @@ function seed(){
   };
 }
 
-const THEMES = [['Jozef en zijn broers','Genesis 37'],['Jozef in de gevangenis','Genesis 39–40'],['Jozef wordt onderkoning','Genesis 41'],
-  ['Jozef vergeeft zijn broers','Genesis 45'],['Mozes in het biezen mandje','Exodus 2'],['De brandende braamstruik','Exodus 3'],['Door de Rode Zee','Exodus 14'],['Manna in de woestijn','Exodus 16']];
+/* Periodes van 7 weken met één thema; deze zondag is week 2 (zoals bij De Deur op 18-10-2026) */
+function seedPeriods(T){
+  const start = addDays(nextSunday(T), -7);
+  return [{ id:newId(), start:addDays(start, -7*PERIOD_WEEKS), theme:'Jozef', meeting:'klein' },
+          { id:newId(), start, theme:'Scheppingsverhaal', meeting:'groot' }];
+}
+const WEEK_TOPICS = [['Dag 1 t/m 3: licht, lucht en land','Genesis 1:1–13'],['Dag 4 t/m 6: zon, dieren en mensen','Genesis 1:14–31'],
+  ['Dag 7: God rust','Genesis 2:1–3'],['De hof van Eden','Genesis 2:4–25'],['De zondeval','Genesis 3'],['',''],['',''],['','']];
 function seedSundays(T){
   const S = nextSunday(T);
-  return THEMES.map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage,
-    prep:i === 1 ? 'Werkblad 20× kopiëren. Kleurpotloden aanvullen.' : i === 2 ? 'Verkleedkleren voor Jozef meenemen (mantel!).' : '', onder:[], boven:[] }));
+  return WEEK_TOPICS.map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage,
+    prep:i === 1 ? 'Werkblad 20× kopiëren. Kleurpotloden aanvullen.' : i === 6 ? 'Punten tellen en spullen voor het puntenwinkeltje klaarzetten.' : '', onder:[], boven:[] }));
 }
 /* Verdeel de leiding over de zondagen: per groep steeds twee, om de beurt */
 function planLeaders(sundays, leaders){
@@ -441,8 +455,8 @@ function planLeaders(sundays, leaders){
 const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
-const STORE_KEY = 'kinderkerk-demo-v3';
-const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], illnesses:[] });
+const STORE_KEY = 'kinderkerk-demo-v4';
+const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], illnesses:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
@@ -473,12 +487,12 @@ async function fetchAll(table, order){
   }
 }
 async function loadCloud(){
-  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays] = await Promise.all([
+  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods] = await Promise.all([
     fetchAll('leaders', ['id']), fetchAll('invites', ['email']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
-    fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date'])]);
+    fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start'])]);
   notes.forEach(n => delete n.created_at);
   const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, illnesses };
+  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, illnesses };
 }
 /* Opnieuw ophalen (na een wijziging van iemand anders); niet tekenen terwijl iemand typt of een venster open heeft */
 let refreshTimer;
@@ -521,6 +535,8 @@ async function cloudDemo(){
     () => sb.from('illnesses').insert(s.illnesses.map(toRow)),
     () => sb.from('rosters').insert(Object.entries(s.rosters).flatMap(([kind, l]) => l.map(r => toRow({ kind, ...r })))),
     () => sb.from('sundays').insert(planLeaders(s.sundays, db.leaders).map(toRow)),
+    // Periodes zijn echte planning: alleen voorbeeld-periodes toevoegen als er nog geen zijn
+    () => db.periods.length ? Promise.resolve({ error:null }) : sb.from('periods').insert(s.periods.map(toRow)),
   ];
   toast('Bezig…');
   for (const step of steps){ const { error } = await step(); if (error){ console.error(error); toast('Mislukt: ' + error.message); return; } }
@@ -538,6 +554,25 @@ const leaderIn = (id, d) => db.leaderCheckins.some(l => l.leaderId === id && l.d
 function lastSeen(kidId){ let m = ''; for (const c of db.checkins) if (c.kidId === kidId && c.date > m) m = c.date; return m; }
 const isRecent = k => (lastSeen(k.id) || k.created) >= addDays(todayISO(), -60);
 const byName = (a,b) => a.name.localeCompare(b.name, 'nl');
+/* Periodes: 7 weken, week 6 = bidden, week 7 = puntenwinkeltje + vergadering (om en om klein/groot) */
+const periodsSorted = () => [...(db.periods || [])].sort((a,b) => a.start.localeCompare(b.start));
+const periodEnd = p => addDays(p.start, 7*(PERIOD_WEEKS-1));
+function weekInfo(date){
+  const p = periodsSorted().filter(x => x.start <= date).pop();
+  if (!p) return null;
+  const week = Math.round((new Date(date + 'T12:00:00') - new Date(p.start + 'T12:00:00')) / 6048e5) + 1;
+  return week > PERIOD_WEEKS ? null : { p, week, special:week === 6 ? 'Bidden' : week === 7 ? 'Puntenwinkeltje' : '' };
+}
+const defaultTheme = date => { const w = weekInfo(date); return w ? w.special || w.p.theme : ''; };
+const meetingLabel = m => m === 'groot' ? 'Grote vergadering' : 'Kleine vergadering';
+function weekTags(date){
+  const w = weekInfo(date); if (!w) return '';
+  const own = !!sundayOf(date).theme;   // eigen onderwerp ingevuld? Dan bidden/puntenwinkeltje als label tonen
+  return `<div class="tags"><span class="tag brand">Week ${w.week} van ${PERIOD_WEEKS} · ${esc(w.p.theme)}</span>
+    ${w.week === 6 && own ? '<span class="tag">🙏 Bidden</span>' : ''}
+    ${w.week === 7 && own ? '<span class="tag">🛍️ Puntenwinkeltje</span>' : ''}
+    ${w.week === 7 ? `<span class="tag warn">👥 ${meetingLabel(w.p.meeting)}</span>` : ''}</div>`;
+}
 const sundayOf = date => db.sundays.find(s => s.date === date) || { date, theme:'', passage:'', prep:'', onder:[], boven:[] };
 const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.onder.includes(db.session) || s.boven.includes(db.session))).sort((a,b) => a.date.localeCompare(b.date))[0];
 function rosterToday(key){ const T = todayISO(); return db.rosters[key].find(r => r.date === T) || db.rosters[key].find(r => r.date > T); }
@@ -958,7 +993,8 @@ function planCard(date, compact){
   const s = sundayOf(date), T = todayISO();
   return `<a class="card plan ${!compact && date === T ? 'today' : ''}" href="#/planning" ${compact ? '' : `data-action="editPlan" data-date="${date}"`}>
     ${compact ? '' : `<small>${date === T ? 'Vandaag' : fmtDate(date, {weekday:'long', day:'numeric', month:'long'})}</small>`}
-    <div class="theme">${s.theme ? esc(s.theme) : '<span class="muted">Nog geen thema</span>'}</div>
+    ${weekTags(date)}
+    <div class="theme">${(s.theme || defaultTheme(date)) ? esc(s.theme || defaultTheme(date)) : '<span class="muted">Nog geen thema</span>'}</div>
     ${s.passage ? `<div class="muted">${esc(s.passage)}</div>` : ''}
     <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span></div>
     ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
@@ -970,20 +1006,62 @@ function renderPlanning(){
   app.innerHTML = `
   <div class="page">
     <div class="page-head"><h1>Planning</h1><span class="muted">Thema en leiding per zondag</span></div>
+    ${periodBlock()}
+    <h3 class="section-title">Zondagen</h3>
     <div class="stack">${dates.map(d => planCard(d)).join('')}</div>
     <button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>
     <div class="banner">${icon('info')}<span>Tik op een zondag om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in.</span></div>
   </div>`;
+}
+function periodBlock(){
+  const T = todayISO(), list = periodsSorted();
+  const w = weekInfo(nextSunday(T)), cur = w?.p;
+  const next = list.find(p => p.start > (cur ? cur.start : T));
+  const adminBtns = isAdmin() ? `<div class="btn-row" style="margin-top:14px">
+      ${cur ? `<button class="btn btn-outline sm" data-action="editPeriod" data-id="${cur.id}">${icon('edit')} Periode bewerken</button>` : ''}
+      <button class="btn btn-soft sm" data-action="editPeriod" data-id="">${icon('plus')} Nieuwe periode</button></div>` : '';
+  return `<h3 class="section-title">Periode</h3><div class="card period">${cur ? `
+      <small class="muted" style="font-weight:700">Thema deze periode</small>
+      <div class="big">${esc(cur.theme)}</div>
+      <div class="tags"><span class="tag brand">Week ${w.week} van ${PERIOD_WEEKS}</span><span class="tag">${fmtDate(cur.start, {day:'numeric', month:'short'})} t/m ${fmtDate(periodEnd(cur), {day:'numeric', month:'short'})}</span></div>
+      <div class="muted" style="font-size:14px;line-height:1.6">🙏 Bidden: ${fmtDate(addDays(cur.start, 35), {day:'numeric', month:'long'})}<br>
+        🛍️ Puntenwinkeltje en 👥 ${meetingLabel(cur.meeting).toLowerCase()}: ${fmtDate(periodEnd(cur), {day:'numeric', month:'long'})}</div>`
+    : `<div class="muted">Er is nu geen periode ingesteld.${isAdmin() ? ' Maak hieronder een nieuwe periode aan.' : ' Een beheerder kan een periode aanmaken.'}</div>`}
+    ${next ? `<div class="muted" style="font-size:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">Daarna: <b style="color:var(--text)">${esc(next.theme)}</b> vanaf ${fmtDate(next.start, {day:'numeric', month:'long'})}${isAdmin() ? ` · <button class="textlink" style="font-size:14px;color:var(--brand)" data-action="editPeriod" data-id="${next.id}">bewerken</button>` : ''}</div>` : ''}
+    ${adminBtns}</div>`;
+}
+function openEditPeriod(id){
+  const list = periodsSorted(), last = list[list.length - 1];
+  const p = db.periods.find(x => x.id === id) || { id:'', theme:'',
+    start:last ? addDays(last.start, 7*PERIOD_WEEKS) : nextSunday(todayISO()),
+    meeting:last ? (last.meeting === 'groot' ? 'klein' : 'groot') : 'klein' };
+  openModal(`
+    <div class="modal-head"><div><h2>${id ? 'Periode bewerken' : 'Nieuwe periode'}</h2><span class="muted">${PERIOD_WEEKS} weken met één thema</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="field"><span>Thema (onderbouw en bovenbouw)</span><input id="pd-theme" value="${esc(p.theme)}" placeholder="Bijv. Scheppingsverhaal" autocomplete="off"></label>
+      <label class="field"><span>Eerste zondag (week 1)</span><input type="date" id="pd-start" value="${p.start}"></label>
+      <label class="field"><span>Vergadering in week ${PERIOD_WEEKS}</span><select id="pd-meeting">
+        <option value="klein" ${p.meeting === 'klein' ? 'selected' : ''}>Kleine vergadering</option>
+        <option value="groot" ${p.meeting === 'groot' ? 'selected' : ''}>Grote vergadering</option></select></label>
+      <div class="banner" style="margin-top:0">${icon('info')}<span>Week 6 is altijd <b>bidden</b>, week 7 is <b>puntenwinkeltje</b> en vergadering. Per zondag kun je onder Planning nog een eigen onderwerp invullen.</span></div>
+      <div id="pd-err"></div>
+    </div>
+    <div class="modal-foot">
+      ${id ? `<button class="btn btn-danger" data-action="delPeriod" data-id="${id}">${icon('trash')} Verwijderen</button>` : ''}
+      <button class="btn btn-primary" data-action="savePeriod" data-id="${id}">Opslaan</button>
+    </div>`);
+  if (!id) setTimeout(() => $('#pd-theme')?.focus(), 50);
 }
 function openEditPlan(date){
   const s = sundayOf(date);
   const chips = (grp, on) => [...db.leaders].sort((a,b) => (a.group === grp ? 0 : 1) - (b.group === grp ? 0 : 1) || byName(a,b)).map(l =>
     `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}">${esc(l.name)}<span class="tick">✓</span></button>`).join('');
   openModal(`
-    <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">Thema en leiding</span></div>
+    <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">${(w => w ? `Week ${w.week} van ${PERIOD_WEEKS} · ${esc(w.p.theme)}` : 'Thema en leiding')(weekInfo(date))}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
-      <label class="field"><span>Thema / Bijbelverhaal</span><input id="pl-theme" value="${esc(s.theme)}" placeholder="Bijv. Jozef en zijn broers" autocomplete="off"></label>
+      <label class="field"><span>Onderwerp deze week</span><input id="pl-theme" value="${esc(s.theme)}" placeholder="${esc(defaultTheme(date) || 'Bijv. Dag 1 t/m 3')}" autocomplete="off"></label>
       <label class="field"><span>Bijbelgedeelte</span><input id="pl-passage" value="${esc(s.passage)}" placeholder="Bijv. Genesis 37" autocomplete="off"></label>
       <label class="field"><span>Voorbereiding</span><textarea id="pl-prep" rows="3" placeholder="Wat moet er klaargezet of meegenomen worden?">${esc(s.prep)}</textarea></label>
       <div class="field"><span>Leiding onderbouw</span><div class="chips" id="pl-onder">${chips('onder', s.onder)}</div></div>
@@ -1252,6 +1330,25 @@ const actions = {
   },
   hideInstall: () => { try { localStorage.setItem('kk-install-hidden', '1'); } catch(e){} render(); toast('Je vindt dit ook onder Meer'); },
   editPlan: (d, el, e) => { e.preventDefault(); openEditPlan(d.date); },
+  editPeriod: d => { if (isAdmin()) openEditPeriod(d.id); },
+  savePeriod: d => {
+    if (!isAdmin()) return;
+    const theme = $('#pd-theme').value.trim(), raw = $('#pd-start').value;
+    const err = msg => { $('#pd-err').innerHTML = `<div class="auth-err">${esc(msg)}</div>`; };
+    if (!theme) return err('Vul een thema in.');
+    if (!raw) return err('Kies de eerste zondag.');
+    const start = nextSunday(raw);
+    if (db.periods.some(x => x.id !== d.id && x.start === start)) return err('Er begint al een periode op die zondag.');
+    const p = { id:d.id || newId(), start, theme, meeting:$('#pd-meeting').value };
+    db.periods = db.periods.filter(x => x.id !== p.id).concat(p);
+    put('periods', p); save(); closeModal(); render();
+    toast(start !== raw ? `Opgeslagen (begint op zondag ${fmtDate(start, {day:'numeric', month:'long'})})` : 'Periode opgeslagen');
+  },
+  delPeriod: d => {
+    const p = db.periods.find(x => x.id === d.id);
+    if (!isAdmin() || !p || !confirm(`Periode "${p.theme}" verwijderen?`)) return;
+    db.periods = db.periods.filter(x => x.id !== p.id); drop('periods', { id:p.id }); save(); closeModal(); render();
+  },
   morePlan: () => { state.planCount += 8; render(); },
   savePlan: d => {
     const ids = sel => [...document.querySelectorAll(sel + ' .chip.on')].map(c => c.dataset.id);

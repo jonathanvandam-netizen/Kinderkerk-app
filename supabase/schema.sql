@@ -77,6 +77,14 @@ create table public.sundays (
   boven   uuid[] not null default '{}'
 );
 
+-- Periodes van 7 weken met één thema; week 7 = vergadering (klein/groot, om en om)
+create table public.periods (
+  id      uuid primary key default gen_random_uuid(),
+  start   date not null unique,
+  theme   text not null,
+  meeting text not null default 'klein' check (meeting in ('klein','groot'))
+);
+
 create table public.illnesses (
   id     uuid primary key default gen_random_uuid(),
   name   text not null,
@@ -150,6 +158,7 @@ alter table public.notes           enable row level security;
 alter table public.rosters         enable row level security;
 alter table public.illnesses       enable row level security;
 alter table public.sundays         enable row level security;
+alter table public.periods         enable row level security;
 
 create policy "beheerders beheren uitnodigingen" on public.invites
   for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -181,6 +190,11 @@ create policy "leiding" on public.rosters
 create policy "leiding" on public.sundays
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
 
+create policy "leiding ziet periodes" on public.periods
+  for select to authenticated using (public.is_leader());
+create policy "beheerder beheert periodes" on public.periods
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
 create policy "leiding ziet ziektes" on public.illnesses
   for select to authenticated using (public.is_leader());
 create policy "beheerder beheert ziektes" on public.illnesses
@@ -193,7 +207,7 @@ revoke all on all tables in schema public from anon;
 -- Zo ziet alle leiding een check-in meteen verschijnen.
 alter publication supabase_realtime add table
   public.invites, public.leaders, public.kids, public.checkins, public.leader_checkins,
-  public.notes, public.rosters, public.illnesses, public.sundays;
+  public.notes, public.rosters, public.illnesses, public.sundays, public.periods;
 
 -- ---------- Eerste beheerder ----------
 -- Vervang het e-mailadres hieronder door dat van jezelf.
