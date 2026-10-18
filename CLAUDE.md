@@ -31,6 +31,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   zonder internet opent. Iconen: `apple-touch-icon.png` (iPhone, 180px) en `icon-maskable-*.png` (Android, logo met
   witte rand). Knop "Installeer de app" op inlogscherm, Home (wegklikbaar) en Meer: Android = installatievenster,
   iPhone/iPad = uitleg via Safari → Deel → Zet op beginscherm.
+- Donkere modus: kleuren als variabelen in `:root`, donkere set onder `html[data-theme=dark]` en `prefers-color-scheme`.
+  Keuze Automatisch/Licht/Donker in Mijn account, per toestel in localStorage `kk-theme`. Geen vaste kleuren in CSS.
 - Inzoomen staat bewust uit (viewport, `touch-action:pan-x pan-y`, gesture/touch-events); invulvelden zijn 16px, anders
   zoomt iOS in. `sw.js` haalt eigen bestanden altijd vers op (GitHub Pages cachet 10 min) en de app herlaadt één keer bij
   een nieuwe versie. Verhoog `APP_VERSION` in index.html bij elke publicatie (zichtbaar onderaan Meer).
