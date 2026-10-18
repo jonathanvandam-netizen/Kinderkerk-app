@@ -85,13 +85,13 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .mainnav a:hover{background:var(--surface-2)}
 .avatar{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;border:0;font:inherit;font-weight:800;cursor:pointer}
 /* Onderbalk in "liquid glass"-stijl (telefoon en geïnstalleerde app) */
-.bottomnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(420px,calc(100% - 28px));
+.bottomnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(480px,calc(100% - 24px));
   display:flex;gap:4px;padding:6px;border-radius:30px;z-index:20;
   background:linear-gradient(135deg,var(--glass-1),var(--glass-2));
   -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
   border:1px solid var(--glass-border);
   box-shadow:0 10px 34px rgba(20,30,60,.18),0 2px 6px rgba(20,30,60,.08),inset 0 1px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-lo)}
-.bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;border-radius:24px;font-size:11.5px;font-weight:700;color:var(--nav-text);text-decoration:none;transition:background .2s,color .2s}
+.bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;border-radius:24px;font-size:11px;font-weight:700;color:var(--nav-text);min-width:0;white-space:nowrap;text-decoration:none;transition:background .2s,color .2s}
 .bottomnav a.active{color:var(--brand);background:var(--glass-active);box-shadow:0 1px 4px rgba(20,30,60,.12),inset 0 1px 0 var(--glass-hi)}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
 body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
@@ -138,8 +138,7 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 
 .home-grid{display:grid;gap:16px}
 .home-grid > *{min-width:0}   /* anders duwen brede tabbladen de pagina breder dan het scherm */
-@media(max-width:1000px){.home-tabs .tab svg.i{display:none}}
-@media(max-width:480px){.home-tabs .tab{padding:10px 7px;font-size:14.5px;gap:4px}}
+
 @media(min-width:760px){.home-grid{grid-template-columns:300px 1fr;align-items:start}.home-grid aside{position:sticky;top:84px}}
 /* Begroeting bovenaan Home */
 .hello{padding:16px}
@@ -377,7 +376,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 11';
+const APP_VERSION = '2026-10-18 · 12';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -714,11 +713,12 @@ const state = { planCount:8, route:'home', homeTab:'vandaag', ciTab:'alles', sea
 const NAV = [
   { id:'home', label:'Home', icon:'home' },
   { id:'checkin', label:'Check-in', icon:'checkin' },
+  { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
 const MEER_ROUTES = ['meer','planning','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
-  const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'vergadering' ? 'home' : state.route;
+  const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $('#mainnav').innerHTML = html;
   $('#bottomnav').innerHTML = html;
@@ -815,11 +815,11 @@ function renderHome(){
     </aside>
     <section>
       <div class="tabs home-tabs">
-        ${[['vandaag','Vandaag','calendar'],['gebed','Gebed','heart'],['notities','Notities','note'],['vergadering','Vergadering','users']].map(([id,l,ic]) => {
-          const n = id === 'gebed' ? prayers : id === 'vergadering' ? db.actions.filter(a => !a.done).length : 0;
+        ${[['vandaag','Vandaag','calendar'],['gebed','Gebed','heart'],['notities','Notities','note']].map(([id,l,ic]) => {
+          const n = id === 'gebed' ? prayers : 0;
           return `<button class="tab ${state.homeTab === id ? 'active' : ''}" data-action="homeTab" data-id="${id}">${icon(ic)} ${l}${n ? ` <span class="count">${n}</span>` : ''}</button>`; }).join('')}
       </div>
-      <div id="hometab">${ { vandaag:homeVandaag, gebed:homeGebed, notities:homeNotities, vergadering:homeVergadering }[state.homeTab]() }</div>
+      <div id="hometab">${ { vandaag:homeVandaag, gebed:homeGebed, notities:homeNotities }[state.homeTab]() }</div>
     </section>
   </div></div>`;
 }
@@ -893,7 +893,10 @@ function actionRow(a, showMeeting){
 }
 const agendaAddForm = (date, kind) => `<form class="addrow" data-submit="addAgenda" data-date="${date}" data-kind="${kind}">
   <input id="ag-new" placeholder="Nieuw agendapunt…" autocomplete="off"><button class="btn btn-primary sm" type="submit">${icon('plus')} Toevoegen</button></form>`;
-function homeVergadering(){
+function renderVergaderingen(){
+  app.innerHTML = `<div class="page"><div class="page-head"><h1>Vergadering</h1></div>${vergaderOverzicht()}</div>`;
+}
+function vergaderOverzicht(){
   const T = todayISO(), n = nextMeetingInfo();
   const m = n && (n.m || db.meetings.find(x => x.date === n.date));
   const items = m ? agendaOf(m.id) : [];
@@ -923,8 +926,9 @@ function homeVergadering(){
     <button class="btn btn-outline btn-block" style="margin-top:16px" data-action="newMeeting">${icon('calendar')} Andere vergadering plannen</button>`;
 }
 function renderVergadering(){
+  if (!state.meetingId) return renderVergaderingen();
   const m = db.meetings.find(x => x.id === state.meetingId);
-  const back = `<a class="textlink" href="#/home" data-action="homeTab" data-id="vergadering" style="margin-bottom:12px">← Terug</a>`;
+  const back = `<a class="textlink" href="#/vergadering" style="margin-bottom:12px">← Terug</a>`;
   if (!m){ app.innerHTML = `<div class="page">${back}<div class="card empty">Deze vergadering bestaat niet (meer).</div></div>`; return; }
   const items = agendaOf(m.id), loose = db.actions.filter(a => a.meetingId === m.id && !a.agendaId);
   app.innerHTML = `
@@ -1560,7 +1564,7 @@ const actions = {
   go: d => { location.hash = '#/' + d.to; },
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
   closeModal: () => closeModal(),
-  homeTab: d => { state.homeTab = d.id; if (state.route === 'home') render(); },
+  homeTab: d => { state.homeTab = d.id; render(); },
   ciTab: d => { state.ciTab = d.id; render(); },
   rosterTab: d => { state.rosterTab = d.id; render(); },
   toggleAll: () => { state.showAll = !state.showAll; renderKidList(); },
@@ -1623,7 +1627,7 @@ const actions = {
     db.meetings = db.meetings.filter(x => x.id !== m.id);
     db.agenda = db.agenda.filter(x => x.meetingId !== m.id);
     db.actions.forEach(x => { if (x.meetingId === m.id){ x.meetingId = null; x.agendaId = null; } });
-    drop('meetings', { id:m.id }); save(); state.homeTab = 'vergadering'; location.hash = '#/home';
+    drop('meetings', { id:m.id }); save(); location.hash = '#/vergadering';
   },
   shareMeeting: async d => {
     const m = db.meetings.find(x => x.id === d.id); if (!m) return;

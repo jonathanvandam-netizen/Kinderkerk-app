@@ -10,7 +10,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).
 - Navigatie: op de website (groot scherm) bovenin; op telefoon en als geïnstalleerde app een zwevende
-  "liquid glass"-balk onderin (Home, Check-in, Meer).
+  "liquid glass"-balk onderin (Home, Check-in, Vergadering, Meer).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Inloggen: alleen op uitnodiging; iedereen met een account is automatisch leiding; beheerders nodigen uit
@@ -55,9 +55,9 @@ puntenwinkeltje + vergadering, om en om klein/groot (nieuwe periode stelt start 
 Per zondag onderwerp + Bijbelgedeelte per groep (leeg = periodethema; bovenbouw leeg = als onderbouw, tenzij de
 periode voor bovenbouw een eigen thema heeft). Echte stand: periode "Scheppingsverhaal" begon 11-10-2026
 (18-10 = week 2, 22-11 = week 7 met grote vergadering; de vorige vergadering was klein). De demodata volgt dit.
-Vergadering (Home → tab Vergadering): volgende vergadering = week 7 van de periode (of zelf gepland), agendapunten
+Vergadering (eigen knop in de menubalk, `#/vergadering`; bewust niet op Home): volgende vergadering = week 7 van de periode (of zelf gepland), agendapunten
 vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
-afvinken; open actiepunten op de tab), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
+afvinken; open actiepunten op het overzicht), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
