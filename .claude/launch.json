@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kinderkerk",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["kinderkerk/serve.js"],
+      "port": 5173
+    }
+  ]
+}
