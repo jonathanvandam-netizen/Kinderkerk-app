@@ -2,6 +2,6 @@
 // Te vinden in Supabase: Project Settings → API (Project URL en de "anon"/"publishable" key).
 // Deze sleutel mag openbaar zijn: de database-regels (row level security) beschermen de gegevens.
 window.KK_CONFIG = {
-  supabaseUrl: '',
+  supabaseUrl: 'https://jbtnszlbvuypvotbhapb.supabase.co',
   supabaseKey: '',
 };
