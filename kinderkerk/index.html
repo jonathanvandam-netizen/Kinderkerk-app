@@ -383,7 +383,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 16';
+const APP_VERSION = '2026-10-18 · 17';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -462,7 +462,7 @@ function seed(){
   const kids = [];
   const mk = (name, group, p, inactive) => {
     const yrs = group === 'onder' ? 4 + rnd()*4 : group === 'boven' ? 8 + rnd()*4 : 5 + rnd()*6;
-    kids.push({ id:newId(), name, group, created:addDays(T,-150), birthdate:addDays(T, -Math.round(yrs * 365.25)), _p:p, _inactive:inactive });
+    kids.push({ id:newId(), demo:true, name, group, created:addDays(T,-150), birthdate:addDays(T, -Math.round(yrs * 365.25)), _p:p, _inactive:inactive });
   };
   ['Noah','Sem','Mila de Jong','Yara','Liam','Sofie Bakker','Daan','Nova','Jesse','Lotte','Amira','Finn'].forEach(n => mk(n,'onder',.35+rnd()*.6));
   ['Levi Jansen','Eva de Vries','Lucas Bakker','Julia Visser','Milan Smit','Sara Meijer','Thijs Mulder','Fenna de Boer','Ruben Bos','Isa Vos','Gideon Peters','Hannah Dekker'].forEach(n => mk(n,'boven',.35+rnd()*.6));
@@ -583,7 +583,7 @@ function dienst(date, leaders, anchor){
 const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
-const STORE_KEY = 'kinderkerk-demo-v7';
+const STORE_KEY = 'kinderkerk-demo-v8';
 const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
@@ -664,7 +664,7 @@ async function cloudDemo(){
     () => sb.from('illnesses').delete().not('id', 'is', null),
     () => sb.from('sundays').delete().not('date', 'is', null),
     () => sb.from('kids').delete().not('id', 'is', null),
-    () => sb.from('kids').insert(s.kids.map(toRow)),
+    () => sb.from('kids').insert(s.kids.map(({ demo, ...k }) => toRow(k))),
     () => sb.from('checkins').insert(s.checkins.map(toRow)),
     () => sb.from('notes').insert(s.notes.map(toRow)),
     () => sb.from('illnesses').insert(s.illnesses.map(toRow)),
@@ -735,7 +735,7 @@ const NAV = [
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
-const MEER_ROUTES = ['meer','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','import','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
@@ -743,7 +743,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -1263,6 +1263,7 @@ function renderMeer(){
     ['roosters','Roosters','Sheets en bidden bovenbouw','calendar'],
     ['gebed','Gebedslijst','Alle gebedsverlangens','heart'],
     ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
+    ...(isAdmin() ? [['import','Kinderen importeren','Echte kinderen in één keer toevoegen','users']] : []),
   ];
   app.innerHTML = `
   <div class="page">
@@ -1273,10 +1274,56 @@ function renderMeer(){
     ${!CLOUD || isAdmin() ? `<h3 class="section-title">Testfase</h3>
     <div class="card list">
       <button class="row" data-action="resetDemo"><span class="row-icon" style="background:var(--warn-soft);color:var(--warn)">${icon('refresh')}</span>
-        <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Alles staat alleen in deze browser en is verzonnen'}</span></span></button>
+        <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Zet alles terug naar de verzonnen voorbeelddata (ook geïmporteerde kinderen gaan weg)'}</span></span></button>
     </div>` : ''}
     <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
   </div>`;
+}
+
+/* ---------- Kinderen importeren ----------
+   Echte namen komen NIET in de code (de repository is openbaar). Ze worden hier ingevoerd:
+   demomodus = alleen in deze browser, databasemodus = in Supabase (alleen zichtbaar voor ingelogde leiding). */
+const groupOf = t => /boven/i.test(t) ? 'boven' : /onder/i.test(t) ? 'onder' : /bezoek|gast/i.test(t) ? 'bezoeker' : null;
+function parseImport(text, fallback, skipDemo){
+  const rows = [];
+  text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).forEach((line, i) => {
+    const parts = line.split(/[;\t]|,(?=[^,]*$)/).map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean);
+    if (i === 0 && /^naam\b/i.test(parts[0])) return;            // kopregel uit een export
+    const g = parts.length > 1 ? groupOf(parts.slice(1).join(' ')) : null;
+    const name = (g ? parts[0] : parts.join(' ')).replace(/\s+/g, ' ');
+    if (name) rows.push({ name, group:g || fallback });
+  });
+  const seen = new Set(db.kids.filter(k => !(skipDemo && k.demo)).map(k => k.name.toLowerCase()));
+  return rows.map(r => { const key = r.name.toLowerCase(), dup = seen.has(key); seen.add(key); return { ...r, dup }; });
+}
+function renderImport(){
+  if (!isAdmin()){ app.innerHTML = `<div class="page"><div class="card empty">Alleen beheerders kunnen kinderen importeren.</div></div>`; return; }
+  const demoCount = db.kids.filter(k => k.demo).length;
+  app.innerHTML = `
+  <div class="page">
+    <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
+    <div class="page-head"><h1>Kinderen importeren</h1></div>
+    <div class="banner" style="margin:0 0 16px">${icon('info')}<span>${CLOUD
+      ? 'De namen worden opgeslagen in de beveiligde database. Alleen ingelogde leiding kan ze zien.'
+      : '<b>De namen blijven alleen op dit toestel</b> (in deze browser). Ze komen niet online en niet in de code. Zodra de echte database gekoppeld is, zetten we ze daarin over.'}</span></div>
+    <div class="card pad">
+      <label class="field"><span>Namen</span>
+        <textarea id="im-text" data-input="importText" rows="8" placeholder="Eén kind per regel, bijvoorbeeld:&#10;Noah&#10;Mila de Jong;onderbouw&#10;Levi Jansen;bovenbouw"></textarea>
+        <span class="muted" style="font-weight:400;font-size:13px">Eén naam per regel. Zet er eventueel <b>;onderbouw</b>, <b>;bovenbouw</b> of <b>;bezoeker</b> achter. Een lijst uit Excel of Google Sheets (kolommen Naam en Groep) mag je ook plakken.</span></label>
+      <label class="field"><span>Groep als er niets achter de naam staat</span>${(v => `<select id="im-group" data-change="importPreview">${Object.entries(GROUPS).map(([k,l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)('onder')}</label>
+      ${demoCount && !CLOUD ? `<label class="check-line"><input type="checkbox" id="im-clear" data-change="importPreview" checked> De ${demoCount} verzonnen demokinderen weghalen</label>` : ''}
+      <div id="im-preview"></div>
+      <button class="btn btn-primary btn-block" data-action="doImport">${icon('plus')} Kinderen toevoegen</button>
+    </div>
+  </div>`;
+}
+function renderImportPreview(){
+  const el = $('#im-preview'); if (!el) return;
+  const rows = parseImport($('#im-text').value, $('#im-group').value, !!$('#im-clear')?.checked);
+  if (!rows.length){ el.innerHTML = ''; return; }
+  const n = g => rows.filter(r => r.group === g && !r.dup).length, dups = rows.filter(r => r.dup).length;
+  el.innerHTML = `<div class="hint soft" style="background:var(--brand-soft);color:var(--brand-text);display:block">
+    <b>${rows.length - dups} kinderen</b>: ${n('onder')} onderbouw, ${n('boven')} bovenbouw${n('bezoeker') ? `, ${n('bezoeker')} bezoeker${n('bezoeker') > 1 ? 's' : ''}` : ''}${dups ? `<br>${dups} ${dups === 1 ? 'naam staat' : 'namen staan'} er al in en ${dups === 1 ? 'wordt' : 'worden'} overgeslagen.` : ''}</div>`;
 }
 
 /* ---------- Planning: thema en leiding per zondag ---------- */
@@ -1625,6 +1672,20 @@ const actions = {
   },
   openCheckin: d => openCheckin(d.id),
   toggleChip: (d, el) => el.classList.toggle('on'),
+  doImport: () => {
+    if (!isAdmin()) return;
+    const rows = parseImport($('#im-text').value, $('#im-group').value, !!$('#im-clear')?.checked).filter(r => !r.dup);
+    if (!rows.length) return toast('Geen nieuwe namen gevonden');
+    if ($('#im-clear')?.checked){
+      const demo = new Set(db.kids.filter(k => k.demo).map(k => k.id));
+      db.kids = db.kids.filter(k => !demo.has(k.id));
+      db.checkins = db.checkins.filter(c => !demo.has(c.kidId));
+      Object.values(db.rosters).forEach(list => list.forEach(r => { if (demo.has(r.kidId)) r.kidId = null; }));
+    }
+    const kids = rows.map(r => ({ id:newId(), name:r.name, group:r.group, created:todayISO(), birthdate:null }));
+    db.kids.push(...kids); put('kids', kids); save();
+    toast(`${kids.length} kinderen toegevoegd`); location.hash = '#/checkin';
+  },
   setAway: d => { const i = $('#ld-away'); i.value = d.id; i.focus(); },
   openMeeting: d => { const m = ensureMeeting(d.date, d.kind); location.hash = '#/vergadering/' + m.id; },
   addAgenda: d => {
@@ -1916,7 +1977,7 @@ const actions = {
   },
   resetDemo: () => {
     if (CLOUD){ if (isAdmin() && confirm('Alle kinderen, check-ins, roosters, notities en ziektes in de database vervangen door verzonnen data?')) cloudDemo(); return; }
-    if (!confirm('Alle demodata opnieuw laden? Je wijzigingen gaan verloren.')) return; const email = me().email; db = seed(); db.session = db.leaders.find(l => l.email === email)?.id || null; save(); toast('Demodata opnieuw geladen'); render(); },
+    if (!confirm(`Alle demodata opnieuw laden? Je wijzigingen gaan verloren${db.kids.some(k => !k.demo) ? ', ook de kinderen die je zelf hebt toegevoegd of geïmporteerd' : ''}.`)) return; const email = me().email; db = seed(); db.session = db.leaders.find(l => l.email === email)?.id || null; save(); toast('Demodata opnieuw geladen'); render(); },
 };
 
 document.addEventListener('click', e => {
@@ -1927,6 +1988,7 @@ document.addEventListener('input', e => {
   const k = e.target.dataset?.input;
   if (k === 'search'){ state.search = e.target.value; renderKidList(); }
   if (k === 'zsearch'){ state.zSearch = e.target.value; renderZList(); }
+  if (k === 'importText') renderImportPreview();
   if (k === 'agTitle' || k === 'agNotes'){
     const a = db.agenda.find(x => x.id === e.target.dataset.id); if (!a) return;
     if (k === 'agTitle') a.title = e.target.value; else { a.notes = e.target.value; grow(e.target); }
@@ -1934,6 +1996,7 @@ document.addEventListener('input', e => {
   }
 });
 document.addEventListener('change', e => {
+  if (e.target.dataset?.change === 'importPreview') renderImportPreview();
   if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || todayISO());
 });
 document.addEventListener('submit', e => {

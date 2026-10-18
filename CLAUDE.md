@@ -5,8 +5,11 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 
 ## Afspraken
 - Alleen **leiding** gebruikt de app, op telefoon én iPad/tablet.
-- Eerst rustig bouwen met **nepdata**. Geen echte kinderdata gebruiken. Pas als de app af is, wordt samen met
-  de beheerder van Zap! de bestaande data overgezet en gaat de app live.
+- Jonathan wil nu al met echte kinderen werken. **Echte kindernamen komen nooit in de code of de repository**
+  (die is openbaar, net als de website). Ze komen er alleen in via Meer → Kinderen importeren (beheerder):
+  in demomodus alleen in de browser van dat toestel, in databasemodus in Supabase (alleen voor ingelogde leiding).
+  Verzonnen demokinderen hebben `demo:true` en kunnen bij het importeren worden weggehaald.
+  Namen uit schermafbeeldingen van Zap! nooit overnemen in code, tests of commits.
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).
 - Navigatie: op de website (groot scherm) bovenin; op telefoon en als geïnstalleerde app een zwevende
@@ -22,7 +25,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS).
 - Twee modi, gekozen via `kinderkerk/config.js`:
-  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v7`), inloggen nagebootst.
+  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v8`), inloggen nagebootst.
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
