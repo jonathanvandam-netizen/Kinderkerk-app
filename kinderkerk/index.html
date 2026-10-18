@@ -29,7 +29,7 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 /* Geen inzoomen: geen dubbeltik-zoom, en invulvelden op 16px zodat de iPhone niet inzoomt bij het tikken */
-html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 input,textarea,select{font-size:16px !important}
 body{font-family:"Nunito Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);
   -webkit-font-smoothing:antialiased;font-size:15px;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
@@ -280,6 +280,7 @@ table.t tr.click:hover td{background:#fafbfc}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
+const APP_VERSION = '2026-10-18 · 6';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -944,6 +945,7 @@ function renderMeer(){
       <button class="row" data-action="resetDemo"><span class="row-icon" style="background:var(--warn-soft);color:var(--warn)">${icon('refresh')}</span>
         <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Alles staat alleen in deze browser en is verzonnen'}</span></span></button>
     </div>` : ''}
+    <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
   </div>`;
 }
 
@@ -1425,12 +1427,19 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 // iPhone negeert user-scalable=no in Safari; knijp-zoom daarom ook hier tegenhouden
-['gesturestart','gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive:false }));
-document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive:false });
+['gesturestart','gesturechange','gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive:false }));
+document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive:false });
+document.addEventListener('touchmove', e => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive:false });
 if (window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.documentElement.classList.add('standalone');
 window.addEventListener('hashchange', router);
 
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  // Nieuwe versie binnen? Dan één keer herladen, zodat je meteen de nieuwste app hebt.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded){ reloaded = true; location.reload(); } });
+  navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).then(r => r.update()).catch(() => {});
+}
 
 $('#mini-logo').innerHTML = logoImg();
 if (CLOUD){

@@ -31,7 +31,9 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   zonder internet opent. Iconen: `apple-touch-icon.png` (iPhone, 180px) en `icon-maskable-*.png` (Android, logo met
   witte rand). Knop "Installeer de app" op inlogscherm, Home (wegklikbaar) en Meer: Android = installatievenster,
   iPhone/iPad = uitleg via Safari → Deel → Zet op beginscherm.
-- Inzoomen staat bewust uit (viewport, `touch-action`, gesture-events); invulvelden zijn 16px, anders zoomt iOS in.
+- Inzoomen staat bewust uit (viewport, `touch-action:pan-x pan-y`, gesture/touch-events); invulvelden zijn 16px, anders
+  zoomt iOS in. `sw.js` haalt eigen bestanden altijd vers op (GitHub Pages cachet 10 min) en de app herlaadt één keer bij
+  een nieuwe versie. Verhoog `APP_VERSION` in index.html bij elke publicatie (zichtbaar onderaan Meer).
 - Lokaal bekijken: `node kinderkerk/serve.js` → http://localhost:5173
 - Online via GitHub Pages: https://jonathanvandam-netizen.github.io/Kinderkerk-app/ — `.github/workflows/pages.yml`
   publiceert de map `kinderkerk/` bij elke push naar `main`. De repository is daarvoor openbaar gemaakt.
