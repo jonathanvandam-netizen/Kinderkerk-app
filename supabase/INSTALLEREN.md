@@ -43,7 +43,9 @@ De **service_role** of **secret key** deel je nooit.
 1. Open de app, vul je e-mailadres in en vul de code uit de mail in.
 2. Vul je naam in.
 3. Ga naar **Meer → Demodata in de database zetten** om met nepkinderen te testen.
-4. Nodig via **Meer → Team** iemand uit. Diegene kan daarna gewoon inloggen met dat e-mailadres.
+4. Zet de leiding in het team via **Meer → Team → + Leiding**. Dat kan zonder e-mailadres; ze staan dan in de
+   planning maar kunnen nog niet inloggen. Wil je iemand toegang geven, tik dan op de naam en kies **Uitnodigen**.
+   Diegene kan daarna inloggen met dat e-mailadres.
 
 ## Goed om te weten
 - Supabase verstuurt zelf maar een paar mails per uur. Voor testen is dat genoeg. Voordat de app live

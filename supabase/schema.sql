@@ -4,27 +4,24 @@
 -- Pas eerst onderaan het e-mailadres van de eerste beheerder aan.
 --
 -- Regels:
---  * Alleen wie is uitgenodigd kan een account maken.
---  * Iedereen met een account is leiding en ziet alle gegevens.
+--  * Leiding kan in het team staan zonder account (voor de planning).
+--  * Pas na "Uitnodigen" (e-mailadres + invited) kan iemand inloggen.
+--  * Iedereen die is ingelogd en gekoppeld aan een leiding-rij ziet alle gegevens.
 --  * Alleen beheerders mogen uitnodigen, leiding beheren, kinderen
 --    verwijderen en kinderziektes aanpassen.
 -- =====================================================================
 
 -- ---------- Tabellen ----------
-create table public.invites (
-  email      text primary key check (email = lower(email)),
-  groep      text not null default '' check (groep in ('onder','boven','')),
-  role       text not null default 'leiding' check (role in ('leiding','beheerder')),
-  invited_by text not null default '',
-  date       date not null default current_date
-);
-
+-- Leiding. user_id is leeg zolang iemand (nog) geen account heeft.
 create table public.leaders (
-  id    uuid primary key references auth.users(id) on delete cascade,
-  email text not null unique,
-  name  text not null default '',
-  groep text not null default '' check (groep in ('onder','boven','')),
-  role  text not null default 'leiding' check (role in ('leiding','beheerder'))
+  id      uuid primary key default gen_random_uuid(),
+  user_id uuid unique references auth.users(id) on delete set null,
+  email   text unique check (email = lower(email)),
+  name    text not null default '',
+  groep   text not null default '' check (groep in ('onder','boven','')),
+  role    text not null default 'leiding' check (role in ('leiding','beheerder')),
+  invited boolean not null default false,   -- mag inloggen
+  away    text not null default ''           -- bijv. 'Zwangerschapsverlof'
 );
 
 create table public.kids (
@@ -127,12 +124,12 @@ create table public.illnesses (
 -- ---------- Wie is leiding / beheerder? ----------
 create function public.is_leader() returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.leaders where id = auth.uid());
+  select exists (select 1 from public.leaders where user_id = auth.uid() and invited);
 $$;
 
 create function public.is_admin() returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.leaders where id = auth.uid() and role = 'beheerder');
+  select exists (select 1 from public.leaders where user_id = auth.uid() and invited and role = 'beheerder');
 $$;
 
 -- ---------- Alleen op uitnodiging ----------
@@ -141,7 +138,7 @@ $$;
 create function public.only_invited() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not exists (select 1 from public.invites where email = lower(new.email)) then
+  if not exists (select 1 from public.leaders where email = lower(new.email) and invited) then
     raise exception 'Dit e-mailadres is niet uitgenodigd';
   end if;
   return new;
@@ -150,29 +147,28 @@ end $$;
 create trigger only_invited before insert on auth.users
   for each row execute function public.only_invited();
 
--- Na het inloggen zet de app de uitnodiging om in een leiding-account.
+-- Na het inloggen koppelt de app het account aan de uitgenodigde leiding-rij.
 create function public.claim_invite() returns void
 language plpgsql security definer set search_path = public as $$
-declare inv public.invites;
 begin
-  if auth.uid() is null or exists (select 1 from public.leaders where id = auth.uid()) then return; end if;
-  select * into inv from public.invites where email = lower(auth.jwt() ->> 'email');
-  if not found then return; end if;
-  insert into public.leaders (id, email, name, groep, role) values (auth.uid(), inv.email, '', inv.groep, inv.role);
-  delete from public.invites where email = inv.email;
+  if auth.uid() is null or exists (select 1 from public.leaders where user_id = auth.uid()) then return; end if;
+  perform set_config('kk.claim', 'on', true);
+  update public.leaders set user_id = auth.uid()
+   where email = lower(auth.jwt() ->> 'email') and invited and user_id is null;
 end $$;
 revoke execute on function public.claim_invite() from public, anon;
 grant execute on function public.claim_invite() to authenticated;
 
--- Leiding mag eigen naam/groep aanpassen, maar alleen een beheerder wijzigt rollen.
+-- Leiding mag eigen naam/groep/verlof aanpassen; rol, e-mail en toegang alleen een beheerder.
 create function public.protect_leader() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if new.id <> old.id or new.email <> old.email then
-    raise exception 'Account-gegevens kunnen niet worden gewijzigd';
-  end if;
-  if new.role <> old.role and not public.is_admin() then
-    raise exception 'Alleen een beheerder kan rollen wijzigen';
+  if current_setting('kk.claim', true) = 'on' then return new; end if;   -- koppelen bij inloggen
+  if auth.uid() is null then return new; end if;                          -- beheer via de SQL Editor
+  if new.id <> old.id then raise exception 'Het id kan niet worden gewijzigd'; end if;
+  if not public.is_admin() and (new.role <> old.role or new.invited <> old.invited
+      or new.email is distinct from old.email or new.user_id is distinct from old.user_id) then
+    raise exception 'Alleen een beheerder kan rol, e-mail of toegang wijzigen';
   end if;
   return new;
 end $$;
@@ -181,7 +177,6 @@ create trigger protect_leader before update on public.leaders
   for each row execute function public.protect_leader();
 
 -- ---------- Beveiliging per rij (row level security) ----------
-alter table public.invites         enable row level security;
 alter table public.leaders         enable row level security;
 alter table public.kids            enable row level security;
 alter table public.checkins        enable row level security;
@@ -195,15 +190,14 @@ alter table public.meetings        enable row level security;
 alter table public.agenda_items    enable row level security;
 alter table public.actions         enable row level security;
 
-create policy "beheerders beheren uitnodigingen" on public.invites
-  for all to authenticated using (public.is_admin()) with check (public.is_admin());
-
 create policy "leiding ziet leiding" on public.leaders
   for select to authenticated using (public.is_leader());
+create policy "beheerder voegt leiding toe" on public.leaders
+  for insert to authenticated with check (public.is_admin());
 create policy "eigen gegevens of beheerder" on public.leaders
-  for update to authenticated using (id = auth.uid() or public.is_admin()) with check (id = auth.uid() or public.is_admin());
-create policy "beheerder trekt toegang in" on public.leaders
-  for delete to authenticated using (public.is_admin() and id <> auth.uid());
+  for update to authenticated using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
+create policy "beheerder verwijdert leiding" on public.leaders
+  for delete to authenticated using (public.is_admin() and user_id is distinct from auth.uid());
 
 create policy "leiding ziet kinderen" on public.kids
   for select to authenticated using (public.is_leader());
@@ -247,11 +241,12 @@ revoke all on all tables in schema public from anon;
 -- ---------- Live bijwerken ----------
 -- Zo ziet alle leiding een check-in meteen verschijnen.
 alter publication supabase_realtime add table
-  public.invites, public.leaders, public.kids, public.checkins, public.leader_checkins,
+  public.leaders, public.kids, public.checkins, public.leader_checkins,
   public.notes, public.rosters, public.illnesses, public.sundays, public.periods,
   public.meetings, public.agenda_items, public.actions;
 
 -- ---------- Eerste beheerder ----------
--- Vervang het e-mailadres hieronder door dat van jezelf.
-insert into public.invites (email, groep, role, invited_by)
-values (lower('JOUW-EMAIL@voorbeeld.nl'), 'boven', 'beheerder', 'installatie');
+-- Vervang het e-mailadres hieronder door dat van jezelf. De rest van de leiding
+-- voeg je daarna toe in de app (Meer → Team), met of zonder uitnodiging.
+insert into public.leaders (email, name, groep, role, invited)
+values (lower('JOUW-EMAIL@voorbeeld.nl'), 'Jonathan', 'boven', 'beheerder', true);

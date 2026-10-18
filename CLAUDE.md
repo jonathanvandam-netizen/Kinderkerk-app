@@ -13,14 +13,15 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   "liquid glass"-balk onderin (Home, Check-in, Planning, Vergadering, Meer).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
-- Inloggen: alleen op uitnodiging; iedereen met een account is automatisch leiding; beheerders nodigen uit
-  en kunnen toegang intrekken. Inloggen gaat met een 6-cijferige code uit de mail (werkt ook in de geïnstalleerde
+- Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
+  "Uitnodigen" (e-mailadres) kan iemand inloggen; toegang intrekken laat iemand in team en planning staan.
+  Per leiding een veld Verlof/afwezig. Inloggen: alleen op uitnodiging; Inloggen gaat met een 6-cijferige code uit de mail (werkt ook in de geïnstalleerde
   iPhone-app, een link niet).
 
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS).
 - Twee modi, gekozen via `kinderkerk/config.js`:
-  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v6`), inloggen nagebootst.
+  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v7`), inloggen nagebootst.
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
@@ -60,6 +61,13 @@ vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autos
 afvinken; open actiepunten op het overzicht), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
+
+## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)
+Bovenbouw: Jonathan (beheerder), Nora, Julian, Jamilla, Sandy (zwangerschapsverlof; normaal met Julian).
+Onderbouw: Melissa, Dina, Tim, Chanel (Tim en Chanel gaan later ook met zwangerschapsverlof).
+Rooster: bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla); onderbouw 2 weken dienst, 2 weken vrij
+(Melissa+Dina / Tim+Chanel). 18-10-2026: Jonathan+Nora en Melissa+Dina (hun 2e week); 25-10: Julian+Jamilla en Tim+Chanel.
+De demodata volgt dit (`dienst()` in index.html).
 
 ## Open vragen / volgende stappen
 - Supabase-project bestaat al (eu-west-1, Ierland); de Project URL staat in `kinderkerk/config.js`.

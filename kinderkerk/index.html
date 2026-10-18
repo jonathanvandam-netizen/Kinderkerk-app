@@ -161,6 +161,8 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .datebar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;margin-bottom:16px;color:var(--muted);font-size:14px}
 .datebar span{display:flex;align-items:center;gap:6px}
 .datebar svg.i{width:18px;height:18px}
+.check-line{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin:-4px 0 14px;cursor:pointer}
+.check-line input{width:20px;height:20px;accent-color:var(--brand);flex:none}
 .hint.soft{font-weight:600;font-size:14px;padding:10px 12px}
 /* Vergadering */
 .eyebrow{display:block;font-size:12px;font-weight:800;color:var(--brand);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
@@ -377,7 +379,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 13';
+const APP_VERSION = '2026-10-18 · 14';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -463,8 +465,12 @@ function seed(){
   ['Tobias','Ella'].forEach(n => mk(n,'bezoeker',.15));
   ['Jurre','Lieke','Mats'].forEach((n,i) => mk(n, i%2 ? 'boven' : 'onder', .7, true));
 
-  const leaders = [['Anneke','onder'],['Mark','onder'],['Priscilla','onder'],['Ruth','onder'],['Jonathan','boven'],['Esther','boven'],['David','boven'],['Miriam','boven'],['Samuel','']]
-    .map(([name,group]) => ({ id:newId(), name, group, email:name.toLowerCase() + '@demo.test', role:name === 'Jonathan' ? 'beheerder' : 'leiding' }));
+  // Echte leiding (alleen voornamen). Alleen Jonathan heeft een account; de rest is nog niet uitgenodigd.
+  const leaders = [['Jonathan','boven'],['Nora','boven'],['Julian','boven'],['Jamilla','boven'],['Sandy','boven','Zwangerschapsverlof'],
+    ['Melissa','onder'],['Dina','onder'],['Tim','onder'],['Chanel','onder']]
+    .map(([name, group, away]) => { const id = newId(), admin = name === 'Jonathan';
+      return { id, userId:admin ? id : null, name, group, email:admin ? 'jonathan@demo.test' : '', role:admin ? 'beheerder' : 'leiding', invited:admin, away:away || '' }; });
+  const anchor = demoAnchor(T);
 
   const checkins = [], leaderCheckins = [];
   for (let w = 16; w >= 0; w--){
@@ -481,7 +487,8 @@ function seed(){
         checkins.push({ id:newId(), kidId:k.id, date, items, prayer, by:'Jonathan' });
       }
     });
-    leaders.forEach(l => { if (rnd() < (w === 0 ? .5 : .55)) leaderCheckins.push({ leaderId:l.id, date }); });
+    const d = dienst(date, leaders, anchor);
+    [...d.onder, ...d.boven].forEach(id => leaderCheckins.push({ leaderId:id, date }));
   }
   kids.forEach(k => { delete k._p; delete k._inactive; });
   kids[1].birthdate = shiftYears(addDays(T, 2), -6);     // twee kinderen jarig rond vandaag
@@ -492,14 +499,13 @@ function seed(){
 
   return {
     session:null,
-    invites:[{ email:'nieuw@demo.test', group:'onder', invitedBy:'Jonathan', date:T }],
     kids, leaders, checkins, leaderCheckins,
     notes:[
-      { id:newId(), date:addDays(T,-7), author:'Esther', text:'Volgende week hebben we extra lijm en scharen nodig voor het werkje.' },
-      { id:newId(), date:T, author:'Mark', text:'Onderbouw begint vandaag 10 minuten later i.v.m. de doop in de dienst.' },
+      { id:newId(), date:addDays(T,-7), author:'Nora', text:'Volgende week hebben we extra lijm en scharen nodig voor het werkje.' },
+      { id:newId(), date:T, author:'Melissa', text:'Onderbouw begint vandaag 10 minuten later i.v.m. de doop in de dienst.' },
     ],
     rosters:{ sheets:roster(0), bidden:roster(5) },
-    sundays:planLeaders(seedSundays(T), leaders),
+    sundays:seedSundays(T).map(x => Object.assign(x, dienst(x.date, leaders, anchor))),
     periods:seedPeriods(T),
     ...seedMeetings(T, leaders),
     illnesses:[
@@ -536,30 +542,34 @@ function seedMeetings(T, leaders){
   const agenda = [
     ag(prev, 'Terugblik periode Jozef', 'Kinderen waren erg betrokken bij het verhaal. Verkleden werkte goed, volgende keer vaker doen.', 'Jonathan', 1),
     ag(prev, 'Rooster sheets bovenbouw', 'Iedereen van de bovenbouw komt aan de beurt. Rooster loopt tot eind november.', 'Jonathan', 2),
-    ag(prev, 'Kerstviering', 'Idee: de kinderen doen een stukje in de dienst. Esther maakt een eerste opzet.', 'Esther', 3),
-    ag(next, 'Evaluatie Scheppingsverhaal', '', 'Esther', 1),
+    ag(prev, 'Kerstviering', 'Idee: de kinderen doen een stukje in de dienst. Nora maakt een eerste opzet.', 'Nora', 3),
+    ag(next, 'Evaluatie Scheppingsverhaal', '', 'Nora', 1),
     ag(next, 'Planning kerstviering', '', 'Jonathan', 2),
-    ag(next, 'Thema volgende periode kiezen', '', 'Mark', 3),
+    ag(next, 'Thema volgende periode kiezen', '', 'Melissa', 3),
   ];
   const act = (m, a, text, who, due, done) => ({ id:newId(), meetingId:m.id, agendaId:a ? a.id : null, text, who, due, done, author:'Jonathan' });
   const actions = [
-    act(prev, agenda[2], 'Opzet kerstviering maken', L('Esther'), addDays(cur, 28), false),
+    act(prev, agenda[2], 'Opzet kerstviering maken', L('Nora'), addDays(cur, 28), false),
     act(prev, agenda[1], 'Rooster sheets uitbreiden tot eind december', L('Jonathan'), null, true),
-    act(prev, null, 'Nieuwe kleurpotloden kopen', L('Mark'), addDays(cur, 14), false),
+    act(prev, null, 'Nieuwe kleurpotloden kopen', L('Tim'), addDays(cur, 14), false),
   ];
   return { meetings:[prev, next], agenda, actions };
 }
 function seedSundays(T){
   const S = nextSunday(T);
-  return WEEK_TOPICS.map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage, themeBoven:'', passageBoven:'',
+  return Array.from({ length:20 }, (_, i) => WEEK_TOPICS[i] || ['','']).map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage, themeBoven:'', passageBoven:'',
     prep:i === 1 ? 'Werkblad 20× kopiëren. Kleurpotloden aanvullen.' : i === 6 ? 'Punten tellen en spullen voor het puntenwinkeltje klaarzetten.' : '', onder:[], boven:[] }));
 }
-/* Verdeel de leiding over de zondagen: per groep steeds twee, om de beurt */
-function planLeaders(sundays, leaders){
-  const pick = (grp, i) => { const l = leaders.filter(x => x.group === grp); if (!l.length) return [];
-    return [...new Set([l[(2*i) % l.length], l[(2*i+1) % l.length]])].map(x => x.id); };
-  sundays.forEach((s, i) => { s.onder = pick('onder', i); s.boven = pick('boven', i); });
-  return sundays;
+/* Het echte leidingrooster van De Deur (vanaf 18-10-2026 = "anker"):
+   bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla);
+   onderbouw 2 weken achter elkaar, dan 2 weken vrij (Melissa+Dina / Tim+Chanel; 18-10 was de 2e week van Melissa+Dina). */
+const demoAnchor = T => weekday(T) === 0 ? T : addDays(nextSunday(T), -7);
+function dienst(date, leaders, anchor){
+  const i = Math.round((new Date(date + 'T12:00:00') - new Date(anchor + 'T12:00:00')) / 6048e5);
+  const ids = names => names.map(n => leaders.find(l => l.name === n)?.id).filter(Boolean);
+  const even = x => ((x % 2) + 2) % 2 === 0;
+  return { boven:ids(even(i) ? ['Jonathan','Nora'] : ['Julian','Jamilla']),
+           onder:ids(even(Math.floor((i + 1) / 2)) ? ['Melissa','Dina'] : ['Tim','Chanel']) };
 }
 
 /* ---------- Opslag ----------
@@ -569,15 +579,15 @@ function planLeaders(sundays, leaders){
 const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
-const STORE_KEY = 'kinderkerk-demo-v6';
-const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[] });
+const STORE_KEY = 'kinderkerk-demo-v7';
+const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
 if (!db){ db = seed(); save(); }
 
 /* Veldnamen in de app ↔ kolommen in de database */
-const COLS = { kidId:'kid_id', leaderId:'leader_id', group:'groep', invitedBy:'invited_by', by:'checked_by', themeBoven:'theme_boven', passageBoven:'passage_boven', meetingId:'meeting_id', agendaId:'agenda_id' };
+const COLS = { kidId:'kid_id', leaderId:'leader_id', group:'groep', userId:'user_id', by:'checked_by', themeBoven:'theme_boven', passageBoven:'passage_boven', meetingId:'meeting_id', agendaId:'agenda_id' };
 const REV = Object.fromEntries(Object.entries(COLS).map(([a,b]) => [b,a]));
 const toRow = o => Object.fromEntries(Object.entries(o).map(([k,v]) => [COLS[k] || k, v]));
 const fromRow = o => Object.fromEntries(Object.entries(o).map(([k,v]) => [REV[k] || k, v]));
@@ -603,20 +613,22 @@ async function fetchAll(table, order){
   }
 }
 async function loadCloud(){
-  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions] = await Promise.all([
-    fetchAll('leaders', ['id']), fetchAll('invites', ['email']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
+  const [leaders, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions] = await Promise.all([
+    fetchAll('leaders', ['id']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
     fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start']),
     fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id'])]);
   notes.forEach(n => delete n.created_at);
   const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses };
+  db = { session:db.session, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses };
   [...agenda, ...actions].forEach(x => delete x.created_at);
 }
 /* Opnieuw ophalen (na een wijziging van iemand anders); niet tekenen terwijl iemand typt of een venster open heeft */
 let refreshTimer;
 async function refresh(){
   if (!CLOUD || !db.session) return;
+  const before = db.session;
   try { await loadCloud(); } catch(e){ console.error(e); return; }
+  if (!leaderById(before)){ db.session = null; state.auth = { step:'noaccess', email:'' }; return render(); }   // toegang ingetrokken
   const a = document.activeElement;
   if ($('#modal-root').innerHTML || (a && a.closest('#app') && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) return;
   render();
@@ -628,12 +640,13 @@ function listen(){
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
 }
 async function afterLogin(user){
-  db.session = user.id;
+  db.session = null;
   try {
     await sb.rpc('claim_invite');
     await loadCloud();
   } catch(e){ console.error(e); state.auth = { step:'email', error:'Gegevens laden lukt niet. Controleer je internet en probeer het opnieuw.' }; db.session = null; return render(); }
-  const l = leaderById(user.id);
+  const l = db.leaders.find(x => x.userId === user.id && x.invited);
+  db.session = l ? l.id : null;
   state.auth = !l ? { step:'noaccess', email:user.email } : !l.name ? { step:'profile', email:user.email, invite:{ group:l.group } } : { step:'email' };
   render();
 }
@@ -652,7 +665,7 @@ async function cloudDemo(){
     () => sb.from('notes').insert(s.notes.map(toRow)),
     () => sb.from('illnesses').insert(s.illnesses.map(toRow)),
     () => sb.from('rosters').insert(Object.entries(s.rosters).flatMap(([kind, l]) => l.map(r => toRow({ kind, ...r })))),
-    () => sb.from('sundays').insert(planLeaders(s.sundays, db.leaders).map(toRow)),
+    () => sb.from('sundays').insert(s.sundays.map(x => toRow({ ...x, ...dienst(x.date, db.leaders, demoAnchor(todayISO())) }))),
     // Periodes zijn echte planning: alleen voorbeeld-periodes toevoegen als er nog geen zijn
     () => db.periods.length ? Promise.resolve({ error:null }) : sb.from('periods').insert(s.periods.map(toRow)),
   ];
@@ -1019,7 +1032,7 @@ function openLeaderCheckin(){
     <div class="list">${sorted.map(l => { const on = leaderIn(l.id, T); return `
       <button class="row" data-action="toggleLeader" data-id="${l.id}">
         <span class="av av-leiding">${initials(l.name)}</span>
-        <span class="row-main"><b>${esc(l.name)}${l.name === me().name ? ' (jij)' : ''}</b><span class="muted">${GROUPS[l.group] || 'Algemeen'}</span></span>
+        <span class="row-main"><b>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</b><span class="muted">${GROUPS[l.group] || 'Algemeen'}${l.away ? ' · ' + esc(l.away) : ''}</span></span>
         ${on ? `<span class="badge ok">${icon('check')} Aanwezig</span>` : `<span class="btn btn-soft sm">Inchecken</span>`}
       </button>`; }).join('')}</div>
     <div class="modal-foot"><button class="btn btn-primary" data-action="closeModal">Klaar</button></div>`);
@@ -1158,6 +1171,14 @@ function openAddKid(){
    is een knop. Met de echte database komt hier echte, veilige login.
    ===================================================================== */
 const validEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+/* Geeft '' (leeg), het nette e-mailadres, of false bij een fout (dan is err() al aangeroepen) */
+function checkEmail(raw, ownId, err){
+  const email = (raw || '').trim().toLowerCase();
+  if (!email) return '';
+  if (!validEmail(email)){ err('Vul een geldig e-mailadres in.'); return false; }
+  if (db.leaders.some(l => l.email === email && l.id !== ownId)){ err('Dit e-mailadres hoort al bij iemand anders in het team.'); return false; }
+  return email;
+}
 function renderLogin(){
   const a = state.auth;
   let body;
@@ -1202,10 +1223,9 @@ function renderLogin(){
     </form>
     ${showInstall() ? `<button class="textlink" style="margin-top:16px" data-action="install">${icon('download')} Installeer als app</button>` : ''}
     <p class="auth-note">Geen wachtwoord nodig: je krijgt een eenmalige ${CLOUD ? 'code' : 'link'} in je mail. Alleen leiding die is uitgenodigd kan inloggen.</p>
-    ${CLOUD ? '' : `<div class="demo-box"><b>Demo-accounts</b><br>
+    ${CLOUD ? '' : `<div class="demo-box"><b>Demo</b><br>
       <code>jonathan@demo.test</code> beheerder<br>
-      <code>esther@demo.test</code> leiding<br>
-      <code>nieuw@demo.test</code> uitgenodigd, nog geen account</div>`}`;
+      De rest van de leiding is nog niet uitgenodigd. Dat kan onder Meer → Team.</div>`}`;
   app.innerHTML = `<div class="auth"><div class="card auth-card">
     ${a.step === 'sent' ? '' : `<div class="hero-logo">${logoImg()}</div>`}${body}</div></div>`;
   setTimeout(() => ($('#lg-code') || $('#lg-email') || $('#pf-name'))?.focus(), 50);
@@ -1341,7 +1361,7 @@ function openEditPeriod(id){
 function openEditPlan(date){
   const s = sundayOf(date), w = weekInfo(date), split = w && periodSplit(w.p);
   const chips = (grp, on) => [...db.leaders].sort((a,b) => (a.group === grp ? 0 : 1) - (b.group === grp ? 0 : 1) || byName(a,b)).map(l =>
-    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}">${esc(l.name)}<span class="tick">✓</span></button>`).join('');
+    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away ? `title="${esc(l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' 🌙' : ''}<span class="tick">✓</span></button>`).join('');
   openModal(`
     <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">${(w => w ? `Week ${w.week} van ${PERIOD_WEEKS} · ${esc(periodLabel(w.p))}` : 'Thema en leiding')(weekInfo(date))}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -1364,53 +1384,63 @@ function openEditPlan(date){
 function renderTeam(){
   const T = todayISO();
   const section = (grp, label) => { const l = db.leaders.filter(x => (x.group || '') === grp).sort(byName); if (!l.length) return '';
-    return `<div class="list-head">${label} · ${l.length}</div>` + l.map(x => `
-      <button class="row ${isAdmin() ? '' : 'static'}" ${isAdmin() ? `data-action="editLeader" data-id="${x.id}"` : ''}><span class="av av-leiding">${initials(x.name)}</span>
-        <span class="row-main"><b>${esc(x.name)}${x.role === 'beheerder' ? '<span class="role">Beheerder</span>' : ''}</b><span class="muted">${esc(x.email || label)}</span></span>
-        ${leaderIn(x.id, T) ? `<span class="badge ok">${icon('check')} Vandaag aanwezig</span>` : ''}${isAdmin() ? icon('chev','chev') : ''}</button>`).join(''); };
-  const invites = isAdmin() && db.invites.length ? `
-    <h3 class="section-title">Openstaande uitnodigingen</h3>
-    <div class="card list">${db.invites.map(i => `
-      <div class="row static"><span class="row-icon">${icon('mail')}</span>
-        <span class="row-main"><b>${esc(i.email)}</b><span class="muted">${GROUPS[i.group] || 'Algemeen'} · uitgenodigd door ${esc(i.invitedBy)}</span></span>
-        <button class="icon-btn" title="Intrekken" data-action="delInvite" data-email="${esc(i.email)}">${icon('trash')}</button></div>`).join('')}</div>` : '';
+    return `<div class="list-head">${label} · ${l.length}</div>` + l.map(x => {
+      const sub = [x.away ? `<span style="color:var(--warn-text);font-weight:700">${esc(x.away)}</span>` : '',
+        isAdmin() ? leaderAccess(x) : ''].filter(Boolean).join(' · ') || label;
+      return `<button class="row ${isAdmin() ? '' : 'static'}" ${isAdmin() ? `data-action="editLeader" data-id="${x.id}"` : ''}><span class="av av-leiding" ${x.away ? 'style="opacity:.55"' : ''}>${initials(x.name)}</span>
+        <span class="row-main"><b>${esc(x.name)}${x.role === 'beheerder' ? '<span class="role">Beheerder</span>' : ''}</b><span class="muted">${sub}</span></span>
+        ${leaderIn(x.id, T) ? `<span class="badge ok">${icon('check')} Vandaag</span>` : ''}${isAdmin() ? icon('chev','chev') : ''}</button>`; }).join(''); };
   app.innerHTML = `
   <div class="page">
-    <div class="page-head"><h1>Team</h1>${isAdmin() ? `<button class="btn btn-primary" data-action="invite">${icon('plus')} Uitnodigen</button>` : ''}</div>
+    <div class="page-head"><h1>Team</h1>${isAdmin() ? `<button class="btn btn-primary" data-action="addLeader">${icon('plus')} Leiding</button>` : ''}</div>
     <div class="card list">${section('onder','Onderbouw')}${section('boven','Bovenbouw')}${section('','Algemeen')}</div>
-    ${invites}
-    <div class="banner">${icon('info')}<span>Iedereen met een account is automatisch leiding. ${isAdmin() ? 'Nodig nieuwe leiding uit via hun e-mailadres.' : 'Een beheerder kan nieuwe leiding uitnodigen.'}</span></div>
+    <div class="banner">${icon('info')}<span>${isAdmin()
+      ? 'Leiding zonder account staat wel in de planning, maar kan nog niet inloggen. Tik op iemand en kies <b>Uitnodigen</b> om toegang te geven.'
+      : 'Een beheerder kan nieuwe leiding toevoegen en uitnodigen.'}</span></div>
   </div>`;
 }
-function openInvite(){
+const leaderAccess = x => x.userId ? 'Heeft account' : x.invited ? 'Uitgenodigd' : 'Nog niet uitgenodigd';
+const groupSelect = (id, val) => `<select id="${id}">
+  <option value="onder" ${val === 'onder' ? 'selected' : ''}>Onderbouw</option>
+  <option value="boven" ${val === 'boven' ? 'selected' : ''}>Bovenbouw</option>
+  <option value="" ${!val ? 'selected' : ''}>Algemeen</option></select>`;
+function openAddLeader(){
   openModal(`
-    <div class="modal-head"><div><h2>Leiding uitnodigen</h2><span class="muted">${CLOUD ? 'Daarna kunnen ze inloggen met dit e-mailadres' : 'Ze krijgen een mail om een account te maken'}</span></div>
+    <div class="modal-head"><div><h2>Leiding toevoegen</h2><span class="muted">Komt in het team en de planning</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
-      <label class="field"><span>E-mailadres</span><input id="inv-email" type="email" autocomplete="off" placeholder="naam@voorbeeld.nl"></label>
-      <label class="field"><span>Groep</span><select id="inv-group"><option value="onder">Onderbouw</option><option value="boven">Bovenbouw</option><option value="">Algemeen</option></select></label>
-      <div id="inv-err"></div>
+      <label class="field"><span>Naam</span><input id="ld-name" autocomplete="off" placeholder="Voornaam"></label>
+      <label class="field"><span>Groep</span>${groupSelect('ld-group', 'onder')}</label>
+      <label class="field"><span>E-mailadres <span class="muted" style="font-weight:400">(mag leeg)</span></span><input id="ld-email" type="email" autocomplete="off" placeholder="naam@voorbeeld.nl"></label>
+      <label class="check-line"><input type="checkbox" id="ld-invite"> Nu al uitnodigen, zodat diegene kan inloggen</label>
+      <div id="ld-err"></div>
     </div>
-    <div class="modal-foot"><button class="btn btn-primary" data-action="saveInvite">Uitnodigen</button></div>`);
-  setTimeout(() => $('#inv-email')?.focus(), 50);
+    <div class="modal-foot"><button class="btn btn-primary" data-action="saveNewLeader">Toevoegen</button></div>`);
+  setTimeout(() => $('#ld-name')?.focus(), 50);
 }
 function openEditLeader(id){
   const l = leaderById(id); if (!l) return;
   const self = l.id === db.session;
+  const access = l.userId
+    ? `<b>Heeft een account</b> en kan inloggen met ${esc(l.email)}.${self ? '' : `<br><button class="btn btn-outline sm" style="margin-top:10px" data-action="uninviteLeader" data-id="${id}">Toegang intrekken</button>`}`
+    : l.invited
+      ? `<b>Uitgenodigd.</b> ${esc(l.name || 'Diegene')} kan inloggen met ${esc(l.email)}${CLOUD ? ' (via een code in de mail)' : ''}.<br><button class="btn btn-outline sm" style="margin-top:10px" data-action="uninviteLeader" data-id="${id}">Uitnodiging intrekken</button>`
+      : `<b>Nog niet uitgenodigd.</b> Staat wel in het team en de planning, maar kan niet inloggen.<br><button class="btn btn-primary sm" style="margin-top:10px" data-action="inviteLeader" data-id="${id}">${icon('mail')} Uitnodigen</button>`;
   openModal(`
-    <div class="modal-head"><div><h2>Leiding bewerken</h2><span class="muted">${esc(l.email)}</span></div>
+    <div class="modal-head"><span class="av av-leiding">${initials(l.name)}</span><div><h2>${esc(l.name)}</h2><span class="muted">${leaderAccess(l)}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
       <label class="field"><span>Naam</span><input id="ld-name" value="${esc(l.name)}" autocomplete="off"></label>
-      <label class="field"><span>Groep</span><select id="ld-group">
-        <option value="onder" ${l.group === 'onder' ? 'selected' : ''}>Onderbouw</option>
-        <option value="boven" ${l.group === 'boven' ? 'selected' : ''}>Bovenbouw</option>
-        <option value="" ${!l.group ? 'selected' : ''}>Algemeen</option></select></label>
+      <label class="field"><span>Groep</span>${groupSelect('ld-group', l.group)}</label>
+      <label class="field"><span>E-mailadres</span><input id="ld-email" type="email" value="${esc(l.email || '')}" autocomplete="off" placeholder="naam@voorbeeld.nl" ${l.userId ? 'disabled' : ''}></label>
+      <label class="field"><span>Verlof / afwezig <span class="muted" style="font-weight:400">(leeg = beschikbaar)</span></span><input id="ld-away" value="${esc(l.away || '')}" autocomplete="off" placeholder="Bijv. zwangerschapsverlof tot maart"></label>
       <label class="field"><span>Rol</span><select id="ld-role" ${self ? 'disabled' : ''}>
         <option value="leiding" ${l.role !== 'beheerder' ? 'selected' : ''}>Leiding</option>
-        <option value="beheerder" ${l.role === 'beheerder' ? 'selected' : ''}>Beheerder (mag leiding uitnodigen en beheren)</option></select></label>
+        <option value="beheerder" ${l.role === 'beheerder' ? 'selected' : ''}>Beheerder (mag leiding toevoegen en beheren)</option></select></label>
+      <div class="banner" style="margin-top:0;display:block">${access}</div>
+      <div id="ld-err"></div>
     </div>
-    <div class="modal-foot">${self ? '' : `<button class="btn btn-danger" data-action="delLeader" data-id="${id}">${icon('trash')} Toegang intrekken</button>`}
+    <div class="modal-foot">${self ? '' : `<button class="btn btn-danger" data-action="delLeader" data-id="${id}">${icon('trash')} Uit team</button>`}
       <button class="btn btn-primary" data-action="saveLeader" data-id="${id}">Opslaan</button></div>`);
 }
 
@@ -1736,32 +1766,52 @@ const actions = {
   },
   delNote: d => { if (!confirm('Notitie verwijderen?')) return; db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save(); render(); },
   editLeader: d => { if (isAdmin()) openEditLeader(d.id); },
+  /* E-mailadres uit het formulier: leeg mag, anders geldig en uniek */
   saveLeader: d => {
     if (!isAdmin()) return;
-    const name = $('#ld-name').value.trim(); if (!name) return;
-    const l = leaderById(d.id);
-    Object.assign(l, { name, group:$('#ld-group').value });
+    const l = leaderById(d.id), err = msg => { $('#ld-err').innerHTML = `<div class="auth-err">${esc(msg)}</div>`; };
+    const name = $('#ld-name').value.trim(); if (!name) return err('Vul een naam in.');
+    const email = l.userId ? l.email : checkEmail($('#ld-email').value, l.id, err); if (email === false) return;
+    if (!email && l.invited) return err('Iemand die is uitgenodigd heeft een e-mailadres nodig. Trek eerst de uitnodiging in.');
+    Object.assign(l, { name, group:$('#ld-group').value, email, away:$('#ld-away').value.trim() });
     if (l.id !== db.session) l.role = $('#ld-role').value;
-    upd('leaders', { id:l.id, name:l.name, group:l.group, role:l.role });
-    save(); closeModal(); render();
+    upd('leaders', { id:l.id, name:l.name, group:l.group, email:l.email || null, away:l.away, role:l.role });
+    save(); closeModal(); render(); toast('Opgeslagen');
+  },
+  addLeader: () => { if (isAdmin()) openAddLeader(); },
+  saveNewLeader: () => {
+    if (!isAdmin()) return;
+    const err = msg => { $('#ld-err').innerHTML = `<div class="auth-err">${esc(msg)}</div>`; };
+    const name = $('#ld-name').value.trim(); if (!name) return err('Vul een naam in.');
+    const email = checkEmail($('#ld-email').value, null, err); if (email === false) return;
+    const invited = $('#ld-invite').checked;
+    if (invited && !email) return err('Vul een e-mailadres in om meteen uit te nodigen.');
+    const l = { id:newId(), userId:null, name, group:$('#ld-group').value, email, role:'leiding', invited, away:'' };
+    db.leaders.push(l); put('leaders', { ...l, email:email || null });
+    save(); closeModal(); render(); toast(invited ? `${name} is toegevoegd en uitgenodigd` : `${name} is toegevoegd`);
+  },
+  inviteLeader: d => {
+    const l = leaderById(d.id), err = msg => { $('#ld-err').innerHTML = `<div class="auth-err">${esc(msg)}</div>`; };
+    const email = checkEmail($('#ld-email').value, l.id, err); if (email === false) return;
+    if (!email) return err('Vul eerst een e-mailadres in.');
+    Object.assign(l, { email, invited:true });
+    upd('leaders', { id:l.id, email, invited:true }); save(); closeModal(); render();
+    toast(CLOUD ? `${l.name} kan nu inloggen met ${email}` : `${l.name} is uitgenodigd`);
+  },
+  uninviteLeader: d => {
+    const l = leaderById(d.id); if (!l || l.id === db.session) return;
+    if (!confirm(`${l.userId ? 'Toegang' : 'Uitnodiging'} van ${l.name} intrekken? ${l.name} blijft in het team en de planning staan, maar kan niet meer inloggen.`)) return;
+    Object.assign(l, { invited:false, userId:null });
+    upd('leaders', { id:l.id, invited:false, userId:null }); save(); closeModal(); render();
   },
   delLeader: d => {
     if (!isAdmin() || d.id === db.session) return;
-    if (!confirm(`Toegang van ${leaderById(d.id).name} intrekken? Diegene kan dan niet meer inloggen.`)) return;
-    db.leaders = db.leaders.filter(l => l.id !== d.id); drop('leaders', { id:d.id }); save(); closeModal(); render();
+    const l = leaderById(d.id);
+    if (!confirm(`${l.name} uit het team verwijderen? Diegene verdwijnt ook uit de planning en kan niet meer inloggen.`)) return;
+    db.leaders = db.leaders.filter(x => x.id !== d.id);
+    db.sundays.forEach(x => { x.onder = x.onder.filter(i => i !== d.id); x.boven = x.boven.filter(i => i !== d.id); });
+    drop('leaders', { id:d.id }); save(); closeModal(); render();
   },
-  invite: () => { if (isAdmin()) openInvite(); },
-  saveInvite: () => {
-    const email = $('#inv-email').value.trim().toLowerCase();
-    const err = msg => { $('#inv-err').innerHTML = `<div class="auth-err">${esc(msg)}</div>`; };
-    if (!validEmail(email)) return err('Vul een geldig e-mailadres in.');
-    if (db.leaders.some(l => l.email === email)) return err('Dit e-mailadres heeft al een account.');
-    if (db.invites.some(i => i.email === email)) return err('Dit e-mailadres is al uitgenodigd.');
-    const inv = { email, group:$('#inv-group').value, invitedBy:me().name, date:todayISO() };
-    db.invites.push(inv); put('invites', inv);
-    save(); closeModal(); render(); toast(CLOUD ? 'Uitgenodigd: laat diegene inloggen in de app' : 'Uitnodiging verstuurd');
-  },
-  delInvite: d => { db.invites = db.invites.filter(i => i.email !== d.email); drop('invites', { email:d.email }); save(); render(); },
   profile: () => openProfile(),
   logout: async () => {
     if (CLOUD){ await sb.auth.signOut(); db = emptyDb(); }
@@ -1780,7 +1830,7 @@ const actions = {
         : 'Er ging iets mis. Controleer je internet en probeer het opnieuw.';
       state.auth = { step:'email', email, error:msg }; return render();
     }
-    const known = db.leaders.some(l => l.email === email) || db.invites.some(i => i.email === email);
+    const known = db.leaders.some(l => l.email === email && l.invited);
     if (!known){ state.auth = { step:'email', email, error:'Dit e-mailadres is (nog) niet uitgenodigd. Vraag een beheerder van de kinderkerk om je uit te nodigen.' }; return render(); }
     state.auth = { step:'sent', email }; render();
   },
@@ -1794,22 +1844,18 @@ const actions = {
   authBack: () => { state.auth = { step:'email', email:state.auth.email }; render(); },
   openLink: () => {
     const email = state.auth.email;
-    const l = db.leaders.find(x => x.email === email);
-    if (l){ db.session = l.id; save(); state.auth = { step:'email' }; render(); toast(`Welkom, ${l.name}!`); return; }
-    state.auth = { step:'profile', email, invite:db.invites.find(i => i.email === email) }; render();
+    const l = db.leaders.find(x => x.email === email && x.invited);
+    if (!l){ state.auth = { step:'email', email, error:'Dit e-mailadres is (nog) niet uitgenodigd.' }; return render(); }
+    l.userId = l.userId || l.id; db.session = l.id; save();
+    if (!l.name){ state.auth = { step:'profile', email, invite:{ group:l.group } }; return render(); }
+    state.auth = { step:'email' }; render(); toast(`Welkom, ${l.name}!`);
   },
   createAccount: () => {
     const name = $('#pf-name').value.trim();
     if (!name){ state.auth.error = 'Vul je naam in.'; return render(); }
-    if (CLOUD){
-      Object.assign(me(), { name, group:$('#pf-group').value });
-      upd('leaders', { id:db.session, name, group:me().group });
-      state.auth = { step:'email' }; render(); toast(`Welkom bij het team, ${name}!`); return;
-    }
-    const l = { id:newId(), name, group:$('#pf-group').value, email:state.auth.email, role:'leiding' };
-    db.leaders.push(l);
-    db.invites = db.invites.filter(i => i.email !== l.email);
-    db.session = l.id; save(); state.auth = { step:'email' }; render(); toast(`Welkom bij het team, ${name}!`);
+    Object.assign(me(), { name, group:$('#pf-group').value });
+    upd('leaders', { id:db.session, name, group:me().group });
+    save(); state.auth = { step:'email' }; render(); toast(`Welkom bij het team, ${name}!`);
   },
   editRoster: d => openEditRoster(d.date),
   setRoster: d => {
