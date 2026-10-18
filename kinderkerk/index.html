@@ -230,6 +230,17 @@ table.t tr.today td{background:var(--brand-soft);font-weight:700}
 table.t tr.click{cursor:pointer}
 table.t tr.click:hover td{background:#fafbfc}
 .okmark{color:var(--ok)}
+.plan{display:block;width:100%;text-align:left;font:inherit;color:inherit;padding:16px;cursor:pointer;text-decoration:none}
+.plan:hover{background:#fafbfc}
+.plan.today{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.plan small{display:block;font-size:12px;font-weight:800;color:var(--brand);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.plan .theme{font-size:17px;font-weight:800}
+.plan .lead{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:10px;font-size:14px}
+.plan .lead span:nth-child(odd){color:var(--muted);font-weight:700}
+.plan .prep{margin-top:10px;font-size:14px;color:#6b4b00;background:var(--warn-soft);border-radius:10px;padding:8px 10px;white-space:pre-wrap}
+.me-tag{font-weight:800;color:var(--brand)}
+.hero-duty{margin-top:12px;font-size:13.5px;background:var(--brand-soft);color:#24345f;border-radius:10px;padding:8px 10px}
+.bday{background:#fdeef6;color:#8a2a5a}
 #toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#1c2433;color:#fff;padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media(min-width:800px){#toast{bottom:28px}}
@@ -266,6 +277,17 @@ function iso(d){ const z = new Date(d.getTime() - d.getTimezoneOffset()*60000); 
 const todayISO = () => iso(new Date());
 function addDays(s, n){ const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); }
 function fmtDate(s, opts = {day:'numeric', month:'long', year:'numeric'}){ return new Date(s + 'T12:00:00').toLocaleDateString('nl-NL', opts); }
+const weekday = s => new Date(s + 'T12:00:00').getDay();
+function nextSunday(s){ while (weekday(s) !== 0) s = addDays(s, 1); return s; }
+const shiftYears = (s, n) => String(+s.slice(0,4) + n) + s.slice(4);
+function age(birth, on = todayISO()){ let a = +on.slice(0,4) - +birth.slice(0,4); if (on.slice(5) < birth.slice(5)) a--; return a; }
+/* Verjaardag binnen 6 dagen van een datum (ervoor of erna)? Geeft de datum van die verjaardag terug. */
+function birthdayNear(k, T = todayISO()){
+  if (!k.birthdate) return null;
+  for (const y of [-1, 0, 1]){ const d = shiftYears(T, y).slice(0,4) + k.birthdate.slice(4);
+    if (Math.abs(new Date(d + 'T12:00:00') - new Date(T + 'T12:00:00')) <= 6 * 864e5) return d; }
+  return null;
+}
 const initials = name => name.split(/\s+/).filter(Boolean).slice(0,2).map(p => p[0]).join('').toUpperCase();
 const firstName = name => name.split(' ')[0];
 function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -298,6 +320,7 @@ const ICONS = {
   arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/>',
   alert:'<path d="M12 8v5M12 16.5v.1"/>',
+  book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',
 };
 const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -321,7 +344,10 @@ function seed(){
   const rnd = mulberry32(7);
   const T = todayISO();
   const kids = [];
-  const mk = (name, group, p, inactive) => kids.push({ id:newId(), name, group, created:addDays(T,-150), _p:p, _inactive:inactive });
+  const mk = (name, group, p, inactive) => {
+    const yrs = group === 'onder' ? 4 + rnd()*4 : group === 'boven' ? 8 + rnd()*4 : 5 + rnd()*6;
+    kids.push({ id:newId(), name, group, created:addDays(T,-150), birthdate:addDays(T, -Math.round(yrs * 365.25)), _p:p, _inactive:inactive });
+  };
   ['Noah','Sem','Mila de Jong','Yara','Liam','Sofie Bakker','Daan','Nova','Jesse','Lotte','Amira','Finn'].forEach(n => mk(n,'onder',.35+rnd()*.6));
   ['Levi Jansen','Eva de Vries','Lucas Bakker','Julia Visser','Milan Smit','Sara Meijer','Thijs Mulder','Fenna de Boer','Ruben Bos','Isa Vos','Gideon Peters','Hannah Dekker'].forEach(n => mk(n,'boven',.35+rnd()*.6));
   ['Tobias','Ella'].forEach(n => mk(n,'bezoeker',.15));
@@ -348,6 +374,8 @@ function seed(){
     leaders.forEach(l => { if (rnd() < (w === 0 ? .5 : .55)) leaderCheckins.push({ leaderId:l.id, date }); });
   }
   kids.forEach(k => { delete k._p; delete k._inactive; });
+  kids[1].birthdate = shiftYears(addDays(T, 2), -6);     // twee kinderen jarig rond vandaag
+  kids[14].birthdate = shiftYears(addDays(T, -3), -10);
 
   const boven = kids.filter(k => k.group === 'boven');
   const roster = offset => Array.from({length:7}, (_,i) => ({ date:addDays(T, 7*i), kidId:boven[(i+offset) % boven.length].id }));
@@ -361,6 +389,7 @@ function seed(){
       { id:newId(), date:T, author:'Mark', text:'Onderbouw begint vandaag 10 minuten later i.v.m. de doop in de dienst.' },
     ],
     rosters:{ sheets:roster(0), bidden:roster(5) },
+    sundays:planLeaders(seedSundays(T), leaders),
     illnesses:[
       ['Hand-, voet- en mondziekte','ok','Mag komen, mits fit genoeg om mee te doen.'],
       ['Ringworm','ok','Mag komen, mits fit genoeg. Plek bij voorkeur bedekt.'],
@@ -378,6 +407,21 @@ function seed(){
   };
 }
 
+const THEMES = [['Jozef en zijn broers','Genesis 37'],['Jozef in de gevangenis','Genesis 39–40'],['Jozef wordt onderkoning','Genesis 41'],
+  ['Jozef vergeeft zijn broers','Genesis 45'],['Mozes in het biezen mandje','Exodus 2'],['De brandende braamstruik','Exodus 3'],['Door de Rode Zee','Exodus 14'],['Manna in de woestijn','Exodus 16']];
+function seedSundays(T){
+  const S = nextSunday(T);
+  return THEMES.map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage,
+    prep:i === 1 ? 'Werkblad 20× kopiëren. Kleurpotloden aanvullen.' : i === 2 ? 'Verkleedkleren voor Jozef meenemen (mantel!).' : '', onder:[], boven:[] }));
+}
+/* Verdeel de leiding over de zondagen: per groep steeds twee, om de beurt */
+function planLeaders(sundays, leaders){
+  const pick = (grp, i) => { const l = leaders.filter(x => x.group === grp); if (!l.length) return [];
+    return [...new Set([l[(2*i) % l.length], l[(2*i+1) % l.length]])].map(x => x.id); };
+  sundays.forEach((s, i) => { s.onder = pick('onder', i); s.boven = pick('boven', i); });
+  return sundays;
+}
+
 /* ---------- Opslag ----------
    Zonder config.js-sleutels: demomodus, alles in localStorage van deze browser.
    Met sleutels: Supabase. De app houdt dan een kopie in `db` bij, past die meteen aan
@@ -385,8 +429,8 @@ function seed(){
 const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
-const STORE_KEY = 'kinderkerk-demo-v2';
-const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, illnesses:[] });
+const STORE_KEY = 'kinderkerk-demo-v3';
+const emptyDb = () => ({ session:null, invites:[], kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], illnesses:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
@@ -417,12 +461,12 @@ async function fetchAll(table, order){
   }
 }
 async function loadCloud(){
-  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses] = await Promise.all([
+  const [leaders, invites, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays] = await Promise.all([
     fetchAll('leaders', ['id']), fetchAll('invites', ['email']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
-    fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id'])]);
+    fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date'])]);
   notes.forEach(n => delete n.created_at);
   const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, illnesses };
+  db = { session:db.session, invites, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, illnesses };
 }
 /* Opnieuw ophalen (na een wijziging van iemand anders); niet tekenen terwijl iemand typt of een venster open heeft */
 let refreshTimer;
@@ -457,12 +501,14 @@ async function cloudDemo(){
     () => sb.from('rosters').delete().not('kind', 'is', null),
     () => sb.from('notes').delete().not('id', 'is', null),
     () => sb.from('illnesses').delete().not('id', 'is', null),
+    () => sb.from('sundays').delete().not('date', 'is', null),
     () => sb.from('kids').delete().not('id', 'is', null),
     () => sb.from('kids').insert(s.kids.map(toRow)),
     () => sb.from('checkins').insert(s.checkins.map(toRow)),
     () => sb.from('notes').insert(s.notes.map(toRow)),
     () => sb.from('illnesses').insert(s.illnesses.map(toRow)),
     () => sb.from('rosters').insert(Object.entries(s.rosters).flatMap(([kind, l]) => l.map(r => toRow({ kind, ...r })))),
+    () => sb.from('sundays').insert(planLeaders(s.sundays, db.leaders).map(toRow)),
   ];
   toast('Bezig…');
   for (const step of steps){ const { error } = await step(); if (error){ console.error(error); toast('Mislukt: ' + error.message); return; } }
@@ -480,10 +526,12 @@ const leaderIn = (id, d) => db.leaderCheckins.some(l => l.leaderId === id && l.d
 function lastSeen(kidId){ let m = ''; for (const c of db.checkins) if (c.kidId === kidId && c.date > m) m = c.date; return m; }
 const isRecent = k => (lastSeen(k.id) || k.created) >= addDays(todayISO(), -60);
 const byName = (a,b) => a.name.localeCompare(b.name, 'nl');
+const sundayOf = date => db.sundays.find(s => s.date === date) || { date, theme:'', passage:'', prep:'', onder:[], boven:[] };
+const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.onder.includes(db.session) || s.boven.includes(db.session))).sort((a,b) => a.date.localeCompare(b.date))[0];
 function rosterToday(key){ const T = todayISO(); return db.rosters[key].find(r => r.date === T) || db.rosters[key].find(r => r.date > T); }
 
 /* ---------- UI-state ---------- */
-const state = { route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { planCount:8, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
@@ -491,7 +539,7 @@ const NAV = [
   { id:'checkin', label:'Check-in', icon:'checkin' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
-const MEER_ROUTES = ['meer','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','planning','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
@@ -499,7 +547,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
   const r = location.hash.replace(/^#\/?/, '').split('/')[0] || 'home';
   state.route = routes[r] ? r : 'home';
@@ -532,6 +580,7 @@ function renderHome(){
         <p class="muted">${greeting()}, ${esc(me().name)}!</p>
         <button class="btn btn-primary btn-block" data-action="leaderCheckin">${icon('checkin')} Leiding check-in</button>
         <div class="hero-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</div>
+        ${(m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${m.date === T ? 'vandaag' : fmtDate(m.date, {weekday:'long', day:'numeric', month:'long'})}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday())}
       </div>
       <a class="card row" href="#/ziektes" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('thermo')}</span>
@@ -570,8 +619,19 @@ function homeVandaag(){
       <a class="btn btn-primary" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
       <button class="btn btn-soft" data-action="whoIsIn">${icon('users')} Bekijk wie ingecheckt is</button>
     </div>
+    ${homeBirthdays()}
+    <h3 class="section-title">${nextSunday(T) === T ? 'Vandaag' : 'Zondag ' + fmtDate(nextSunday(T), {day:'numeric', month:'long'})}</h3>
+    ${planCard(nextSunday(T), true)}
     <h3 class="section-title">Vandaag ingeroosterd</h3>
     <div class="stats" style="grid-template-columns:1fr 1fr">${duty(sheets, 'Sheets', 'monitor')}${duty(bidden, 'Bidden bovenbouw', 'pray')}</div>`;
+}
+function homeBirthdays(){
+  const T = todayISO();
+  const list = db.kids.filter(isRecent).map(k => ({ k, d:birthdayNear(k) })).filter(x => x.d).sort((a,b) => a.d.localeCompare(b.d));
+  if (!list.length) return '';
+  return `<h3 class="section-title">🎂 Jarig deze week</h3><div class="card list">${list.map(({k,d}) => `
+    <button class="row" data-action="openKid" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
+      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${d === T ? 'Wordt vandaag' : d > T ? 'Wordt' : 'Werd'} ${age(k.birthdate, d)} jaar${d === T ? '' : ' op ' + fmtDate(d, {weekday:'long', day:'numeric', month:'short'})}</span></span>${icon('chev','chev')}</button>`).join('')}</div>`;
 }
 function homeGebed(){
   const T = todayISO();
@@ -656,7 +716,7 @@ function renderKidList(){
   kids.sort(byName);
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k));
+    const sub = (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) ? ' · 🎂' : '');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
@@ -684,6 +744,7 @@ function openCheckin(kidId, date = todayISO()){
       <button class="icon-btn" title="Gegevens van ${esc(firstName(k.name))}" data-action="openKid" data-id="${k.id}">${icon('edit')}</button>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
+      ${(bd => bd ? `<div class="hint bday">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, {weekday:'long'})} ${age(k.birthdate, bd)} jaar!</div>` : '')(birthdayNear(k, date))}
       <label class="field"><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
       <div class="field"><span>Selecteer hieronder</span>
         <div class="chips">${ITEMS.filter(i => !i.boven || k.group === 'boven').map(i =>
@@ -704,11 +765,12 @@ function openKid(id){
   const n8 = visits.filter(c => c.date > addDays(todayISO(), -56)).length;
   openModal(`
     <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
-      <div><h2>${esc(k.name)}</h2><span class="muted">${n8}× in de laatste 8 weken · ${lastSeenText(k).toLowerCase()}</span></div>
+      <div><h2>${esc(k.name)}</h2><span class="muted">${k.birthdate ? age(k.birthdate) + ' jaar · ' : ''}${n8}× in de laatste 8 weken · ${lastSeenText(k).toLowerCase()}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
       <label class="field"><span>Naam</span><input id="kd-name" value="${esc(k.name)}" autocomplete="off"></label>
       <label class="field"><span>Groep</span><select id="kd-group">${Object.entries(GROUPS).map(([v,l]) => `<option value="${v}" ${v === k.group ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Geboortedatum</span><input type="date" id="kd-birth" value="${k.birthdate || ''}" max="${todayISO()}"></label>
       <div class="field"><span>Laatste keren</span>
         <div class="card list">${visits.slice(0,8).map(c => `<div class="row static"><span class="row-main"><b>${cap(fmtDate(c.date, {weekday:'short', day:'numeric', month:'long'}))}</b>
           <span class="muted">${c.items.map(itemEmoji).join(' ') || 'Ingecheckt'}${c.prayer ? ` · 🙏 ${esc(c.prayer)}` : ''}</span></span></div>`).join('')
@@ -728,6 +790,7 @@ function openAddKid(){
     <div class="modal-body">
       <label class="field"><span>Naam</span><input id="kid-name" placeholder="Voornaam (en achternaam)" autocomplete="off" value="${esc(state.search)}"></label>
       <label class="field"><span>Groep</span><select id="kid-group">${Object.entries(GROUPS).map(([v,l]) => `<option value="${v}" ${v === preset ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Geboortedatum <span class="muted" style="font-weight:400">(mag leeg)</span></span><input type="date" id="kid-birth" max="${todayISO()}"></label>
     </div>
     <div class="modal-foot"><button class="btn btn-primary" data-action="saveKid">Toevoegen</button></div>`);
   setTimeout(() => $('#kid-name')?.focus(), 50);
@@ -811,6 +874,7 @@ function openProfile(){
    ===================================================================== */
 function renderMeer(){
   const items = [
+    ['planning','Planning','Thema en leiding per zondag','book'],
     ['team','Team','Alle leiding per groep','users'],
     ['historie','Historie','Aantallen en wie er regelmatig komt','chart'],
     ['roosters','Roosters','Sheets en bidden bovenbouw','calendar'],
@@ -828,6 +892,49 @@ function renderMeer(){
         <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Alles staat alleen in deze browser en is verzonnen'}</span></span></button>
     </div>` : ''}
   </div>`;
+}
+
+/* ---------- Planning: thema en leiding per zondag ---------- */
+function leaderNames(ids){
+  const l = ids.map(leaderById).filter(Boolean);
+  return l.length ? l.map(x => x.id === db.session ? '<span class="me-tag">Jij</span>' : esc(x.name)).join(', ') : '<span class="muted">nog niemand</span>';
+}
+function planCard(date, compact){
+  const s = sundayOf(date), T = todayISO();
+  return `<a class="card plan ${!compact && date === T ? 'today' : ''}" href="#/planning" ${compact ? '' : `data-action="editPlan" data-date="${date}"`}>
+    ${compact ? '' : `<small>${date === T ? 'Vandaag' : fmtDate(date, {weekday:'long', day:'numeric', month:'long'})}</small>`}
+    <div class="theme">${s.theme ? esc(s.theme) : '<span class="muted">Nog geen thema</span>'}</div>
+    ${s.passage ? `<div class="muted">${esc(s.passage)}</div>` : ''}
+    <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span></div>
+    ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
+  </a>`;
+}
+function renderPlanning(){
+  const first = nextSunday(todayISO());
+  const dates = Array.from({ length:state.planCount }, (_, i) => addDays(first, 7*i));
+  app.innerHTML = `
+  <div class="page">
+    <div class="page-head"><h1>Planning</h1><span class="muted">Thema en leiding per zondag</span></div>
+    <div class="stack">${dates.map(d => planCard(d)).join('')}</div>
+    <button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>
+    <div class="banner">${icon('info')}<span>Tik op een zondag om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in.</span></div>
+  </div>`;
+}
+function openEditPlan(date){
+  const s = sundayOf(date);
+  const chips = (grp, on) => [...db.leaders].sort((a,b) => (a.group === grp ? 0 : 1) - (b.group === grp ? 0 : 1) || byName(a,b)).map(l =>
+    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}">${esc(l.name)}<span class="tick">✓</span></button>`).join('');
+  openModal(`
+    <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">Thema en leiding</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="field"><span>Thema / Bijbelverhaal</span><input id="pl-theme" value="${esc(s.theme)}" placeholder="Bijv. Jozef en zijn broers" autocomplete="off"></label>
+      <label class="field"><span>Bijbelgedeelte</span><input id="pl-passage" value="${esc(s.passage)}" placeholder="Bijv. Genesis 37" autocomplete="off"></label>
+      <label class="field"><span>Voorbereiding</span><textarea id="pl-prep" rows="3" placeholder="Wat moet er klaargezet of meegenomen worden?">${esc(s.prep)}</textarea></label>
+      <div class="field"><span>Leiding onderbouw</span><div class="chips" id="pl-onder">${chips('onder', s.onder)}</div></div>
+      <div class="field"><span>Leiding bovenbouw</span><div class="chips" id="pl-boven">${chips('boven', s.boven)}</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" data-action="savePlan" data-date="${date}">Opslaan</button></div>`);
 }
 
 /* ---------- Team ---------- */
@@ -1076,16 +1183,25 @@ const actions = {
   saveKid: () => {
     const name = $('#kid-name').value.trim();
     if (!name){ $('#kid-name').focus(); return; }
-    const kid = { id:newId(), name, group:$('#kid-group').value, created:todayISO() };
+    const kid = { id:newId(), name, group:$('#kid-group').value, created:todayISO(), birthdate:$('#kid-birth').value || null };
     db.kids.push(kid); put('kids', kid); save();
     state.search = ''; render(); openCheckin(kid.id);
   },
   openKid: d => openKid(d.id),
+  editPlan: (d, el, e) => { e.preventDefault(); openEditPlan(d.date); },
+  morePlan: () => { state.planCount += 8; render(); },
+  savePlan: d => {
+    const ids = sel => [...document.querySelectorAll(sel + ' .chip.on')].map(c => c.dataset.id);
+    const s = { date:d.date, theme:$('#pl-theme').value.trim(), passage:$('#pl-passage').value.trim(), prep:$('#pl-prep').value.trim(), onder:ids('#pl-onder'), boven:ids('#pl-boven') };
+    db.sundays = db.sundays.filter(x => x.date !== d.date).concat(s);
+    put('sundays', s); save(); closeModal(); render(); toast('Planning opgeslagen');
+  },
   saveKidEdit: d => {
     const name = $('#kd-name').value.trim();
     if (!name){ $('#kd-name').focus(); return; }
-    Object.assign(kidById(d.id), { name, group:$('#kd-group').value });
-    upd('kids', { id:d.id, name, group:$('#kd-group').value });
+    const data = { name, group:$('#kd-group').value, birthdate:$('#kd-birth').value || null };
+    Object.assign(kidById(d.id), data);
+    upd('kids', { id:d.id, ...data });
     save(); closeModal(); render(); toast('Gegevens opgeslagen');
   },
   delKid: d => {

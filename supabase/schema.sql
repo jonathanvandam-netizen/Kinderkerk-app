@@ -31,7 +31,8 @@ create table public.kids (
   id      uuid primary key default gen_random_uuid(),
   name    text not null check (name <> ''),
   groep   text not null check (groep in ('onder','boven','bezoeker')),
-  created date not null default current_date
+  created date not null default current_date,
+  birthdate date
 );
 
 create table public.checkins (
@@ -64,6 +65,16 @@ create table public.rosters (
   date   date not null,
   kid_id uuid references public.kids(id) on delete set null,
   primary key (kind, date)
+);
+
+-- Planning per zondag: thema en leiding (lijsten met leaders.id)
+create table public.sundays (
+  date    date primary key,
+  theme   text not null default '',
+  passage text not null default '',
+  prep    text not null default '',
+  onder   uuid[] not null default '{}',
+  boven   uuid[] not null default '{}'
 );
 
 create table public.illnesses (
@@ -138,6 +149,7 @@ alter table public.leader_checkins enable row level security;
 alter table public.notes           enable row level security;
 alter table public.rosters         enable row level security;
 alter table public.illnesses       enable row level security;
+alter table public.sundays         enable row level security;
 
 create policy "beheerders beheren uitnodigingen" on public.invites
   for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -166,6 +178,8 @@ create policy "leiding" on public.notes
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
 create policy "leiding" on public.rosters
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
+create policy "leiding" on public.sundays
+  for all to authenticated using (public.is_leader()) with check (public.is_leader());
 
 create policy "leiding ziet ziektes" on public.illnesses
   for select to authenticated using (public.is_leader());
@@ -179,7 +193,7 @@ revoke all on all tables in schema public from anon;
 -- Zo ziet alle leiding een check-in meteen verschijnen.
 alter publication supabase_realtime add table
   public.invites, public.leaders, public.kids, public.checkins, public.leader_checkins,
-  public.notes, public.rosters, public.illnesses;
+  public.notes, public.rosters, public.illnesses, public.sundays;
 
 -- ---------- Eerste beheerder ----------
 -- Vervang het e-mailadres hieronder door dat van jezelf.

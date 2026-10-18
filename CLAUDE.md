@@ -20,7 +20,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS).
 - Twee modi, gekozen via `kinderkerk/config.js`:
-  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v2`), inloggen nagebootst.
+  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v3`), inloggen nagebootst.
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
@@ -35,7 +35,11 @@ Home (Vandaag/Gebed/Notities, aantallen, rooster van vandaag), check-in per kind
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
 leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), roosters (sheets en bidden
 bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen), gebedslijst.
-Kindgegevens (potloodje in check-in, of klik in historie): naam/groep wijzigen, laatste keren; verwijderen alleen beheerder.
+Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
+verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
+Planning (Meer → Planning): per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw; iedereen
+mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
+Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Open vragen / volgende stappen
 - Supabase-project bestaat al (eu-west-1, Ierland); de Project URL staat in `kinderkerk/config.js`.
