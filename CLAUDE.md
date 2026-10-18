@@ -39,7 +39,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   publiceert de map `kinderkerk/` bij elke push naar `main`. De repository is daarvoor openbaar gemaakt.
 
 ## Functies
-Home (Vandaag/Gebed/Notities, aantallen, rooster van vandaag), check-in per kind (Bijbel/Werkblad/Geld,
+Home (compacte begroeting + leiding check-in; tabs Vandaag/Gebed/Notities; tellers in één kaart; "Programma" = thema,
+leiding, sheets en bidden van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
 leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), roosters (sheets en bidden
 bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen), gebedslijst.

@@ -27,6 +27,7 @@
   --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html,body{margin:0}
 /* Geen inzoomen: geen dubbeltik-zoom, en invulvelden op 16px zodat de iPhone niet inzoomt bij het tikken */
 html{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -103,7 +104,28 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .stack{display:flex;flex-direction:column;gap:12px}
 
 .home-grid{display:grid;gap:16px}
-@media(min-width:900px){.home-grid{grid-template-columns:320px 1fr;align-items:start}.home-grid aside{position:sticky;top:84px}}
+@media(min-width:760px){.home-grid{grid-template-columns:300px 1fr;align-items:start}.home-grid aside{position:sticky;top:84px}}
+/* Begroeting bovenaan Home */
+.hello{padding:16px}
+.hello-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.hello-logo{width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid var(--brand-soft);flex:none}
+.hello h1{font-size:20px;font-weight:800}
+.hello-date{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.hello .hero-duty{margin:0 0 12px}
+/* Tellers in één kaart */
+.stats1{display:grid;grid-template-columns:repeat(3,1fr);padding:14px 0 12px}
+.stats1 .cell{padding:0 16px}
+.stats1 .cell + .cell{border-left:1px solid var(--border)}
+.stats1 .lbl{font-size:13px;color:var(--muted);font-weight:700}
+.stats1 .num{font-size:30px;font-weight:800;line-height:1.15}
+.stats1 .dots{grid-column:1/-1;border-top:1px solid var(--border);margin-top:10px;padding:10px 16px 0}
+.btn-row.two{display:grid;grid-template-columns:1fr 1fr}
+.btn-row.two .btn{padding-left:10px;padding-right:10px}
+/* Inchecken: datum klein bovenaan */
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;margin-bottom:16px;color:var(--muted);font-size:14px}
+.datebar span{display:flex;align-items:center;gap:6px}
+.datebar svg.i{width:18px;height:18px}
+.hint.soft{font-weight:600;font-size:14px;padding:10px 12px}
 .hero{padding:28px 20px 20px;text-align:center}
 .hero-logo{width:104px;height:104px;margin:0 auto 14px;border-radius:50%;border:4px solid var(--brand-soft);overflow:hidden}
 .hero h1{font-size:22px;font-weight:800;margin-bottom:4px}
@@ -293,7 +315,7 @@ table.t tr.click:hover td{background:#fafbfc}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 8';
+const APP_VERSION = '2026-10-18 · 9';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -679,13 +701,12 @@ function renderHome(){
   app.innerHTML = `
   <div class="page wide"><div class="home-grid">
     <aside class="stack">
-      <div class="card hero">
-        <div class="hero-logo">${logoImg()}</div>
-        <h1>Kinderkerk De Deur</h1>
-        <p class="muted">${greeting()}, ${esc(me().name)}!</p>
-        <button class="btn btn-primary btn-block" data-action="leaderCheckin">${icon('checkin')} Leiding check-in</button>
-        <div class="hero-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</div>
+      <div class="card hello">
+        <div class="hello-top"><span class="hello-logo">${logoImg()}</span>
+          <div><div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div>
+          <h1>${greeting()}, ${esc(firstName(me().name))}!</h1></div></div>
         ${(m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${m.date === T ? 'vandaag' : fmtDate(m.date, {weekday:'long', day:'numeric', month:'long'})}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday())}
+        <button class="btn btn-primary btn-block" data-action="leaderCheckin">${icon('checkin')} Leiding check-in</button>
       </div>
       <a class="card row" href="#/ziektes" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('thermo')}</span>
@@ -707,29 +728,21 @@ function homeVandaag(){
   const cs = checkinsOn(T);
   const g = grp => cs.filter(c => kidById(c.kidId).group === grp).length;
   const leaders = db.leaders.filter(l => leaderIn(l.id, T)).length;
-  const sheets = rosterToday('sheets'), bidden = rosterToday('bidden');
-  const duty = (r, label, ic) => {
-    const k = r && kidById(r.kidId);
-    const when = r && r.date !== T ? ` · ${fmtDate(r.date, {day:'numeric', month:'short'})}` : '';
-    return `<a class="card duty" href="#/roosters" style="text-decoration:none;color:inherit"><span class="row-icon">${icon(ic)}</span>
-      <span><small>${label}${when}</small><b>${k ? esc(k.name) : 'Nog niet ingepland'}</b></span></a>`;
-  };
+  const S = nextSunday(T);
   return `
-    <div class="stats">
-      <div class="card stat"><div class="lbl">Kinderen vandaag</div><div class="num">${cs.length}</div>
-        <div class="dots"><span><i class="dot" style="background:var(--onder)"></i>${g('onder')} onderbouw</span><span><i class="dot" style="background:var(--boven)"></i>${g('boven')} bovenbouw</span>${g('bezoeker') ? `<span><i class="dot" style="background:var(--bezoeker)"></i>${g('bezoeker')} bezoeker${g('bezoeker') > 1 ? 's' : ''}</span>` : ''}</div></div>
-      <div class="card stat"><div class="lbl">Leiding</div><div class="num">${leaders}</div><div class="sub">ingecheckt</div></div>
-      <div class="card stat"><div class="lbl">Totaal</div><div class="num">${cs.length + leaders}</div><div class="sub">waarvan ${leaders} leiding</div></div>
+    <div class="card stats1">
+      <div class="cell"><div class="lbl">Kinderen</div><div class="num">${cs.length}</div></div>
+      <div class="cell"><div class="lbl">Leiding</div><div class="num">${leaders}</div></div>
+      <div class="cell"><div class="lbl">Totaal</div><div class="num">${cs.length + leaders}</div></div>
+      <div class="dots"><span><i class="dot" style="background:var(--onder)"></i>${g('onder')} onderbouw</span><span><i class="dot" style="background:var(--boven)"></i>${g('boven')} bovenbouw</span>${g('bezoeker') ? `<span><i class="dot" style="background:var(--bezoeker)"></i>${g('bezoeker')} bezoeker${g('bezoeker') > 1 ? 's' : ''}</span>` : ''}</div>
     </div>
-    <div class="btn-row" style="margin-top:12px">
-      <a class="btn btn-primary" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
-      <button class="btn btn-soft" data-action="whoIsIn">${icon('users')} Bekijk wie ingecheckt is</button>
+    <div class="btn-row two" style="margin-top:12px">
+      <a class="btn btn-primary" href="#/checkin">${icon('checkin')} Inchecken</a>
+      <button class="btn btn-soft" data-action="whoIsIn">${icon('users')} Wie is er?</button>
     </div>
-    ${homeBirthdays()}
-    <h3 class="section-title">${nextSunday(T) === T ? 'Vandaag' : 'Zondag ' + fmtDate(nextSunday(T), {day:'numeric', month:'long'})}</h3>
-    ${planCard(nextSunday(T), true)}
-    <h3 class="section-title">Vandaag ingeroosterd</h3>
-    <div class="stats" style="grid-template-columns:1fr 1fr">${duty(sheets, 'Sheets', 'monitor')}${duty(bidden, 'Bidden bovenbouw', 'pray')}</div>`;
+    <h3 class="section-title">${S === T ? 'Programma vandaag' : 'Programma zondag ' + fmtDate(S, {day:'numeric', month:'long'})}</h3>
+    ${planCard(S, true)}
+    ${homeBirthdays()}`;
 }
 function homeBirthdays(){
   const T = todayISO();
@@ -851,12 +864,14 @@ function openCheckin(kidId, date = todayISO()){
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
       ${(bd => bd ? `<div class="hint bday">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, {weekday:'long'})} ${age(k.birthdate, bd)} jaar!</div>` : '')(birthdayNear(k, date))}
-      <label class="field"><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
-      <div class="field"><span>Selecteer hieronder</span>
+      <div class="datebar"><span>${icon('calendar')} ${date === todayISO() ? 'Vandaag, ' + fmtDate(date, {day:'numeric', month:'long'}) : cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</span>
+        <button type="button" class="textlink" style="font-size:14px;color:var(--brand)" data-action="pickDate">Andere datum</button></div>
+      <label class="field" id="ci-date-field" ${date === todayISO() ? 'hidden' : ''}><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
+      <div class="field"><span>Meegenomen</span>
         <div class="chips">${ITEMS.filter(i => !i.boven || k.group === 'boven').map(i =>
           `<button type="button" class="chip ${items.has(i.id) ? 'on' : ''}" data-action="toggleChip" data-id="${i.id}">${i.emoji} ${i.label}<span class="tick">✓</span></button>`).join('')}</div></div>
       <label class="field"><span>Gebedsverlangens</span><textarea id="ci-prayer" rows="3" placeholder="Vul hier eventueel gebedsverlangens in">${esc(ex?.prayer || '')}</textarea></label>
-      <div class="hint">${icon('help')} Vraag of ${esc(firstName(k.name))} naar de wc moet</div>
+      <div class="hint soft">${icon('help')} Vraag of ${esc(firstName(k.name))} naar de wc moet</div>
       <div style="text-align:center"><a class="textlink" href="#/ziektes">${icon('thermo')} Kind ziek? Klik hier.</a></div>
     </div>
     <div class="modal-foot">
@@ -1020,7 +1035,9 @@ function planCard(date, compact){
     ${compact ? '' : `<small>${date === T ? 'Vandaag' : fmtDate(date, {weekday:'long', day:'numeric', month:'long'})}</small>`}
     ${weekTags(date)}
     ${topicBlock(date)}
-    <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span></div>
+    <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span>
+      ${compact ? ['sheets','bidden'].map(key => { const r = db.rosters[key].find(x => x.date === date), k = r && kidById(r.kidId);
+        return `<span>${key === 'sheets' ? 'Sheets' : 'Bidden'}</span><span>${k ? esc(k.name) : '<span class="muted">niemand</span>'}</span>`; }).join('') : ''}</div>
     ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
   </a>`;
 }
@@ -1326,6 +1343,7 @@ const actions = {
   },
   openCheckin: d => openCheckin(d.id),
   toggleChip: (d, el) => el.classList.toggle('on'),
+  pickDate: () => { const f = $('#ci-date-field'); f.hidden = false; const i = $('#ci-date'); i.focus(); try { i.showPicker(); } catch(e){} },
   saveCheckin: d => {
     const date = $('#ci-date').value || todayISO();
     const items = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.id);
