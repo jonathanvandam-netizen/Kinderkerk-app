@@ -131,11 +131,9 @@ Rooster: bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla); onderbouw
 De demodata volgt dit (`dienst()` in index.html).
 
 ## Open vragen / volgende stappen
-- Supabase-project (eu-west-1, Ierland): database is ingericht (schema.sql + agenda.sql + Edge Function `agenda` door
-  Jonathan). De koppeling staat **tijdelijk uit** (`supabaseKey` leeg in config.js, de sleutel staat er als commentaar):
-  zonder eigen SMTP kun je bij een gratis project (sinds juni 2026) de inlogmail niet aanpassen, dus komt er een link
-  i.p.v. een code en kan niemand inloggen. Eerst SMTP (Gmail met app-wachtwoord of Brevo, zie installeren.html stap 2),
-  dan de mailtemplates (stap 3), dan de sleutel weer invullen en APP_VERSION ophogen.
+- Supabase-project (eu-west-1, Ierland) is gekoppeld (versie 22): schema.sql + agenda.sql + Edge Function `agenda`,
+  eigen SMTP via een apart Gmail-adres voor de app (app-wachtwoord; los van het gedeelde kinderkerk-adres), en de
+  mailtemplates Magic Link + Confirm sign up met `{{ .Token }}`. Sleutel in config.js.
   Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan de database niet zelf controleren.
-- Daarna: eigen SMTP voor de inlogmails (stappenplan met Brevo staat in INSTALLEREN.md stap 7),
-  en pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
+  Nog te doen: gegevens overzetten (Meer → Gegevens), leiding uitnodigen, agenda-koppeling testen.
+- Pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
