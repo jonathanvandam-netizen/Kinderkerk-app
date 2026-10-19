@@ -108,7 +108,7 @@ periode voor bovenbouw een eigen thema heeft). Echte stand: periode "Scheppingsv
 (18-10 = week 2, 22-11 = week 7 met grote vergadering; de vorige vergadering was klein). De demodata volgt dit.
 Vergadering (eigen knop in de menubalk, `#/vergadering`; bewust niet op Home): volgende vergadering = week 7 van de periode (of zelf gepland), agendapunten
 vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
-afvinken; open actiepunten op het overzicht), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
+afvinken; open actiepunten op het overzicht; over de vóór-datum = `isLate`: rood vlak + "⚠️ Te laat", kop "· N te laat", bovenaan door `byDue`), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Per vergadering een notulist; actiepunten met één of meer personen (`who` = lijst). Notulen typt alleen de notulist;
 anderen zien ze alleen-lezen en live ("Toch typen" kan, `state.notesOpen`), zodat niemand elkaars tekst overschrijft. Delen geeft een verslag zoals de

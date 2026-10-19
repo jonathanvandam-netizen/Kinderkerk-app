@@ -191,6 +191,9 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .check.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .action .row-main{cursor:pointer}
 .action .row-main b{white-space:normal}
+.late-count{color:var(--bad);font-size:14px;font-weight:700}
+.row.action.late,.row.action.late:hover{background:var(--bad-soft)}
+.action.late .late-tag{color:var(--bad);font-weight:800}
 .action.done .row-main b{text-decoration:line-through;color:var(--muted)}
 .icon-btn.sm{width:32px;height:32px}
 .icon-btn.sm svg.i{width:17px;height:17px}
@@ -457,7 +460,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 39';
+const APP_VERSION = '2026-10-19 · 40';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1326,19 +1329,20 @@ function ensureMeeting(date, kind){
   return m;
 }
 const agendaOf = id => db.agenda.filter(a => a.meetingId === id).sort((a,b) => a.sort - b.sort);
+const isLate = a => !a.done && !!a.due && a.due < todayISO();
 const byDue = (a,b) => (a.due || '9999').localeCompare(b.due || '9999');
 /* Wie: lijst met leiding-id's (oude data had één id) */
 const whoList = a => Array.isArray(a.who) ? a.who : a.who ? [a.who] : [];
 const whoNames = (a, me) => whoList(a).map(leaderById).filter(Boolean).map(l => me && l.id === db.session ? 'Jij' : l.name);
 function actionRow(a, showMeeting){
   const names = whoNames(a, true), m = showMeeting && db.meetings.find(x => x.id === a.meetingId);
-  const meta = [names.length ? esc(names.join(', ')) : 'Nog niemand',
+  const late = isLate(a);
+  const meta = [late ? '<span class="late-tag">⚠️ Te laat</span>' : '', names.length ? esc(names.join(', ')) : 'Nog niemand',
     a.due ? `vóór ${fmtDate(a.due, {day:'numeric', month:'short'})}` : '',
     m ? `uit ${meetingKindLabel(m.kind).toLowerCase()} ${fmtDate(m.date, {day:'numeric', month:'short'})}` : ''].filter(Boolean).join(' · ');
-  const late = !a.done && a.due && a.due < todayISO();
-  return `<div class="row static action ${a.done ? 'done' : ''}">
+  return `<div class="row static action ${a.done ? 'done' : ''} ${late ? 'late' : ''}">
     <button class="check ${a.done ? 'on' : ''}" title="${a.done ? 'Weer open zetten' : 'Afvinken'}" data-action="toggleAction" data-id="${a.id}">${icon('check')}</button>
-    <span class="row-main" data-action="editAction" data-id="${a.id}"><b>${esc(a.text)}</b><span class="muted" ${late ? 'style="color:var(--bad)"' : ''}>${meta}</span></span>
+    <span class="row-main" data-action="editAction" data-id="${a.id}"><b>${esc(a.text)}</b><span class="muted">${meta}</span></span>
   </div>`;
 }
 const agendaAddForm = (date, kind) => `<form class="addrow" data-submit="addAgenda" data-date="${date}" data-kind="${kind}">
@@ -1365,7 +1369,7 @@ function vergaderOverzicht(){
         <span class="row-main"><b style="white-space:normal">${esc(a.title)}</b><span class="muted">door ${esc(a.author || '—')}</span></span>
         <button class="icon-btn sm" title="Verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>`).join('')}
       ${agendaAddForm(n.date, n.kind)}</div>` : ''}
-    <h3 class="section-title">Open actiepunten</h3>
+    <h3 class="section-title">Open actiepunten${(n => n ? ` <span class="late-count">· ${n} te laat</span>` : '')(open.filter(isLate).length)}</h3>
     <div class="card list">${open.map(a => actionRow(a, true)).join('') || '<div class="empty">Geen open actiepunten. 🎉</div>'}</div>
     <button class="btn btn-soft btn-block" style="margin-top:10px" data-action="addAction" data-meeting="${m ? m.id : ''}">${icon('plus')} Actiepunt toevoegen</button>
     ${past.length ? `<h3 class="section-title">Eerdere vergaderingen</h3>
