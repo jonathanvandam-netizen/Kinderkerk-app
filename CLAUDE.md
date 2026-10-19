@@ -74,7 +74,9 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   publiceert de map `kinderkerk/` bij elke push naar `main`. De repository is daarvoor openbaar gemaakt.
 
 ## Functies
-Home (compacte begroeting + leiding check-in; kaart Gebed boven Kind ziek; tabs Vandaag/Notities (Gebed-tab bewust weg, dubbel); tellers in één kaart; "Programma" = thema,
+Home (compacte begroeting + grote knop "Kinderen inchecken"; kaart Gebedsverlangens (Kind ziek? bewust niet op Home, wel in
+het incheckvenster en Meer); onder de tellers "Wie is er?" en "Leiding inchecken". Leiding op de planning telt automatisch
+als aanwezig (`leaderPlanned`), extra leiding check je in (`leaderExtra`, tabel leader_checkins); tabs Vandaag/Notities (Gebed-tab bewust weg, dubbel); tellers in één kaart; "Programma" = thema,
 leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
 leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
