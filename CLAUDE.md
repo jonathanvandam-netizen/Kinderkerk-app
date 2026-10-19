@@ -15,7 +15,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).
 - Navigatie: op de website (groot scherm) bovenin; op telefoon en als geïnstalleerde app een zwevende
-  "liquid glass"-balk onderin (Home, Check-in, Smileys, Planning, Vergadering, Meer).
+  "liquid glass"-balk onderin (Home, Check-in, Gedrag, Planning, Vergadering, Meer).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
@@ -88,7 +88,7 @@ bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep
 Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,
 per ding, opgeteld, geen punten voor alleen aanwezig): bovenbouw Bijbel 10, Werkblad 10, Geld 5, Bijbeltekst 10;
 onderbouw Bijbel 10, Werkblad 15, Geld 10; bezoekers als onderbouw.
-Smileys (eigen knop in de menubalk, `#/smileys`): per kind smileys geven (😊) en waarschuwingen (⚠️). 7 smileys =
+Gedrag (eigen knop in de menubalk, `#/gedrag`; `#/smileys` werkt ook): per kind smileys geven (😊) en waarschuwingen (⚠️). 7 smileys =
 iets uit de grabbelbak graaien; knop "Gegraaid" trekt er 7 af (rest telt door). Waarschuwingen tellen per zondag:
 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders/verzorgers in de dienst (bevestigen). Lijst = vandaag
 ingecheckte kinderen (anders recent), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";

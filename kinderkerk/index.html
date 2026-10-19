@@ -404,7 +404,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 9';
+const APP_VERSION = '2026-10-19 · 10';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -839,20 +839,20 @@ const state = { smTab:null, smAll:false, planCount:8, planMine:false, route:'hom
 const NAV = [
   { id:'home', label:'Home', icon:'home' },
   { id:'checkin', label:'Check-in', icon:'checkin' },
-  { id:'smileys', label:'Smileys', icon:'smile' },
+  { id:'gedrag', label:'Gedrag', icon:'smile' },
   { id:'planning', label:'Planning', icon:'calendar' },
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
 const MEER_ROUTES = ['meer','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
-  const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
+  const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'smileys' ? 'gedrag' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $('#mainnav').innerHTML = html;
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -1261,7 +1261,7 @@ function renderSmileys(){
   app.innerHTML = `
   <div class="page">
     <div class="tabs">${tabs.map(([id,l]) => `<button class="tab ${state.smTab === id ? 'active' : ''}" data-action="smTab" data-id="${id}">${l}</button>`).join('')}</div>
-    <div class="page-head"><h1>Smileys</h1><span class="muted">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+    <div class="page-head"><h1>Gedrag</h1><span class="muted">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
     <div class="banner" style="margin:0 0 16px">${icon('info')}<span><b>${SMILEY_GOAL} smileys</b> = iets uit de grabbelbak graaien.
       Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders of verzorgers in de dienst zitten.</span></div>
     ${grab.length ? `<h3 class="section-title">🎁 Mag graaien uit de grabbelbak</h3>
