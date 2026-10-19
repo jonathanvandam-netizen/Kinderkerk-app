@@ -175,6 +175,11 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .absent-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}.absent-dates label{display:flex;flex-direction:column;gap:2px;font-weight:400;font-size:13px}
 #absent-box input{font:inherit;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--input);color:var(--text);width:100%}
 .hero-duty.clash{background:var(--warn-soft);color:var(--warn-text)}.hero-duty.clash a{color:inherit;font-weight:800;margin-left:4px}
+.group-hints{margin-bottom:14px;background:var(--warn-soft);border:0}
+.gh-row{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:10px 0;border-top:1px solid var(--border);font-size:15px}
+.gh-btns{display:flex;gap:6px;flex-wrap:wrap}
+.gh-row:first-of-type{margin-top:6px}
+.gh-limit{width:52px;font:inherit;font-size:16px;border:1px solid var(--border);border-radius:8px;padding:2px 6px;background:var(--input);color:var(--text)}
 .away-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .away-presets .chip{padding:5px 10px;font-size:13.5px}
 .check-line{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin:-4px 0 14px;cursor:pointer}
@@ -502,7 +507,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 54';
+const APP_VERSION = '2026-10-19 · 55';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2061,6 +2066,33 @@ function renderMeer(){
   </div>`;
 }
 
+/* ---------- Groep nakijken ----------
+   Een kind dat door zijn leeftijd naar de bovenbouw hoort (leeftijd op 1 september, begin van het schooljaar; grens instelbaar door
+   een beheerder, settings 'groepsgrens', standaard 8), of een bezoeker die al 3 keer kwam: dan een seintje in Kinderen beheren. */
+const groupLimit = () => +(db.settings?.groepsgrens) || 8;
+const schoolStart = () => { const T = todayISO(), y = +T.slice(0, 4); return T.slice(5) >= '09-01' ? `${y}-09-01` : `${y - 1}-09-01`; };
+/* "Laat zo": tabel notes, text = 'groep-ok:{"kid","sep"}' (geldt dit schooljaar; bij een bezoeker altijd) */
+const GROUP_OK = 'groep-ok:';
+const groupOk = (k, sep) => db.notes.some(n => { if (!n.text || !n.text.startsWith(GROUP_OK)) return false; try { const x = JSON.parse(n.text.slice(GROUP_OK.length)); return x.kid === k.id && (k.group === 'bezoeker' || x.sep === sep); } catch(e){ return false; } });
+function groupHints(){
+  const sep = schoolStart(), lim = groupLimit();
+  const up = db.kids.filter(k => isActive(k) && k.group === 'onder' && k.birthdate && age(k.birthdate, sep) >= lim && !groupOk(k, sep)).sort(byName);
+  const visit = db.kids.filter(k => isActive(k) && k.group === 'bezoeker' && db.checkins.filter(c => c.kidId === k.id).length >= 3 && !groupOk(k, sep)).sort(byName);
+  return { up, visit };
+}
+function groupHintCard(){
+  const { up, visit } = groupHints(); if (!up.length && !visit.length) return '';
+  const sugg = k => k.birthdate && age(k.birthdate, schoolStart()) >= groupLimit() ? 'boven' : 'onder';
+  return `<div class="card pad group-hints">
+    <b>🔔 Groep nakijken</b>
+    ${up.map(k => `<div class="gh-row"><span><b>${esc(k.name)}</b> is ${age(k.birthdate, schoolStart())} jaar en staat nog in de onderbouw</span>
+      <span class="gh-btns"><button class="btn btn-soft sm" data-action="setKidGroup" data-id="${k.id}" data-group="boven">Naar bovenbouw</button><button class="btn btn-outline sm" data-action="groupOk" data-id="${k.id}">Laat zo</button></span></div>`).join('')}
+    ${visit.map(k => `<div class="gh-row"><span><b>${esc(k.name)}</b> kwam al ${db.checkins.filter(c => c.kidId === k.id).length} keer als bezoeker. Vast kind maken?</span>
+      <span class="gh-btns">${['onder','boven'].map(g => `<button class="btn ${g === sugg(k) ? 'btn-soft' : 'btn-outline'} sm" data-action="setKidGroup" data-id="${k.id}" data-group="${g}">${g === 'onder' ? 'Onderbouw' : 'Bovenbouw'}</button>`).join('')}<button class="btn btn-outline sm" data-action="groupOk" data-id="${k.id}">Blijft bezoeker</button></span></div>`).join('')}
+    <div class="muted" style="font-size:13px;margin-top:6px">Bovenbouw vanaf ${isAdmin() ? `<input type="number" min="4" max="14" class="gh-limit" value="${groupLimit()}" data-change="groupLimit">` : `<b>${groupLimit()}</b>`} jaar (leeftijd op 1 september, begin van het schooljaar).</div>
+  </div>`;
+}
+
 /* ---------- Kinderen beheren: wie komt er nog? ---------- */
 const OLD_AGE = 13;   // vanaf deze leeftijd te oud voor de kinderkerk (voorstel, per kind aan te passen)
 function renderKinderen(){
@@ -2073,6 +2105,7 @@ function renderKinderen(){
   <div class="page">
     <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
     <div class="page-head"><h1>Kinderen beheren</h1><span class="muted">${all.length} kinderen</span></div>
+    ${groupHintCard()}
     <div class="tabs">${tabs.map(([id,l,n]) => `<button class="tab ${f === id ? 'active' : ''}" data-action="kidFilter" data-id="${id}">${l} <span class="count">${n}</span></button>`).join('')}</div>
     ${f === 'oud' && oud.length ? `<div class="banner" style="margin:0 0 12px">${icon('info')}<span>Deze kinderen zijn ${OLD_AGE} jaar of ouder. Gaan ze niet meer naar de kinderkerk? Zet ze dan allemaal in één keer op <b>Komt niet meer</b>.</span>
       <button class="btn btn-primary sm" data-action="retireOld">Allemaal: komt niet meer</button></div>` : ''}
@@ -2888,6 +2921,19 @@ const actions = {
     db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save();
     $('#absent-box').innerHTML = absentBox(); render();
   },
+  groupLimit: (d, el) => {
+    const v = Math.max(4, Math.min(14, +el.value || 8)); if (!isAdmin()) return;
+    db.settings = { ...db.settings, groepsgrens:v }; put('settings', { key:'groepsgrens', value:v }); save(); render();
+  },
+  groupOk: d => {
+    const n = { id:newId(), date:todayISO(), author:me().name, text:GROUP_OK + JSON.stringify({ kid:d.id, sep:schoolStart() }) };
+    db.notes.push(n); put('notes', n); save(); render();
+  },
+  setKidGroup: d => {
+    const k = kidById(d.id); if (!k) return;
+    k.group = d.group; upd('kids', { id:k.id, group:k.group }); save(); render();
+    toast(`${firstName(k.name)} staat nu in de ${d.group === 'onder' ? 'onderbouw' : 'bovenbouw'}`);
+  },
   quizNew: d => openQuizAdd(d.date || quizDate()),
   qfType: (d, el) => {
     el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el));
@@ -3413,6 +3459,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   if (e.target.dataset?.change === 'importPreview') renderImportPreview();
+  if (e.target.dataset?.change === 'groupLimit') actions.groupLimit(e.target.dataset, e.target);
   if (e.target.dataset?.change === 'backupFile' && e.target.files[0]) (CLOUD ? cloudImportFile : restoreBackup)(e.target.files[0]);
   if (e.target.dataset?.change === 'notulist'){ const m = db.meetings.find(x => x.id === e.target.dataset.id); if (m){ m.notulist = e.target.value || null; put('meetings', m); save(); toast('Notulist opgeslagen'); } }
   if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || kkDay());

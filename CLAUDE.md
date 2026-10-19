@@ -99,6 +99,9 @@ Afwezig + vervanger (bewust rustig): Mijn account → "Wanneer kan ik niet?" (va
 text = `afwezig:{"leader","from","to","why"}`, `absentOn`). Planning zet ⚠️ achter die naam (tabel, kaarten, chips). Op Home alleen
 bij een botsing een gele regel met "Vervanger zoeken" (`myClashes`); in het venster van een zondag waarop jij leiding hebt de knop
 "🔁 Kun je niet? Vervanger zoeken via WhatsApp" (`swapLink` = wa.me met kant-en-klare tekst).
+Groep nakijken (bovenaan Kinderen beheren, alleen als er iets is): onderbouwkind met leeftijd op 1 september ≥ grens (settings
+'groepsgrens', standaard 8, beheerder past aan in de kaart) → "Naar bovenbouw"; bezoeker met ≥3 check-ins → Onderbouw/Bovenbouw/
+"Blijft bezoeker". "Laat zo" = note `groep-ok:{"kid","sep"}` (geldt dat schooljaar; bezoeker altijd).
 Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**
