@@ -55,6 +55,9 @@ leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"),
 bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen), gebedslijst.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
+Jarig zingen: bij het inchecken knop "🎂 Vandaag gezongen" (+100 punten, instelbaar) van 6 dagen vóór tot 4 weken ná
+de verjaardag zolang er nog niet gezongen is (kind trakteert vaak later). Opgeslagen als item 'jarig' in de check-in.
+Home toont bij Jarig "Gezongen" of "🎵 Nog zingen".
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt" met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; iedereen
 mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
 Periodes (Planning, alleen beheerder): 7 weken, thema per groep (bovenbouw leeg = zelfde als onderbouw); week 6 = bidden, week 7 =

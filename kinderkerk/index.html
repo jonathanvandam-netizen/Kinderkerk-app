@@ -388,7 +388,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 3';
+const APP_VERSION = '2026-10-19 · 4';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -406,6 +406,18 @@ function birthdayNear(k, T = todayISO()){
   for (const y of [-1, 0, 1]){ const d = shiftYears(T, y).slice(0,4) + k.birthdate.slice(4);
     if (Math.abs(new Date(d + 'T12:00:00') - new Date(T + 'T12:00:00')) <= 6 * 864e5) return d; }
   return null;
+}
+/* Verjaardag om bij het inchecken te vieren: van 6 dagen ervoor tot 4 weken erna (vaak trakteert een kind later) */
+function birthdayCycle(k, T = todayISO()){
+  if (!k.birthdate) return null;
+  for (const y of [-1, 0, 1]){ const d = shiftYears(T, y).slice(0,4) + k.birthdate.slice(4), diff = (new Date(T + 'T12:00:00') - new Date(d + 'T12:00:00')) / 864e5;
+    if (diff >= -6 && diff <= 28) return d; }
+  return null;
+}
+/* Al gezongen voor deze verjaardag? Geeft de datum terug (een andere check-in dan exceptId) */
+function sungFor(k, bd, exceptId){
+  const c = db.checkins.find(x => x.kidId === k.id && x.id !== exceptId && x.items.includes('jarig') && x.date >= addDays(bd, -6) && x.date <= addDays(bd, 60));
+  return c ? c.date : null;
 }
 const initials = name => name.split(/\s+/).filter(Boolean).slice(0,2).map(p => p[0]).join('').toUpperCase();
 const firstName = name => name.split(' ')[0];
@@ -455,16 +467,19 @@ const ITEMS = [
   { id:'werkblad', emoji:'📄', label:'Werkblad' },
   { id:'geld', emoji:'💰', label:'Geld' },
   { id:'bijbeltekst', emoji:'💬', label:'Bijbeltekst', boven:true },
+  { id:'jarig', emoji:'🎂', label:'Jarig: gezongen', special:true },   // alleen bij een (net) jarig kind, eigen knop
 ];
 const itemEmoji = id => ITEMS.find(i => i.id === id)?.emoji || '';
 /* Punten: alleen om te weten hoeveel (fysieke) punten een kind krijgt. Een beheerder past de waarden aan onder Meer → Punten.
    Startwaarden opgegeven door Jonathan (punten per meegenomen ding, opgeteld; bezoekers als onderbouw). */
 const DEFAULT_POINTS = {
-  onder:{ aanwezig:0, bijbel:10, werkblad:15, geld:10 },
-  boven:{ aanwezig:0, bijbel:10, werkblad:10, geld:5, bijbeltekst:10 },
-  bezoeker:{ aanwezig:0, bijbel:10, werkblad:15, geld:10 },
+  onder:{ aanwezig:0, bijbel:10, werkblad:15, geld:10, jarig:100 },
+  boven:{ aanwezig:0, bijbel:10, werkblad:10, geld:5, bijbeltekst:10, jarig:100 },
+  bezoeker:{ aanwezig:0, bijbel:10, werkblad:15, geld:10, jarig:100 },
 };
-const pointsCfg = () => ({ ...DEFAULT_POINTS, ...(db.settings?.points || {}) });
+/* Opgeslagen waarden per groep over de startwaarden heen (zo krijgen nieuwe soorten punten ook een waarde) */
+const pointsCfg = () => { const saved = db.settings?.points || {};
+  return Object.fromEntries(Object.keys(DEFAULT_POINTS).map(g => [g, { ...DEFAULT_POINTS[g], ...(saved[g] || {}) }])); };
 function pointsFor(group, items){
   const c = pointsCfg()[group] || pointsCfg().onder;
   return (c.aanwezig || 0) + items.reduce((sum, id) => sum + (c[id] || 0), 0);
@@ -901,11 +916,13 @@ function homeVandaag(){
 }
 function homeBirthdays(){
   const T = todayISO();
-  const list = db.kids.filter(isRecent).map(k => ({ k, d:birthdayNear(k) })).filter(x => x.d).sort((a,b) => a.d.localeCompare(b.d));
+  const list = db.kids.filter(isRecent).map(k => { const d = birthdayCycle(k); return { k, d, sung:d && sungFor(k, d) }; })
+    .filter(x => x.d && (x.d >= addDays(T, -6) || !x.sung)).sort((a,b) => a.d.localeCompare(b.d));
   if (!list.length) return '';
-  return `<h3 class="section-title">🎂 Jarig deze week</h3><div class="card list">${list.map(({k,d}) => `
+  return `<h3 class="section-title">🎂 Jarig</h3><div class="card list">${list.map(({k,d,sung}) => `
     <button class="row" data-action="openKid" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
-      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${d === T ? 'Wordt vandaag' : d > T ? 'Wordt' : 'Werd'} ${age(k.birthdate, d)} jaar${d === T ? '' : ' op ' + fmtDate(d, {weekday:'long', day:'numeric', month:'short'})}</span></span>${icon('chev','chev')}</button>`).join('')}</div>`;
+      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${d === T ? 'Wordt vandaag' : d > T ? 'Wordt' : 'Werd'} ${age(k.birthdate, d)} jaar${d === T ? '' : ' op ' + fmtDate(d, {weekday:'long', day:'numeric', month:'short'})}</span></span>
+      ${sung ? `<span class="badge ok">${icon('check')} Gezongen</span>` : d <= T ? '<span class="badge grey">🎵 Nog zingen</span>' : ''}${icon('chev','chev')}</button>`).join('')}</div>`;
 }
 function homeGebed(){
   const T = todayISO();
@@ -1122,7 +1139,7 @@ function renderKidList(){
   kids.sort(byName);
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) ? ' · 🎂' : '');
+    const sub = (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
@@ -1150,12 +1167,17 @@ function openCheckin(kidId, date = todayISO()){
       <button class="icon-btn" title="Gegevens van ${esc(firstName(k.name))}" data-action="openKid" data-id="${k.id}">${icon('edit')}</button>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
-      ${(bd => bd ? `<div class="hint bday">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, {weekday:'long'})} ${age(k.birthdate, bd)} jaar!</div>` : '')(birthdayNear(k, date))}
+      ${(bd => { if (!bd) return '';
+        const sung = sungFor(k, bd, ex?.id), past = bd < addDays(date, -6);
+        if (past && sung) return '';
+        return `<div class="hint bday" style="display:block">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, past ? {day:'numeric', month:'long'} : {weekday:'long'})} ${age(k.birthdate, bd)} jaar!
+          ${sung ? `<div style="margin-top:8px;font-weight:600">🎉 Al gezongen op ${fmtDate(sung, {day:'numeric', month:'long'})}</div>`
+            : `<div style="margin-top:10px"><button type="button" class="chip ${items.has('jarig') ? 'on' : ''}" data-action="toggleChip" data-id="jarig">🎂 Vandaag gezongen <span class="pts">+${pointsCfg()[k.group]?.jarig ?? 0} punten</span><span class="tick">✓</span></button></div>`}</div>`; })(birthdayCycle(k, date))}
       <div class="datebar"><span>${icon('calendar')} ${date === todayISO() ? 'Vandaag, ' + fmtDate(date, {day:'numeric', month:'long'}) : cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</span>
         <button type="button" class="textlink" style="font-size:14px;color:var(--brand)" data-action="pickDate">Andere datum</button></div>
       <label class="field" id="ci-date-field" ${date === todayISO() ? 'hidden' : ''}><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
       <div class="field"><span>Meegenomen</span>
-        <div class="chips">${ITEMS.filter(i => !i.boven || k.group === 'boven').map(i =>
+        <div class="chips">${ITEMS.filter(i => !i.special && (!i.boven || k.group === 'boven')).map(i =>
           `<button type="button" class="chip ${items.has(i.id) ? 'on' : ''}" data-action="toggleChip" data-id="${i.id}">${i.emoji} ${i.label}<span class="tick">✓</span></button>`).join('')}</div></div>
       <label class="field"><span>Gebedsverlangens</span><textarea id="ci-prayer" rows="3" placeholder="Vul hier eventueel gebedsverlangens in">${esc(ex?.prayer || '')}</textarea></label>
       <div class="hint soft">${icon('help')} Vraag of ${esc(firstName(k.name))} naar de wc moet</div>
