@@ -130,8 +130,12 @@ Downloaden: alleen PowerPoint en Google Slides (Jonathan wil geen spreadsheet/Ex
 (`vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia; daarna haalt
 de app uit [Content_Types].xml de Overrides naar niet-bestaande slideMasterN weg, anders weigert PowerPoint het bestand). Eerst maken,
 dan venster met "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster alleen direct na een tik) en Downloaden.
-Google Slides = hetzelfde .pptx + stappen: bewaren → docs.google.com/presentation openen → mapje → Uploaden (Google laat geen andere
-site een bestand neerzetten; automatisch openen in een app kan niet vanuit een web-app). PowerPoint werkt (getest door Jonathan).
+Google Slides: de app stuurt de .pptx (base64, met de Supabase access_token) naar een Google Apps Script web-app van de beheerder
+(`google/quiz-naar-slides.gs`, URL in config.js als `slidesScript`; pages.yml zet hem als slides-script.txt naast installeren.html,
+stap 8). Het script controleert de token bij Supabase /auth/v1/user, zet het bestand in Drive (map "Kinderkerk quiz") om naar Google
+Slides (Drive API-service v3 of v2; zonder die service blijft het een .pptx in Drive), deelt "iedereen met link kan bewerken" en geeft
+de link terug → venster "Openen in Google Slides". Getest met een nagebootste Google-omgeving (gstest) en Supabase-stub; echt Google
+is vanaf hier niet bereikbaar. Zonder slidesScript: oude route (bewaren → docs.google.com → zelf uploaden). PowerPoint werkt (getest door Jonathan).
 Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q","a"}` of `quiz:{"q","opts":[…],"ok":[…]}` (`QUIZ_PREFIX`, `quizOf`).
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.

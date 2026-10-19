@@ -145,6 +145,19 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
       <li>In de app: <b>Meer → Team</b> → tik op iemand → <b>Uitnodigen via WhatsApp</b>.</li>
     </ol>
   </section>
+
+  <section class="card">
+    <h2><span class="num">8</span> Quiz naar Google Slides</h2>
+    <p style="margin:0">Dan zet de knop <b>Google Slides</b> bij de quiz hem vanzelf in Google Slides. De quiz komt in jouw Google Drive (map <b>Kinderkerk quiz</b>). Doe dit het liefst op een computer.</p>
+    <ol>
+      <li>Ga naar <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> (met het Google-account waar de quizzen in mogen komen) en kies <b>Nieuw project</b>.</li>
+      <li><button class="soft" data-file="slides-script.txt">Kopieer de script-code</button>. Selecteer in het project alle tekst die er al staat en plak eroverheen. Klik op het <b>opslaan</b>-icoontje.</li>
+      <li>Links bij <b>Services</b> op <b>+</b> → kies <b>Drive API</b> → <b>Toevoegen</b>.</li>
+      <li>Kies bovenaan bij de functies <b>test</b> en klik op <b>Uitvoeren</b>. Geef toestemming (bij "Google heeft deze app niet geverifieerd": <b>Geavanceerd</b> → <b>Ga naar … (onveilig)</b>; het is je eigen script).</li>
+      <li>Rechtsboven <b>Implementeren → Nieuwe implementatie</b> → tandwiel → <b>Web-app</b>. Uitvoeren als: <b>Ik</b>. Wie heeft toegang: <b>Iedereen</b>. Klik op <b>Implementeren</b>.</li>
+      <li>Kopieer de <b>URL van de web-app</b> (eindigt op <code>/exec</code>) en stuur hem naar Claude, dan zet die hem in de app. Die URL is niet geheim: het script laat alleen ingelogde leiding toe.</li>
+    </ol>
+  </section>
 </main>
 <script>
 const TEXT = {
@@ -171,7 +184,7 @@ $('#copy-sql').addEventListener('click', e => {
   copy(schema.replace('JOUW-EMAIL@voorbeeld.nl', email), e.target, '✓ Gekopieerd, nu plakken in Supabase');
 });
 const files = {};
-['agenda.sql', 'agenda-functie.txt', 'backup.sql', 'uitnodigen.sql'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
+['agenda.sql', 'agenda-functie.txt', 'backup.sql', 'uitnodigen.sql', 'slides-script.txt'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
 document.querySelectorAll('[data-file]').forEach(b => b.addEventListener('click', () => files[b.dataset.file]
   ? copy(files[b.dataset.file], b, '✓ Gekopieerd') : alert('Nog aan het laden. Probeer het zo nog een keer.')));
 document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy(TEXT[b.dataset.copy], b, '✓ Gekopieerd')));
