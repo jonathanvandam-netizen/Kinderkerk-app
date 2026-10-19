@@ -388,7 +388,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 2';
+const APP_VERSION = '2026-10-19 · 3';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -473,6 +473,23 @@ function pointsFor(group, items){
 /* ---------- Demodata (verzonnen namen) ---------- */
 const PRAYERS = ['Voor opa die in het ziekenhuis ligt','Dat mijn kat weer beter wordt','Voor mijn toets op school deze week','Dat mijn vriendin naar de kinderkerk komt',
   'Voor mama die een nieuwe baan zoekt','Dank voor mijn nieuwe broertje!','Dat mijn oma snel beter wordt','Voor de mensen in landen waar oorlog is','Dat ik niet meer bang ben in het donker'];
+/* Verzonnen demokinderen. Ook om ze te herkennen en weg te halen (ook als ze al in de database staan). */
+const DEMO_KIDS = {
+  onder:['Noah','Sem','Mila de Jong','Yara','Liam','Sofie Bakker','Daan','Nova','Jesse','Lotte','Amira','Finn'],
+  boven:['Levi Jansen','Eva de Vries','Lucas Bakker','Julia Visser','Milan Smit','Sara Meijer','Thijs Mulder','Fenna de Boer','Ruben Bos','Isa Vos','Gideon Peters','Hannah Dekker'],
+  bezoeker:['Tobias','Ella'], weg:['Jurre','Lieke','Mats'],
+};
+const DEMO_KID_NAMES = new Set(Object.values(DEMO_KIDS).flat());
+const isDemoKid = k => !!k.demo || DEMO_KID_NAMES.has(k.name);
+function removeDemoKids(){
+  const demo = new Set(db.kids.filter(isDemoKid).map(k => k.id));
+  db.kids = db.kids.filter(k => !demo.has(k.id));
+  db.checkins = db.checkins.filter(c => !demo.has(c.kidId));
+  Object.values(db.rosters).forEach(list => list.forEach(r => { if (demo.has(r.kidId)) r.kidId = null; }));
+  demo.forEach(id => drop('kids', { id }));   // database: check-ins gaan automatisch mee, roosterplekken worden leeg
+  save();
+  return demo.size;
+}
 function seed(){
   const rnd = mulberry32(7);
   const T = todayISO();
@@ -481,10 +498,10 @@ function seed(){
     const yrs = group === 'onder' ? 4 + rnd()*4 : group === 'boven' ? 8 + rnd()*4 : 5 + rnd()*6;
     kids.push({ id:newId(), demo:true, name, group, created:addDays(T,-150), birthdate:addDays(T, -Math.round(yrs * 365.25)), _p:p, _inactive:inactive });
   };
-  ['Noah','Sem','Mila de Jong','Yara','Liam','Sofie Bakker','Daan','Nova','Jesse','Lotte','Amira','Finn'].forEach(n => mk(n,'onder',.35+rnd()*.6));
-  ['Levi Jansen','Eva de Vries','Lucas Bakker','Julia Visser','Milan Smit','Sara Meijer','Thijs Mulder','Fenna de Boer','Ruben Bos','Isa Vos','Gideon Peters','Hannah Dekker'].forEach(n => mk(n,'boven',.35+rnd()*.6));
-  ['Tobias','Ella'].forEach(n => mk(n,'bezoeker',.15));
-  ['Jurre','Lieke','Mats'].forEach((n,i) => mk(n, i%2 ? 'boven' : 'onder', .7, true));
+  DEMO_KIDS.onder.forEach(n => mk(n,'onder',.35+rnd()*.6));
+  DEMO_KIDS.boven.forEach(n => mk(n,'boven',.35+rnd()*.6));
+  DEMO_KIDS.bezoeker.forEach(n => mk(n,'bezoeker',.15));
+  DEMO_KIDS.weg.forEach((n,i) => mk(n, i%2 ? 'boven' : 'onder', .7, true));
 
   // Echte leiding (alleen voornamen). Alleen Jonathan heeft een account; de rest is nog niet uitgenodigd.
   const leaders = [['Jonathan','boven'],['Nora','boven'],['Julian','boven'],['Jamilla','boven'],['Sandy','boven','Zwangerschapsverlof'],
@@ -1294,6 +1311,8 @@ function renderMeer(){
       <a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}</b><span class="muted">${s}</span></span>${icon('chev','chev')}</a>`).join('')}</div>
     ${!CLOUD || isAdmin() ? `<h3 class="section-title">Testfase</h3>
     <div class="card list">
+      ${isAdmin() && db.kids.some(isDemoKid) ? `<button class="row" data-action="removeDemoKids"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('trash')}</span>
+        <span class="row-main"><b>Demokinderen weghalen</b><span class="muted">${db.kids.filter(isDemoKid).length} verzonnen kinderen; jouw eigen kinderen blijven staan</span></span></button>` : ''}
       <button class="row" data-action="resetDemo"><span class="row-icon" style="background:var(--warn-soft);color:var(--warn)">${icon('refresh')}</span>
         <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Zet alles terug naar de verzonnen voorbeelddata (ook geïmporteerde kinderen gaan weg)'}</span></span></button>
     </div>` : ''}
@@ -1355,16 +1374,19 @@ function parseImport(text, fallback, skipDemo){
   });
   // Dubbel = zelfde naam in dezelfde groep (twee kinderen met dezelfde naam in verschillende groepen mag)
   const key = (n, g) => n.toLowerCase() + '|' + g;
-  const seen = new Set(db.kids.filter(k => !(skipDemo && k.demo)).map(k => key(k.name, k.group)));
+  const seen = new Set(db.kids.filter(k => !(skipDemo && isDemoKid(k))).map(k => key(k.name, k.group)));
   return rows.map(r => { const k = key(r.name, r.group), dup = seen.has(k); seen.add(k); return { ...r, dup }; });
 }
 function renderImport(){
   if (!isAdmin()){ app.innerHTML = `<div class="page"><div class="card empty">Alleen beheerders kunnen kinderen importeren.</div></div>`; return; }
-  const demoCount = db.kids.filter(k => k.demo).length;
+  const demoCount = db.kids.filter(isDemoKid).length;
   app.innerHTML = `
   <div class="page">
     <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
     <div class="page-head"><h1>Kinderen importeren</h1></div>
+    ${demoCount ? `<div class="card row static" style="border-radius:var(--radius);margin-bottom:16px"><span class="row-icon" style="background:var(--warn-soft);color:var(--warn)">${icon('trash')}</span>
+      <span class="row-main"><b>${demoCount} demokinderen</b><span class="muted">Verzonnen kinderen uit de demo</span></span>
+      <button class="btn btn-danger sm" data-action="removeDemoKids">Weghalen</button></div>` : ''}
     <div class="banner" style="margin:0 0 16px">${icon('info')}<span>${CLOUD
       ? 'De namen worden opgeslagen in de beveiligde database. Alleen ingelogde leiding kan ze zien.'
       : '<b>De namen blijven alleen op dit toestel</b> (in deze browser). Ze komen niet online en niet in de code. Zodra de echte database gekoppeld is, zetten we ze daarin over.'}</span></div>
@@ -1373,7 +1395,7 @@ function renderImport(){
         <textarea id="im-text" data-input="importText" rows="8" placeholder="Eén kind per regel, bijvoorbeeld:&#10;Noah&#10;Mila de Jong;onderbouw&#10;Levi Jansen;bovenbouw;9-10-2014"></textarea>
         <span class="muted" style="font-weight:400;font-size:13px">Eén naam per regel. Zet er eventueel <b>;onderbouw</b>, <b>;bovenbouw</b> of <b>;bezoeker</b> achter, en een geboortedatum (bijv. <b>;9-10-2014</b> of <b>;9 oktober 2014</b>). Een lijst uit Excel of Google Sheets (kolommen Naam, Groep, Geboortedatum) mag je ook plakken.</span></label>
       <label class="field"><span>Groep als er niets achter de naam staat</span>${(v => `<select id="im-group" data-change="importPreview">${Object.entries(GROUPS).map(([k,l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)('onder')}</label>
-      ${demoCount && !CLOUD ? `<label class="check-line"><input type="checkbox" id="im-clear" data-change="importPreview" checked> De ${demoCount} verzonnen demokinderen weghalen</label>` : ''}
+      ${demoCount ? `<label class="check-line"><input type="checkbox" id="im-clear" data-change="importPreview" checked> De ${demoCount} verzonnen demokinderen weghalen</label>` : ''}
       <div id="im-preview"></div>
       <button class="btn btn-primary btn-block" data-action="doImport">${icon('plus')} Kinderen toevoegen</button>
     </div>
@@ -1749,16 +1771,17 @@ const actions = {
     if (!isAdmin() || !confirm('Alle punten terugzetten naar de startwaarden?')) return;
     db.settings = { ...db.settings, points:DEFAULT_POINTS }; put('settings', { key:'points', value:DEFAULT_POINTS }); save(); render(); toast('Startwaarden teruggezet');
   },
+  removeDemoKids: () => {
+    const n = db.kids.filter(isDemoKid).length;
+    if (!isAdmin() || !n || !confirm(`De ${n} verzonnen demokinderen weghalen? Hun check-ins gaan ook weg. Jouw eigen kinderen blijven staan.`)) return;
+    removeDemoKids(); render(); toast(`${n} demokinderen weggehaald`);
+  },
   doImport: () => {
     if (!isAdmin()) return;
-    const rows = parseImport($('#im-text').value, $('#im-group').value, !!$('#im-clear')?.checked).filter(r => !r.dup);
-    if (!rows.length) return toast('Geen nieuwe namen gevonden');
-    if ($('#im-clear')?.checked){
-      const demo = new Set(db.kids.filter(k => k.demo).map(k => k.id));
-      db.kids = db.kids.filter(k => !demo.has(k.id));
-      db.checkins = db.checkins.filter(c => !demo.has(c.kidId));
-      Object.values(db.rosters).forEach(list => list.forEach(r => { if (demo.has(r.kidId)) r.kidId = null; }));
-    }
+    const clear = !!$('#im-clear')?.checked;
+    const rows = parseImport($('#im-text').value, $('#im-group').value, clear).filter(r => !r.dup);
+    const removed = clear ? removeDemoKids() : 0;
+    if (!rows.length){ toast(removed ? `${removed} demokinderen weggehaald, geen nieuwe namen` : 'Geen nieuwe namen gevonden'); return render(); }
     const kids = rows.map(r => ({ id:newId(), name:r.name, group:r.group, created:todayISO(), birthdate:r.birthdate || null }));
     db.kids.push(...kids); put('kids', kids); save();
     toast(`${kids.length} kinderen toegevoegd`); location.hash = '#/checkin';
