@@ -192,6 +192,12 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .action .row-main{cursor:pointer}
 .action .row-main b{white-space:normal}
 .late-count{color:var(--bad);font-size:14px;font-weight:700}
+.quiz-play{padding:18px 20px 22px;display:flex;flex-direction:column;gap:18px;min-height:60vh}
+.qp-top{display:flex;justify-content:space-between;align-items:center}
+.qp-q{font-size:30px;font-weight:800;line-height:1.25;flex:1;display:flex;align-items:center}
+.qp-a{font-size:24px;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:16px;padding:16px 18px}
+.qp-nav{justify-content:space-between}
+@media(min-width:640px){.modal:has(.quiz-play){max-width:820px}.qp-q{font-size:40px}.qp-a{font-size:30px}}
 .terugblik{position:relative;background:linear-gradient(135deg,var(--brand-soft),var(--card))}
 .terugblik .big{font-size:20px;font-weight:800;margin:4px 0 2px;padding-right:36px}
 .terugblik .tb-x{position:absolute;top:10px;right:10px}
@@ -470,7 +476,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 42';
+const APP_VERSION = '2026-10-19 · 43';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1100,7 +1106,7 @@ const NAV = [
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
-const MEER_ROUTES = ['meer','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','quiz','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'smileys' ? 'gedrag' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
@@ -1108,7 +1114,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { gebed:renderGebed, gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters };
+const routes = { gebed:renderGebed, gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, quiz:renderQuiz };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -1282,6 +1288,9 @@ function renderHome(){
         <span class="row-icon" style="background:var(--bday-bg);color:var(--bday-text)">${icon('heart')}</span>
         <span class="row-main"><b>Gebedsverlangens</b><span class="muted">${(n => isSunday(T) || checkinsOn(T).length ? (n ? n + ' gebedspunt' + (n > 1 ? 'en' : '') + ' · wie bidt er?' : 'Wie bidt er vandaag?') : 'Gebedslijst en gebedspunten')(prayerPoints(T).length)}</span></span>${icon('chev','chev')}
       </a>
+      ${canQuiz() && isSunday(T) && quizPeriod() ? `<a class="card row" href="#/quiz" style="border-radius:var(--radius)">
+        <span class="row-icon">${icon('help')}</span>
+        <span class="row-main"><b>Quiz</b><span class="muted">${(n => n ? `${n} vra${n === 1 ? 'ag' : 'gen'} klaar · nog een vraag?` : 'Schrijf alvast een vraag op voor week 7')(quizList(quizPeriod()).length)}</span></span>${icon('chev','chev')}</a>` : ''}
       ${terugblikCard()}
       ${isAdmin() && (lastBackupDays() ?? 99) > 35 ? `<a class="card row" href="#/meer" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('download')}</span>
@@ -1961,7 +1970,8 @@ function renderMeer(){
       ['gebed','Gebedsverlangens','Wie bidt er, en alle gebedsverlangens','heart'],
       ['roosters','Sheets','Wie doet de sheets? (bovenbouw)','monitor'],
       ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
-      ['punten','Punten','Hoeveel punten een kind krijgt','check']]],
+      ['punten','Punten','Hoeveel punten een kind krijgt','check'],
+      ...(canQuiz() ? [['quiz','Quiz','Vragen voor de quiz in week 7 (bovenbouw)','help']] : [])]],
     ['Kinderen', [
       ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','user'],
       ['historie','Historie','Aantallen en wie er regelmatig komt','chart']]],
@@ -2361,6 +2371,66 @@ function renderHistorie(){
   </div>`;
 }
 
+/* ---------- Quiz (week 7) ----------
+   Bovenbouw-leiding zet tijdens de periode vragen klaar (bijv. tijdens de preek); in week 7 speel je de quiz.
+   Onderbouw ziet dit niet. Opslag in de bestaande tabel notes, met text = 'quiz:{"q":…,"a":…}' (geen extra database-stap). */
+const QUIZ_PREFIX = 'quiz:';
+const quizOf = n => { if (!n.text || !n.text.startsWith(QUIZ_PREFIX)) return null; try { return JSON.parse(n.text.slice(QUIZ_PREFIX.length)); } catch(e){ return null; } };
+const canQuiz = () => me().group === 'boven' || isAdmin();
+const quizPeriod = () => (weekInfo(kkDay()) || weekInfo(nextSunday(todayISO())))?.p || null;
+const quizList = p => db.notes.filter(n => quizOf(n) && n.date >= p.start && n.date <= addDays(periodEnd(p), 6)).sort((a,b) => a.date.localeCompare(b.date));
+function renderQuiz(){
+  const back = `<a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>`;
+  if (!canQuiz()){ app.innerHTML = `<div class="page">${back}<div class="card empty">De quiz is voor de leiding van de bovenbouw.</div></div>`; return; }
+  const p = quizPeriod();
+  if (!p){ app.innerHTML = `<div class="page">${back}<div class="page-head"><h1>Quiz</h1></div><div class="card empty">Er is nu geen periode. Een beheerder kan er een maken onder Planning.</div></div>`; return; }
+  const list = quizList(p), w = weekInfo(kkDay());
+  const weeks = [...new Set(list.map(n => weekInfo(n.date)?.week || 1))];
+  app.innerHTML = `
+  <div class="page">
+    ${back}
+    <div class="page-head"><div><h1>Quiz</h1><span class="muted">${esc(periodLabel(p))}${w && w.p.id === p.id ? ` · week ${w.week} van ${PERIOD_WEEKS}` : ''}</span></div></div>
+    ${list.length ? `<button class="btn ${w?.week === 7 ? 'btn-primary' : 'btn-soft'} btn-block" style="margin-bottom:16px" data-action="quizPlay">▶️ Quiz spelen (${list.length} vra${list.length === 1 ? 'ag' : 'gen'})</button>` : ''}
+    <form class="card pad" data-submit="quizAdd">
+      <label class="field"><span>Nieuwe vraag</span><textarea id="qz-q" rows="2" placeholder="Bijv. Wat maakte God op de vierde dag?"></textarea></label>
+      <label class="field"><span>Antwoord <span class="muted" style="font-weight:400">(mag leeg)</span></span><input id="qz-a" autocomplete="off" placeholder="Bijv. De zon, de maan en de sterren"></label>
+      <button class="btn btn-primary" type="submit">${icon('plus')} Vraag opslaan</button>
+    </form>
+    ${weeks.map(wk => { const qs = list.filter(n => (weekInfo(n.date)?.week || 1) === wk), d = addDays(p.start, 7*(wk-1)); return `
+      <h3 class="section-title">Week ${wk} · ${esc(sundayTopic(d, 'boven').theme || '')}</h3>
+      <div class="card list">${qs.map(n => { const x = quizOf(n); return `
+        <button class="row" data-action="quizEdit" data-id="${n.id}"><span class="row-main"><b style="white-space:normal">${esc(x.q)}</b>
+          <span class="muted">${x.a ? esc(x.a) : '<i>geen antwoord</i>'} · ${esc(n.author || '')}</span></span>${icon('edit','chev')}</button>`; }).join('')}</div>`; }).join('')
+      || '<div class="banner">' + icon('info') + '<span>Nog geen vragen. Zet tijdens de periode een paar vragen klaar, bijvoorbeeld tijdens de preek. In week 7 speel je de quiz met de knop hierboven.</span></div>'}
+  </div>`;
+}
+function openQuizEdit(id){
+  const n = db.notes.find(x => x.id === id), x = n && quizOf(n); if (!x) return;
+  openModal(`
+    <div class="modal-head"><div><h2>Vraag aanpassen</h2><span class="muted">${esc(n.author || '')} · ${fmtDate(n.date, {day:'numeric', month:'long'})}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="field"><span>Vraag</span><textarea id="qe-q" rows="3">${esc(x.q)}</textarea></label>
+      <label class="field"><span>Antwoord</span><input id="qe-a" value="${esc(x.a || '')}" autocomplete="off"></label>
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" data-action="quizDel" data-id="${n.id}">${icon('trash')} Weghalen</button><button class="btn btn-primary" data-action="quizSave" data-id="${n.id}">Opslaan</button></div>`);
+}
+function openQuizPlay(){
+  const p = quizPeriod(), list = p ? quizList(p) : [];
+  if (!list.length) return;
+  const i = Math.min(state.quizIdx || 0, list.length - 1), x = quizOf(list[i]);
+  openModal(`
+    <div class="quiz-play">
+      <div class="qp-top"><span class="muted">Vraag ${i + 1} van ${list.length}</span><button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+      <div class="qp-q">${esc(x.q)}</div>
+      ${state.quizShow ? `<div class="qp-a">${x.a ? esc(x.a) : '<span class="muted">Geen antwoord ingevuld</span>'}</div>`
+        : `<button class="btn btn-soft btn-block" data-action="quizShow">Antwoord tonen</button>`}
+      <div class="btn-row qp-nav">
+        <button class="btn btn-outline" data-action="quizStep" data-id="-1" ${i ? '' : 'disabled'}>← Vorige</button>
+        ${i < list.length - 1 ? `<button class="btn btn-primary" data-action="quizStep" data-id="1">Volgende →</button>` : `<button class="btn btn-primary" data-action="closeModal">Klaar 🎉</button>`}
+      </div>
+    </div>`);
+}
 /* ---------- Roosters ---------- */
 /* Sheets (alleen bovenbouw): op zondag kiest de app eerlijk een kind uit de bovenbouw die er is
    (minst vaak sheets gedaan → langst geleden → toeval). Opslag: db.rosters.sheets { date, kidId }. */
@@ -2595,6 +2665,25 @@ const actions = {
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
   closeModal: () => closeModal(),
   openTerugblik: d => openTerugblik(d.id),
+  quizAdd: (d, el, e) => {
+    e?.preventDefault();
+    const q = $('#qz-q').value.trim(), a = $('#qz-a').value.trim(); if (!q) return $('#qz-q').focus();
+    const n = { id:newId(), date:kkDay(), author:me().name, text:QUIZ_PREFIX + JSON.stringify({ q, a }) };
+    db.notes.push(n); put('notes', n); save(); render(); toast('Vraag opgeslagen');
+  },
+  quizEdit: d => openQuizEdit(d.id),
+  quizSave: d => {
+    const n = db.notes.find(x => x.id === d.id), q = $('#qe-q').value.trim(), a = $('#qe-a').value.trim();
+    if (!n || !q) return;
+    n.text = QUIZ_PREFIX + JSON.stringify({ q, a }); upd('notes', { id:n.id, text:n.text }); save(); closeModal(); render();
+  },
+  quizDel: d => {
+    if (!confirm('Deze vraag weghalen?')) return;
+    db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save(); closeModal(); render();
+  },
+  quizPlay: () => { state.quizIdx = 0; state.quizShow = false; openQuizPlay(); },
+  quizShow: () => { state.quizShow = true; openQuizPlay(); },
+  quizStep: d => { state.quizIdx = (state.quizIdx || 0) + Number(d.id); state.quizShow = false; openQuizPlay(); },
   hideTerugblik: d => { try { localStorage.setItem(TERUGBLIK_KEY, JSON.stringify([...terugblikHidden(), d.id])); } catch(e){} render(); },
   shareTerugblik: async d => {
     const p = db.periods.find(x => x.id === d.id); if (!p) return;
