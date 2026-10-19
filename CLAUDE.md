@@ -120,10 +120,13 @@ Terugblik (`terugblikData`/`openTerugblik`): vanaf de vergadering in week 7 (12:
 Vergadering, wegdrukken per toestel (localStorage `kk-terugblik` = lijst periode-id's). Op de vergaderpagina van week 7 blijft een
 knop "🎉 Terugblik". Bewust simpel (wens van Jonathan): zondagen, kinderen gemiddeld, nieuwe kinderen (eerste check-in ooit in de periode),
 elke zondag geweest en een bedankje aan de leiding. Telt per week (zondag t/m zaterdag). Delen = tekst (WhatsApp). Alleen zichtbaar als er check-ins zijn.
-Quiz (`#/quiz`, Meer → Op zondag, alleen bovenbouw-leiding en beheerders; onderbouw ziet hem niet): tijdens de periode zet
-bovenbouw-leiding vragen + antwoord (mag leeg) klaar, bijv. tijdens de preek. Op zondag een snelle kaart "Quiz" op Home. Vragen per
-week gegroepeerd; tikken = aanpassen/weghalen. "Quiz spelen" = groot scherm: vraag, "Antwoord tonen", Vorige/Volgende.
-Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q":…,"a":…}` (`QUIZ_PREFIX`, `quizOf`).
+Quiz (`#/quiz`, Meer → Op zondag, alleen bovenbouw-leiding en beheerders; onderbouw ziet hem niet): op Home onder het programma
+een knop "❓ Quizvraag bedenken" (voor die zondag; in week 7 "Quiz van vandaag: spelen of downloaden"). Vraag = open (antwoord mag
+leeg) of meerkeuze A–D (min. 2 antwoorden, tik op de letter van het goede). Quizpagina: vragen per week, tikken = aanpassen/weghalen,
+"Quiz spelen in de app" (groot scherm, gekleurde A–D-vakken, Antwoord tonen), downloaden als PowerPoint (PptxGenJS 3.12.0 in
+`vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia) of
+spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel; opent in Google Sheets/Excel). Bestand via deelvenster of download.
+Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q","a"}` of `quiz:{"q","opts":[…],"ok":i}` (`QUIZ_PREFIX`, `quizOf`).
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
 Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,
