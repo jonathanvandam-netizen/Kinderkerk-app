@@ -193,6 +193,8 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .agenda .ag-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .agenda .num{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:800;display:grid;place-items:center;flex:none;font-size:14px}
 .agenda .ag-title{flex:1;font:inherit;font-weight:800;border:0;background:transparent;color:var(--text);padding:4px 0;min-width:0;outline:0}
+.agenda textarea.ag-title{min-height:0;border:0;border-radius:6px;padding:4px 2px;background:transparent;line-height:1.3}
+.agenda textarea.ag-title:focus{box-shadow:none;background:var(--input)}
 .agenda textarea{width:100%;font:inherit;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--input);color:var(--text);resize:none;min-height:84px;outline:0;display:block}
 .agenda textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 .agenda .acts{margin:10px -16px 0;border-top:1px solid var(--border)}
@@ -388,7 +390,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 5';
+const APP_VERSION = '2026-10-19 · 6';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -561,6 +563,7 @@ function seed(){
     sundays:seedSundays(T).map(x => Object.assign(x, dienst(x.date, leaders, anchor))),
     periods:seedPeriods(T),
     settings:{},
+    demoRev:2,
     ...seedMeetings(T, leaders),
     illnesses:[
       ['Hand-, voet- en mondziekte','ok','Mag komen, mits fit genoeg om mee te doen.'],
@@ -581,38 +584,53 @@ function seed(){
 
 /* Periodes van 7 weken met één thema; deze zondag is week 2 (zoals bij De Deur op 18-10-2026) */
 function seedPeriods(T){
-  const start = addDays(nextSunday(T), -7);
+  const start = addDays(demoAnchor(T), -7);   // laatste zondag = week 2, dus week 1 een week eerder
   return [{ id:newId(), start:addDays(start, -7*PERIOD_WEEKS), theme:'Jozef', themeBoven:'Mozes', meeting:'klein' },
           { id:newId(), start, theme:'Scheppingsverhaal', themeBoven:'', meeting:'groot' }];
 }
-const WEEK_TOPICS = [['Dag 1 t/m 3: licht, lucht en land','Genesis 1:1–13'],['Dag 4 t/m 6: zon, dieren en mensen','Genesis 1:14–31'],
-  ['Dag 7: God rust','Genesis 2:1–3'],['De hof van Eden','Genesis 2:4–25'],['De zondeval','Genesis 3'],['',''],['',''],['','']];
+/* Indeling Scheppingsverhaal (vergadering 4-10-2026, uitgewerkt door Jonathan en Julian); index 0 = de week vóór deze periode */
+const WEEK_TOPICS = [['',''],['Scheppingsdag 1 + 2: licht en donker; hemel en water','Genesis 1:1-8'],['Scheppingsdag 3: land, zee en planten','Genesis 1:9-13'],
+  ['Scheppingsdag 4: zon, maan en sterren','Genesis 1:14-19'],['Scheppingsdag 5: vissen en vogels','Genesis 1:20-23'],['Scheppingsdag 6: dieren en mensen','Genesis 1:24-31'],
+  ['Bidden: aandacht voor gebeden die niet worden verhoord',''],['Afsluiting: quiz + puntenwinkeltje','']];
+const WEEK_PREP = { 6:'Liedje: Lees je Bijbel, bid elke dag. (Ook voor de onderbouw.)', 7:'Quiz voorbereiden. Punten tellen en spullen voor het puntenwinkeltje klaarzetten.' };
 /* Vergaderingen: de vorige (klein) en de volgende (groot, week 7 van deze periode) */
 function seedMeetings(T, leaders){
-  const cur = addDays(nextSunday(T), -7);
-  const prev = { id:newId(), date:addDays(cur, -7), kind:'klein' }, next = { id:newId(), date:addDays(cur, 7*(PERIOD_WEEKS-1)), kind:'groot' };
-  const L = n => leaders.find(l => l.name === n)?.id || null;
+  const cur = addDays(demoAnchor(T), -7);   // week 1 van de periode
+  const L = n => leaders.find(l => l.name === n)?.id || null, LL = (...n) => n.map(L).filter(Boolean);
+  const prev = { id:newId(), date:addDays(cur, -7), kind:'klein', notulist:L('Jonathan') }, next = { id:newId(), date:addDays(cur, 7*(PERIOD_WEEKS-1)), kind:'groot', notulist:null };
   const ag = (m, title, notes, author, sort) => ({ id:newId(), meetingId:m.id, title, notes, author, sort });
+  // Notulen van de vergadering van 4 oktober 2026
   const agenda = [
-    ag(prev, 'Terugblik periode Jozef', 'Kinderen waren erg betrokken bij het verhaal. Verkleden werkte goed, volgende keer vaker doen.', 'Jonathan', 1),
-    ag(prev, 'Rooster sheets bovenbouw', 'Iedereen van de bovenbouw komt aan de beurt. Rooster loopt tot eind november.', 'Jonathan', 2),
-    ag(prev, 'Kerstviering', 'Idee: de kinderen doen een stukje in de dienst. Nora maakt een eerste opzet.', 'Nora', 3),
-    ag(next, 'Evaluatie Scheppingsverhaal', '', 'Nora', 1),
-    ag(next, 'Planning kerstviering', '', 'Jonathan', 2),
-    ag(next, 'Thema volgende periode kiezen', '', 'Melissa', 3),
+    ag(prev, 'Scheppingsverhaal: thema bevestigen', 'Het scheppingsverhaal gaat door als thema voor de volgende periode.\nNa de vergadering hebben Jonathan en Julian de praktische verdeling gemaakt voor de vijf beschikbare themaweken.', 'Jonathan', 1),
+    ag(prev, 'Printerpapier: verantwoordelijkheid + seintje bij bijna op', 'Afgesproken is dat er op tijd een seintje wordt gegeven wanneer het printerpapier bijna op is.', 'Jonathan', 2),
+    ag(prev, 'Kast: opruimdatum plannen', 'Er is nog geen datum afgesproken. Het punt blijft daarom openstaan.', 'Jonathan', 3),
+    ag(prev, 'Week 6: bidden', 'In week 6 aandacht besteden aan gebeden die niet worden verhoord. Dit onderwerp ook meenemen voor de onderbouw.\nLiedje: Lees je Bijbel, bid elke dag.', 'Jonathan', 4),
+    ag(prev, 'Pauze/structuur Kinderkerk: nieuwe ideeën', 'De huidige structuur wordt zoveel mogelijk hetzelfde gehouden. De nadruk ligt op het goed uitvoeren van het bestaande systeem.\nDe Gouden Week blijft behouden. Smiley\'s en waarschuwingen in de app gaan helpen bij het consequenter uitvoeren van het huidige systeem.', 'Jonathan', 5),
+    ag(prev, 'Bovenbouw: onrust aanpakken', 'De onrust in de bovenbouw is kort besproken; er zijn hierover geen afzonderlijke concrete afspraken genoteerd.', 'Jonathan', 6),
+    ag(prev, 'Kerstmusical: invulling bespreken', 'Kinderkerk organiseert de kerstmusical niet.\nDe pastor gaat op zoek naar iemand die de kar van de musical gaat trekken.\nAls er hulp nodig is, kunnen mensen van Kinderkerk individueel worden benaderd om mee te helpen.\nHet idee is doorgegeven om met een verteller te werken, zodat de kinderen het verhaal vooral hoeven uit te beelden.', 'Jonathan', 7),
+    ag(prev, 'Tieners mee laten lopen in kinderkerk', 'Het gaat om tieners die gedurende het blok van zeven weken kunnen meewerken bij Kinderkerk; dit betekent niet dat zij iedere week hoeven mee te lopen.\nEr wordt eerst nagevraagd om hoeveel tieners en welke tieners het gaat. Daarna wordt dit teruggekoppeld in de groep.', 'Jonathan', 8),
+    // Alvast voor de volgende vergadering: wat nog openstaat
+    ag(next, 'Evaluatie Scheppingsverhaal', '', 'Jonathan', 1),
+    ag(next, 'Kast opruimen: datum', '', 'Jonathan', 2),
+    ag(next, 'Tieners meelopen: terugkoppeling', '', 'Jonathan', 3),
+    ag(next, "Smiley's en waarschuwingen in de app (Gouden Week)", '', 'Jonathan', 4),
+    ag(next, 'Thema volgende periode kiezen', '', 'Jonathan', 5),
   ];
   const act = (m, a, text, who, due, done) => ({ id:newId(), meetingId:m.id, agendaId:a ? a.id : null, text, who, due, done, author:'Jonathan' });
   const actions = [
-    act(prev, agenda[2], 'Opzet kerstviering maken', L('Nora'), addDays(cur, 28), false),
-    act(prev, agenda[1], 'Rooster sheets uitbreiden tot eind december', L('Jonathan'), null, true),
-    act(prev, null, 'Nieuwe kleurpotloden kopen', L('Tim'), addDays(cur, 14), false),
+    act(prev, agenda[1], 'Bij bijna op: doorgeven aan Jonathan. Jonathan haalt enkele pakken papier bij de Action.', LL('Jonathan'), null, false),
+    act(prev, agenda[2], 'Datum prikken voor het opruimen van de kast', LL('Sandy','Chanel','Jamilla'), null, false),
+    act(prev, agenda[4], "Smiley's en waarschuwingen toevoegen in de app", LL('Julian'), null, false),
+    act(prev, agenda[7], 'Bij Celmo navragen om hoeveel en welke tieners het gaat en dit daarna in de groep delen', LL('Jonathan'), null, false),
+    act(prev, agenda[0], 'Praktische verdeling van de vijf themaweken maken', LL('Jonathan','Julian'), null, true),
+    act(prev, agenda[6], 'Aan de pastor doorgeven dat Kinderkerk de musical niet organiseert, en het idee van een verteller (kinderen beelden vooral uit)', LL('Jonathan','Julian'), null, true),
   ];
   return { meetings:[prev, next], agenda, actions };
 }
 function seedSundays(T){
-  const S = nextSunday(T);
+  const S = addDays(demoAnchor(T), -7);   // week 1 van de periode
   return Array.from({ length:20 }, (_, i) => WEEK_TOPICS[i] || ['','']).map(([theme, passage], i) => ({ date:addDays(S, 7*(i-1)), theme, passage, themeBoven:'', passageBoven:'',
-    prep:i === 1 ? 'Werkblad 20× kopiëren. Kleurpotloden aanvullen.' : i === 6 ? 'Punten tellen en spullen voor het puntenwinkeltje klaarzetten.' : '', onder:[], boven:[] }));
+    prep:WEEK_PREP[i] || '', onder:[], boven:[] }));
 }
 /* Het echte leidingrooster van De Deur (vanaf 18-10-2026 = "anker"):
    bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla);
@@ -639,6 +657,18 @@ function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSO
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
 if (!db){ db = seed(); save(); }
+/* Demo-update (2026-10-19): echte notulen van 4 oktober en de echte themaplanning erin zetten.
+   Alleen vergaderingen/agendapunten/actiepunten en de zondagplanning worden vervangen; kinderen, check-ins en leiding blijven. */
+if (!CLOUD && (db.demoRev || 0) < 2){
+  const s = seed(), byName = n => db.leaders.find(l => l.name === n);
+  const map = id => { const old = s.leaders.find(l => l.id === id); return old && byName(old.name) ? byName(old.name).id : null; };
+  db.meetings = s.meetings.map(m => ({ ...m, notulist:m.notulist ? map(m.notulist) : null }));
+  db.agenda = s.agenda;
+  db.actions = s.actions.map(a => ({ ...a, who:whoListRaw(a).map(map).filter(Boolean) }));
+  db.sundays = s.sundays.map(x => ({ ...x, onder:x.onder.map(map).filter(Boolean), boven:x.boven.map(map).filter(Boolean) }));
+  db.demoRev = 2; save();
+}
+function whoListRaw(a){ return Array.isArray(a.who) ? a.who : a.who ? [a.who] : []; }
 
 /* Veldnamen in de app ↔ kolommen in de database */
 const COLS = { kidId:'kid_id', leaderId:'leader_id', group:'groep', userId:'user_id', by:'checked_by', themeBoven:'theme_boven', passageBoven:'passage_boven', meetingId:'meeting_id', agendaId:'agenda_id' };
@@ -954,9 +984,12 @@ function ensureMeeting(date, kind){
 }
 const agendaOf = id => db.agenda.filter(a => a.meetingId === id).sort((a,b) => a.sort - b.sort);
 const byDue = (a,b) => (a.due || '9999').localeCompare(b.due || '9999');
+/* Wie: lijst met leiding-id's (oude data had één id) */
+const whoList = a => Array.isArray(a.who) ? a.who : a.who ? [a.who] : [];
+const whoNames = (a, me) => whoList(a).map(leaderById).filter(Boolean).map(l => me && l.id === db.session ? 'Jij' : l.name);
 function actionRow(a, showMeeting){
-  const who = leaderById(a.who), m = showMeeting && db.meetings.find(x => x.id === a.meetingId);
-  const meta = [who ? (who.id === db.session ? 'Jij' : esc(who.name)) : 'Nog niemand',
+  const names = whoNames(a, true), m = showMeeting && db.meetings.find(x => x.id === a.meetingId);
+  const meta = [names.length ? esc(names.join(', ')) : 'Nog niemand',
     a.due ? `vóór ${fmtDate(a.due, {day:'numeric', month:'short'})}` : '',
     m ? `uit ${meetingKindLabel(m.kind).toLowerCase()} ${fmtDate(m.date, {day:'numeric', month:'short'})}` : ''].filter(Boolean).join(' · ');
   const late = !a.done && a.due && a.due < todayISO();
@@ -1010,10 +1043,12 @@ function renderVergadering(){
     ${back}
     <div class="page-head"><div><h1>${meetingKindLabel(m.kind)}</h1><span class="muted">${cap(fmtDate(m.date, {weekday:'long', day:'numeric', month:'long', year:'numeric'}))}</span></div>
       <button class="btn btn-outline sm" data-action="shareMeeting" data-id="${m.id}">${icon('share')} Delen</button></div>
+    <label class="field" style="margin-bottom:14px"><span>Notulist</span><select data-change="notulist" data-id="${m.id}"><option value="">Nog niemand</option>
+      ${[...db.leaders].sort(byName).map(l => `<option value="${l.id}" ${l.id === m.notulist ? 'selected' : ''}>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</option>`).join('')}</select></label>
     <div class="stack">${items.map((a, i) => `
       <div class="card agenda">
         <div class="ag-head"><span class="num">${i + 1}</span>
-          <input class="ag-title" data-input="agTitle" data-id="${a.id}" value="${esc(a.title)}" aria-label="Agendapunt">
+          <textarea class="ag-title" rows="1" data-input="agTitle" data-id="${a.id}" aria-label="Agendapunt">${esc(a.title)}</textarea>
           <button class="icon-btn sm" title="Agendapunt verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>
         <textarea data-input="agNotes" data-id="${a.id}" placeholder="Notulen bij dit punt…">${esc(a.notes || '')}</textarea>
         ${(acts => acts.length ? `<div class="acts">${acts.map(x => actionRow(x)).join('')}</div>` : '')(db.actions.filter(x => x.agendaId === a.id).sort(byDue))}
@@ -1035,15 +1070,15 @@ function growAll(){ document.querySelectorAll('.agenda textarea').forEach(grow);
 const saveTimers = {};
 function autosave(table, obj){ save(); clearTimeout(saveTimers[obj.id]); saveTimers[obj.id] = setTimeout(() => put(table, obj), 700); }
 function openActionForm(a, meetingId, agendaId){
-  const x = a || { id:'', text:'', who:'', due:'', meetingId, agendaId };
+  const x = a || { id:'', text:'', who:[], due:'', meetingId, agendaId };
   const ag = db.agenda.find(y => y.id === (x.agendaId || agendaId));
   openModal(`
     <div class="modal-head"><div><h2>${a ? 'Actiepunt' : 'Nieuw actiepunt'}</h2><span class="muted">${ag ? 'Bij: ' + esc(ag.title) : 'Wie doet wat, en wanneer?'}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
       <label class="field"><span>Wat moet er gebeuren?</span><textarea id="ac-text" rows="2" placeholder="Bijv. Opzet kerstviering maken">${esc(x.text)}</textarea></label>
-      <label class="field"><span>Wie</span><select id="ac-who"><option value="">Nog niemand</option>
-        ${[...db.leaders].sort(byName).map(l => `<option value="${l.id}" ${l.id === x.who ? 'selected' : ''}>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</option>`).join('')}</select></label>
+      <div class="field"><span>Wie <span class="muted" style="font-weight:400">(één of meer)</span></span><div class="chips" id="ac-who">
+        ${[...db.leaders].sort(byName).map(l => `<button type="button" class="chip ${whoList(x).includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}">${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}<span class="tick">✓</span></button>`).join('')}</div></div>
       <label class="field"><span>Vóór <span class="muted" style="font-weight:400">(mag leeg)</span></span><input type="date" id="ac-due" value="${x.due || ''}"></label>
     </div>
     <div class="modal-foot">
@@ -1052,18 +1087,30 @@ function openActionForm(a, meetingId, agendaId){
     </div>`);
   if (!a) setTimeout(() => $('#ac-text')?.focus(), 50);
 }
+/* Verslag als tekst, opgebouwd zoals de notulen van De Deur: algemeen, agenda, notulen, actiepunten, reeds uitgevoerd */
 function meetingText(m){
-  const lines = [`${meetingKindLabel(m.kind)} kinderkerk – ${fmtDate(m.date, {weekday:'long', day:'numeric', month:'long', year:'numeric'})}`, ''];
-  const act = x => { const w = leaderById(x.who); return `   ${x.done ? '☑' : '☐'} ${x.text}${w ? ` (${w.name}` : ' ('}${x.due ? `${w ? ', ' : ''}vóór ${fmtDate(x.due, {day:'numeric', month:'short'})}` : ''})`.replace(' ()', ''); };
-  agendaOf(m.id).forEach((a, i) => {
-    lines.push(`${i + 1}. ${a.title}`);
-    if (a.notes) a.notes.split('\n').forEach(l => lines.push('   ' + l));
-    db.actions.filter(x => x.agendaId === a.id).forEach(x => lines.push(act(x)));
-    lines.push('');
-  });
-  const loose = db.actions.filter(x => x.meetingId === m.id && !x.agendaId);
-  if (loose.length){ lines.push('Actiepunten'); loose.forEach(x => lines.push(act(x))); }
-  return lines.join('\n').trim();
+  const long = d => fmtDate(d, {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const items = agendaOf(m.id), acts = db.actions.filter(x => x.meetingId === m.id);
+  const nextM = nextMeetingAfter(m.date), notulist = leaderById(m.notulist);
+  const act = x => { const w = whoNames(x).join(', '); return `• ${x.text}${w ? ' – ' + w : ''}${x.due ? ` (vóór ${fmtDate(x.due, {day:'numeric', month:'short'})})` : ''}`; };
+  const lines = [`Meeting kinderkerk leiding – ${meetingKindLabel(m.kind).toLowerCase()}`, '', 'ALGEMEEN', `Datum: ${long(m.date)}`];
+  if (notulist) lines.push(`Notulist: ${notulist.name}`);
+  if (nextM) lines.push(`Volgende meeting: ${long(nextM.date)} (${meetingKindLabel(nextM.kind).toLowerCase()})`);
+  if (items.length){ lines.push('', 'AGENDA'); items.forEach(a => lines.push('• ' + a.title)); }
+  const withNotes = items.filter(a => a.notes);
+  if (withNotes.length){ lines.push('', 'NOTULEN'); withNotes.forEach(a => { lines.push(a.title); a.notes.split('\n').filter(Boolean).forEach(l => lines.push('• ' + l)); lines.push(''); }); }
+  const open = acts.filter(x => !x.done), done = acts.filter(x => x.done);
+  const byItem = list => { const out = []; items.forEach(a => { const l = list.filter(x => x.agendaId === a.id); if (l.length){ out.push(a.title); l.forEach(x => out.push(act(x))); } });
+    const loose = list.filter(x => !x.agendaId || !items.some(a => a.id === x.agendaId)); if (loose.length){ out.push('Overig'); loose.forEach(x => out.push(act(x))); } return out; };
+  if (open.length){ lines.push('ACTIEPUNTEN'); lines.push(...byItem(open)); lines.push(''); }
+  if (done.length){ lines.push('REEDS UITGEVOERD'); done.forEach(x => lines.push(act(x))); }
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+/* Eerstvolgende vergadering na een datum (opgeslagen, of week 7 van een periode) */
+function nextMeetingAfter(date){
+  const list = db.meetings.filter(x => x.date > date).map(x => ({ date:x.date, kind:x.kind }));
+  periodsSorted().forEach(p => { const d = periodEnd(p); if (d > date && !list.some(x => x.date === d)) list.push({ date:d, kind:p.meeting }); });
+  return list.sort((a,b) => a.date.localeCompare(b.date))[0] || null;
 }
 
 function homeNotities(){
@@ -1879,7 +1926,7 @@ const actions = {
     const text = $('#ac-text').value.trim(); if (!text) return $('#ac-text').focus();
     const old = db.actions.find(x => x.id === d.id);
     const a = Object.assign(old || { id:newId(), meetingId:d.meeting || null, agendaId:d.agenda || null, done:false, author:me().name },
-      { text, who:$('#ac-who').value || null, due:$('#ac-due').value || null });
+      { text, who:[...document.querySelectorAll('#ac-who .chip.on')].map(c => c.dataset.id), due:$('#ac-due').value || null });
     if (!old) db.actions.push(a);
     put('actions', a); save(); closeModal(); render(); toast(old ? 'Actiepunt opgeslagen' : 'Actiepunt toegevoegd');
   },
@@ -2162,12 +2209,14 @@ document.addEventListener('input', e => {
   if (k === 'importText') renderImportPreview();
   if (k === 'agTitle' || k === 'agNotes'){
     const a = db.agenda.find(x => x.id === e.target.dataset.id); if (!a) return;
-    if (k === 'agTitle') a.title = e.target.value; else { a.notes = e.target.value; grow(e.target); }
+    if (k === 'agTitle') a.title = e.target.value.replace(/\n/g, ' '); else a.notes = e.target.value;
+    grow(e.target);
     autosave('agenda_items', a);
   }
 });
 document.addEventListener('change', e => {
   if (e.target.dataset?.change === 'importPreview') renderImportPreview();
+  if (e.target.dataset?.change === 'notulist'){ const m = db.meetings.find(x => x.id === e.target.dataset.id); if (m){ m.notulist = e.target.value || null; put('meetings', m); save(); toast('Notulist opgeslagen'); } }
   if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || todayISO());
 });
 document.addEventListener('submit', e => {

@@ -90,7 +90,8 @@ create table public.periods (
 create table public.meetings (
   id   uuid primary key default gen_random_uuid(),
   date date not null unique,
-  kind text not null default 'klein' check (kind in ('klein','groot'))
+  kind text not null default 'klein' check (kind in ('klein','groot')),
+  notulist uuid references public.leaders(id) on delete set null
 );
 
 create table public.agenda_items (
@@ -108,7 +109,7 @@ create table public.actions (
   meeting_id uuid references public.meetings(id) on delete set null,
   agenda_id  uuid references public.agenda_items(id) on delete set null,
   text       text not null,
-  who        uuid references public.leaders(id) on delete set null,
+  who        uuid[] not null default '{}',   -- één of meer leiding-id's
   due        date,
   done       boolean not null default false,
   author     text not null default '',

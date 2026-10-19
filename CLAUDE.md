@@ -72,6 +72,11 @@ Vergadering (eigen knop in de menubalk, `#/vergadering`; bewust niet op Home): v
 vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
 afvinken; open actiepunten op het overzicht), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
+Per vergadering een notulist; actiepunten met één of meer personen (`who` = lijst). Delen geeft een verslag zoals de
+notulen van De Deur: Algemeen (datum, notulist, volgende meeting), Agenda, Notulen, Actiepunten, Reeds uitgevoerd.
+Demo bevat de echte notulen van 4-10-2026 (Jonathan gaf toestemming dat dit openbaar in de code staat) en de echte
+themaplanning Scheppingsverhaal (week 1–5 scheppingsdagen, 6 bidden, 7 quiz + winkeltje). Demo-updates via `demoRev`
+vervangen alleen vergaderingen/planning, nooit kinderen. Gouden Week (smiley's en waarschuwingen): Jonathan legt nog uit hoe het werkt.
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
 Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,
