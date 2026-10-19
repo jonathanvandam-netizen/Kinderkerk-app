@@ -491,7 +491,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 46';
+const APP_VERSION = '2026-10-19 · 47';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2547,7 +2547,12 @@ async function makeQuizPptx(){
   list.forEach((n, i) => { const x = quizOf(n); slide(x, i, false); slide(x, i, true); });
   const end = pptx.addSlide(); end.background = { color:BLUE };
   end.addText('Goed gedaan! 🎉', { x:0.5, y:2.8, w:12.33, h:1.5, fontFace:FONT, fontSize:60, bold:true, color:'FFFFFF', align:'center' });
-  const blob = await pptx.write({ outputType:'blob' });
+  // PptxGenJS zet in [Content_Types].xml verwijzingen naar dia-masters die niet bestaan (slideMaster2 enz.).
+  // Andere apps negeren dat, maar PowerPoint (ook online) weigert het bestand dan. Die regels halen we eruit.
+  const zip = await JSZip.loadAsync(await pptx.write({ outputType:'blob' }));
+  const ct = await zip.file('[Content_Types].xml').async('string');
+  zip.file('[Content_Types].xml', ct.replace(/<Override PartName="\/([^"]+)"[^>]*\/>/g, (m, part) => zip.file(part) ? m : ''));
+  const blob = await zip.generateAsync({ type:'blob', compression:'DEFLATE', mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
   offerFile(blob, quizFileName(p, 'pptx'), 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'PowerPoint');
 }
 async function makeQuizXlsx(){
