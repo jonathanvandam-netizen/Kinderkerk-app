@@ -158,7 +158,27 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
       <li>Kopieer de <b>URL van de web-app</b> (eindigt op <code>/exec</code>) en stuur hem naar Claude, dan zet die hem in de app. Die URL is niet geheim: het script laat alleen ingelogde leiding toe.</li>
     </ol>
   </section>
+
+  <section class="card">
+    <h2><span class="num">9</span> Meldingen op de telefoon</h2>
+    <p style="margin:0">Daarmee kan leiding <b>zelf</b> meldingen aanzetten (standaard uit): zaterdagavond "Morgen heb jij leiding" en zondagochtend "Vandaag vergadering". Doe dit het liefst op een computer, in één keer.</p>
+    <ol>
+      <li><button id="mk-keys">Maak de sleutels</button> <span class="muted" style="font-size:14px">(worden alleen op dit toestel gemaakt; niemand anders ziet ze)</span>
+        <div id="keys" hidden>
+          <div class="note">Plak deze drie meteen in Supabase (stap 2) en bewaar ze verder nergens. Laat deze pagina open tot je klaar bent.</div>
+          <div class="row"><code>VAPID_PUBLIC</code> <button class="soft" data-key="pub">Kopieer</button></div>
+          <div class="row"><code>VAPID_PRIVATE</code> <button class="soft" data-key="priv">Kopieer</button></div>
+          <div class="row"><code>KK_GEHEIM</code> <button class="soft" data-key="secret">Kopieer</button></div>
+        </div></li>
+      <li>In Supabase: <b>Edge Functions → Secrets</b> (of Project Settings → Edge Functions). Voeg drie geheimen toe met precies deze namen: <code>VAPID_PUBLIC</code>, <code>VAPID_PRIVATE</code> en <code>KK_GEHEIM</code>, met de waarden uit stap 1.</li>
+      <li><b>Edge Functions → Deploy a new function → Via Editor</b>. Noem hem <code>meldingen</code> (kleine letters). <button class="soft" data-file="meldingen-functie.txt">Kopieer de functie-code</button>, plak alles eroverheen en klik op <b>Deploy</b>. Zet daarna bij de functie (Details) <b>Verify JWT</b> uit en sla op.</li>
+      <li><b>Database → Extensions</b>: zet <code>pg_net</code> aan (en <code>pg_cron</code>, als die nog uit staat).</li>
+      <li><button class="soft" id="copy-push-sql" disabled>Kopieer de meldingen-code</button> (kan pas na stap 1), ga naar <b>SQL Editor → New query</b>, plak en tik op <b>Run</b>.</li>
+      <li>Klaar. In de app: tik op je letter rechtsboven → <b>Meldingen aanzetten</b> → <b>Stuur een testmelding</b>. Op de iPhone werkt dit alleen in de app op het beginscherm.</li>
+    </ol>
+  </section>
 </main>
+<script src="config.js"></script>
 <script>
 const TEXT = {
   subject:'Je inlogcode voor de kinderkerk-app',
@@ -184,10 +204,28 @@ $('#copy-sql').addEventListener('click', e => {
   copy(schema.replace('JOUW-EMAIL@voorbeeld.nl', email), e.target, '✓ Gekopieerd, nu plakken in Supabase');
 });
 const files = {};
-['agenda.sql', 'agenda-functie.txt', 'backup.sql', 'uitnodigen.sql', 'slides-script.txt'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
+['agenda.sql', 'agenda-functie.txt', 'backup.sql', 'uitnodigen.sql', 'slides-script.txt', 'meldingen.sql', 'meldingen-functie.txt'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
 document.querySelectorAll('[data-file]').forEach(b => b.addEventListener('click', () => files[b.dataset.file]
   ? copy(files[b.dataset.file], b, '✓ Gekopieerd') : alert('Nog aan het laden. Probeer het zo nog een keer.')));
 document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy(TEXT[b.dataset.copy], b, '✓ Gekopieerd')));
+// Stap 9: sleutels voor meldingen (VAPID) en een geheim voor de tijdklok, gemaakt met de browser zelf
+const KEYS = {};
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+$('#mk-keys').addEventListener('click', async () => {
+  const kp = await crypto.subtle.generateKey({ name:'ECDSA', namedCurve:'P-256' }, true, ['sign', 'verify']);
+  KEYS.pub = b64url(await crypto.subtle.exportKey('raw', kp.publicKey));
+  KEYS.priv = (await crypto.subtle.exportKey('jwk', kp.privateKey)).d;
+  KEYS.secret = b64url(crypto.getRandomValues(new Uint8Array(24)));
+  $('#keys').hidden = false; $('#mk-keys').textContent = '✓ Sleutels gemaakt'; $('#mk-keys').disabled = true;
+  $('#copy-push-sql').disabled = false;
+});
+document.querySelectorAll('[data-key]').forEach(b => b.addEventListener('click', () => copy(KEYS[b.dataset.key], b, '✓ Gekopieerd')));
+$('#copy-push-sql').addEventListener('click', e => {
+  if (!files['meldingen.sql']) return alert('Nog aan het laden. Probeer het zo nog een keer.');
+  const url = (window.KK_CONFIG && window.KK_CONFIG.supabaseUrl || '').replace(/\/$/, '');
+  if (!url) return alert('De Supabase-URL ontbreekt in config.js.');
+  copy(files['meldingen.sql'].replace(/PUBLIEKE_SLEUTEL/g, KEYS.pub).replace(/GEHEIM_WAARDE/g, KEYS.secret).replace(/PROJECT_URL/g, url), e.target, '✓ Gekopieerd, nu plakken in Supabase');
+});
 </script>
 </body>
 </html>

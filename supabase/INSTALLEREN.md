@@ -105,3 +105,8 @@ Daarom koppel je een gratis mailservice. Hieronder met **Brevo** (300 mails per 
   Met één klik zet je hem weer aan.
 - Bij een gratis project kun je zelf geen back-ups van Supabase downloaden. Maak daarom af en toe (bijv. elke maand)
   een back-up in de app: **Meer → Gegevens → Back-up maken**.
+
+## Meldingen (optioneel)
+Zie stap 9 op de installeerpagina (/installeren.html). Kort: sleutels maken op die pagina → in Supabase drie geheimen
+(VAPID_PUBLIC, VAPID_PRIVATE, KK_GEHEIM) → functie `meldingen` (Verify JWT uit) → pg_net aan → meldingen-code in de SQL Editor.
+Meldingen staan voor iedereen standaard uit; ieder zet ze zelf aan in Mijn account.
