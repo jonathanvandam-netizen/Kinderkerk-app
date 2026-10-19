@@ -122,7 +122,7 @@ knop "🎉 Terugblik". Bewust simpel (wens van Jonathan): zondagen, kinderen gem
 elke zondag geweest en een bedankje aan de leiding. Telt per week (zondag t/m zaterdag). Delen = tekst (WhatsApp). Alleen zichtbaar als er check-ins zijn.
 Quiz (`#/quiz`, Meer → Op zondag, alleen bovenbouw-leiding en beheerders; onderbouw ziet hem niet): op Home onder het programma
 een knop "❓ Quizvraag bedenken" (voor die zondag; in week 7 "Quiz van vandaag: spelen of downloaden"). Vraag = open (antwoord mag
-leeg) of meerkeuze A–D (min. 2 antwoorden, tik op de letter van het goede). Quizpagina en het venster op Home: vragen van die week, tikken = aanpassen/weghalen,
+leeg) of meerkeuze A–D (min. 2 antwoorden; tik de letter(s) van het goede aan, meer goede antwoorden mag: `ok` = lijst, oude vragen hebben één getal → `okList`). Quizpagina en het venster op Home: vragen van die week, tikken = aanpassen/weghalen,
 "Quiz spelen in de app" (groot scherm, gekleurde A–D-vakken, Antwoord tonen), downloaden als PowerPoint (PptxGenJS 3.12.0 in
 `vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia; daarna haalt de app uit [Content_Types].xml de Overrides naar niet-bestaande slideMasterN weg, anders weigert PowerPoint het bestand) of
 spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel, met sharedStrings + docProps zodat Excel, Google Sheets, Numbers en iPhone-voorvertoning hem openen). Eerst maken, dan venster "… is klaar" met knop "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster
