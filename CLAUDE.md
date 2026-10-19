@@ -15,7 +15,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).
 - Navigatie: op de website (groot scherm) bovenin; op telefoon en als geïnstalleerde app een zwevende
-  "liquid glass"-balk onderin (Home, Check-in, Planning, Vergadering, Meer).
+  "liquid glass"-balk onderin (Home, Check-in, Smileys, Planning, Vergadering, Meer).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
@@ -45,7 +45,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   witte rand). Knop "Installeer de app" op inlogscherm, Home (wegklikbaar) en Meer: Android = installatievenster,
   iPhone/iPad = uitleg via Safari → Deel → Zet op beginscherm.
 - Donkere modus: kleuren als variabelen in `:root`, donkere set onder `html[data-theme=dark]` en `prefers-color-scheme`.
-  Keuze Automatisch/Licht/Donker in Mijn account, per toestel in localStorage `kk-theme`. Geen vaste kleuren in CSS.
+  Keuze Automatisch/Licht/Donker in Mijn account, per toestel in localStorage `kk-theme`. Geen vaste kleuren in CSS. Let op: een variabele nooit naar zichzelf laten verwijzen (`--x:var(--x)` = ongeldig/doorzichtig).
 - Inzoomen staat bewust uit (viewport, `touch-action:pan-x pan-y`, gesture/touch-events); invulvelden zijn 16px, anders
   zoomt iOS in. `sw.js` haalt eigen bestanden altijd vers op (GitHub Pages cachet 10 min) en de app herlaadt één keer bij
   een nieuwe versie. Verhoog `APP_VERSION` in index.html bij elke publicatie (zichtbaar onderaan Meer).
@@ -82,12 +82,18 @@ Per vergadering een notulist; actiepunten met één of meer personen (`who` = li
 notulen van De Deur: Algemeen (datum, notulist, volgende meeting), Agenda, Notulen, Actiepunten, Reeds uitgevoerd.
 Demo bevat de echte notulen van 4-10-2026 (Jonathan gaf toestemming dat dit openbaar in de code staat) en de echte
 themaplanning Scheppingsverhaal (week 1–5 scheppingsdagen, 6 bidden, 7 quiz + winkeltje). Demo-updates via `demoRev`
-vervangen alleen vergaderingen/planning, nooit kinderen. Gouden Week (smiley's en waarschuwingen): Jonathan legt nog uit hoe het werkt.
+vervangen alleen vergaderingen/planning, nooit kinderen.
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
 Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,
 per ding, opgeteld, geen punten voor alleen aanwezig): bovenbouw Bijbel 10, Werkblad 10, Geld 5, Bijbeltekst 10;
 onderbouw Bijbel 10, Werkblad 15, Geld 10; bezoekers als onderbouw.
+Smileys (eigen knop in de menubalk, `#/smileys`): per kind smileys geven (😊) en waarschuwingen (⚠️). 7 smileys =
+iets uit de grabbelbak graaien; knop "Gegraaid" trekt er 7 af (rest telt door). Waarschuwingen tellen per zondag:
+1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders/verzorgers in de dienst (bevestigen). Lijst = vandaag
+ingecheckte kinderen (anders recent), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";
+tik op de naam om terug te draaien. Opslag: tabel `marks` (kid_id, date, kind smiley/warn/grab, author), lokaal `db.marks`.
+Gouden Week komt later (Jonathan legt uit).
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)

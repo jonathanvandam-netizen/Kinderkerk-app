@@ -122,6 +122,17 @@ create table public.settings (
   value jsonb not null
 );
 
+-- Smileys en waarschuwingen: één regel per smiley, waarschuwing of keer graaien uit de grabbelbak
+create table public.marks (
+  id         uuid primary key default gen_random_uuid(),
+  kid_id     uuid not null references public.kids(id) on delete cascade,
+  date       date not null,
+  kind       text not null check (kind in ('smiley','warn','grab')),
+  author     text not null default '',
+  created_at timestamptz not null default now()
+);
+create index on public.marks (kid_id);
+
 create table public.illnesses (
   id     uuid primary key default gen_random_uuid(),
   name   text not null,
@@ -198,6 +209,7 @@ alter table public.meetings        enable row level security;
 alter table public.agenda_items    enable row level security;
 alter table public.actions         enable row level security;
 alter table public.settings        enable row level security;
+alter table public.marks           enable row level security;
 
 create policy "leiding ziet leiding" on public.leaders
   for select to authenticated using (public.is_leader());
@@ -233,6 +245,8 @@ create policy "leiding" on public.agenda_items
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
 create policy "leiding" on public.actions
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
+create policy "leiding" on public.marks
+  for all to authenticated using (public.is_leader()) with check (public.is_leader());
 
 create policy "leiding ziet periodes" on public.periods
   for select to authenticated using (public.is_leader());
@@ -257,7 +271,7 @@ revoke all on all tables in schema public from anon;
 alter publication supabase_realtime add table
   public.leaders, public.kids, public.checkins, public.leader_checkins,
   public.notes, public.rosters, public.illnesses, public.sundays, public.periods,
-  public.meetings, public.agenda_items, public.actions, public.settings;
+  public.meetings, public.agenda_items, public.actions, public.settings, public.marks;
 
 -- ---------- Eerste beheerder ----------
 -- Vervang het e-mailadres hieronder door dat van jezelf. De rest van de leiding

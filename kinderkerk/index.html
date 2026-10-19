@@ -24,9 +24,9 @@ try { const t = localStorage.getItem('kk-theme'); if (t === 'light' || t === 'da
 </script>
 <style>
 :root{
-  --brand:#1d3c9c; --brand-600:#162f7c; --brand-soft:#e9eefb; --brand-soft-2:var(--brand-soft-2); --brand-text:#24345f;
+  --brand:#1d3c9c; --brand-600:#162f7c; --brand-soft:#e9eefb; --brand-soft-2:#dce4f8; --brand-text:#24345f;
   --bg:#f3f4f7; --card:#fff; --text:#1c2433; --muted:#6b7385; --border:#e6e8ee;
-  --surface-2:var(--surface-2); --surface-3:var(--surface-3); --surface-4:var(--surface-4); --input:var(--input);
+  --surface-2:#f7f8fa; --surface-3:#eef0f4; --surface-4:#e7e9ee; --input:#f8f9fb;
   --ok:#1f9d55; --ok-soft:#e4f5eb; --warn:#d99100; --warn-soft:#fdf3dc; --warn-text:#6b4b00; --bad:#d64545; --bad-soft:#fbe7e7; --bad-text:#8f2a2a;
   --bday-bg:#fdeef6; --bday-text:#8a2a5a;
   --onder:#f08a24; --boven:#2f80ed; --bezoeker:#9b51e0;
@@ -92,7 +92,8 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
   border:1px solid var(--glass-border);
   box-shadow:0 10px 34px rgba(20,30,60,.18),0 2px 6px rgba(20,30,60,.08),inset 0 1px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-lo)}
 .bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;border-radius:24px;font-size:11px;font-weight:700;color:var(--nav-text);min-width:0;white-space:nowrap;text-decoration:none;transition:background .2s,color .2s}
-@media(max-width:374px){.bottomnav{gap:2px;padding:5px}.bottomnav a{font-size:9.5px;letter-spacing:-.2px}}
+@media(max-width:440px){.bottomnav a{font-size:10px;letter-spacing:-.2px}}
+@media(max-width:374px){.bottomnav{gap:1px;padding:5px}.bottomnav a{font-size:8.6px;letter-spacing:-.3px}}
 .bottomnav a.active{color:var(--brand);background:var(--glass-active);box-shadow:0 1px 4px rgba(20,30,60,.12),inset 0 1px 0 var(--glass-hi)}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
 body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
@@ -256,6 +257,23 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .row-main b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row-main .muted{font-size:13px}
 .row .chev{width:18px;height:18px;color:#a0a6b4}
+.sm-row{gap:8px;cursor:default}.sm-row:hover{background:none}
+.sm-name{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.sm-btn{flex:none;width:46px;height:42px;border:0;border-radius:12px;font-size:21px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.sm-btn.smile{background:var(--warn-soft)}.sm-btn.warn{background:var(--bad-soft)}
+.sm-btn:disabled{opacity:.35;cursor:default}
+.sdots{display:inline-flex;gap:3px;vertical-align:middle;margin-right:4px}
+.sdots i{width:8px;height:8px;border-radius:50%;background:var(--surface-3);box-shadow:inset 0 0 0 1px var(--border)}
+.sdots i.on{background:var(--warn);box-shadow:none}
+.sdots.big{gap:6px}.sdots.big i{width:22px;height:22px}
+.wb{display:inline-block;font-size:12px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn-text)}
+.wb.w3{background:var(--bad-soft);color:var(--bad-text)}
+.wsteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wsteps li{padding:9px 12px;border-radius:10px;background:var(--surface-2);color:var(--muted);font-weight:600;font-size:14.5px}
+.wsteps li.on{background:var(--warn-soft);color:var(--warn-text)}
+.wsteps li.on.w3{background:var(--bad-soft);color:var(--bad-text)}
+.sm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sm-actions .btn{min-width:0;padding-left:8px;padding-right:8px;justify-content:center}
 .row-icon{width:40px;height:40px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;flex:none}
 .list-head{padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);border-top:1px solid var(--border)}
 .list-head:first-child{border-top:0}
@@ -386,7 +404,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 8';
+const APP_VERSION = '2026-10-19 · 9';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -449,6 +467,7 @@ const ICONS = {
   arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   share:'<path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/>',
+  smile:'<circle cx="12" cy="12" r="9"/><path d="M8.3 14.2c.9 1.4 2.2 2.1 3.7 2.1s2.8-.7 3.7-2.1M9 9.6v.1M15 9.6v.1"/>',
   alert:'<path d="M12 8v5M12 16.5v.1"/>',
   book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',
 };
@@ -509,6 +528,7 @@ function removeDemoKids(){
   const demo = new Set(db.kids.filter(isDemoKid).map(k => k.id));
   db.kids = db.kids.filter(k => !demo.has(k.id));
   db.checkins = db.checkins.filter(c => !demo.has(c.kidId));
+  db.marks = db.marks.filter(m => !demo.has(m.kidId));
   Object.values(db.rosters).forEach(list => list.forEach(r => { if (demo.has(r.kidId)) r.kidId = null; }));
   demo.forEach(id => drop('kids', { id }));   // database: check-ins gaan automatisch mee, roosterplekken worden leeg
   save();
@@ -659,11 +679,12 @@ const CFG = window.KK_CONFIG || {};
 const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
 const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : null;
 const STORE_KEY = 'kinderkerk-demo-v8';
-const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[], settings:{} });
+const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[], settings:{}, marks:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
 if (!db){ db = seed(); save(); }
+if (!db.marks) db.marks = [];   // smileys en waarschuwingen (nieuw in versie 9)
 /* Eenmalige update (2026-10-19): echte notulen van 4 oktober en de echte themaplanning toevoegen.
    Veilig: alleen de oude verzonnen voorbeeldteksten worden vervangen; wat Jonathan zelf heeft ingevoerd blijft staan
    (eigen agendapunten, actiepunten, leiding in de planning, kinderen, check-ins). */
@@ -724,13 +745,13 @@ async function fetchAll(table, order){
   }
 }
 async function loadCloud(){
-  const [leaders, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions, settingRows] = await Promise.all([
+  const [leaders, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions, settingRows, marks] = await Promise.all([
     fetchAll('leaders', ['id']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
     fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start']),
-    fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id']), fetchAll('settings', ['key'])]);
+    fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id']), fetchAll('settings', ['key']), fetchAll('marks', ['created_at','id'])]);
   notes.forEach(n => delete n.created_at);
   const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses,
+  db = { session:db.session, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses, marks,
     settings:Object.fromEntries(settingRows.map(r => [r.key, r.value])) };
   [...agenda, ...actions].forEach(x => delete x.created_at);
 }
@@ -812,12 +833,13 @@ const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.ond
 function rosterToday(key){ const T = todayISO(); return db.rosters[key].find(r => r.date === T) || db.rosters[key].find(r => r.date > T); }
 
 /* ---------- UI-state ---------- */
-const state = { planCount:8, planMine:false, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { smTab:null, smAll:false, planCount:8, planMine:false, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
   { id:'home', label:'Home', icon:'home' },
   { id:'checkin', label:'Check-in', icon:'checkin' },
+  { id:'smileys', label:'Smileys', icon:'smile' },
   { id:'planning', label:'Planning', icon:'calendar' },
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
@@ -830,7 +852,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -1202,6 +1224,92 @@ function renderKidList(){
   $('#allbanner').innerHTML = state.showAll
     ? `${icon('info')}<span>Je ziet nu <b>alle</b> kinderen, ook wie langer dan 60 dagen niet is geweest.</span><button class="btn btn-outline sm" data-action="toggleAll">Alleen recent</button>`
     : `${icon('info')}<span>Niet gevonden? Je ziet alleen kinderen die in de afgelopen 60 dagen zijn geweest${hidden ? ` (${hidden} verborgen)` : ''}.</span><button class="btn btn-outline sm" data-action="toggleAll">${icon('search')} Alle kinderen</button>`;
+}
+/* =====================================================================
+   SMILEYS EN WAARSCHUWINGEN
+   7 smileys = iets uit de grabbelbak graaien (daarna begint de telling opnieuw; wat over is telt mee).
+   Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit (naar ouders in de dienst).
+   Alles staat als losse regels in db.marks: { kidId, date, kind:'smiley'|'warn'|'grab', author }.
+   ===================================================================== */
+const SMILEY_GOAL = 7;
+const WARN_TEXT = ['', 'Naam op het bord', 'Streepje achter de naam', 'Eruit: naar ouders of verzorgers in de dienst'];
+const marksOf = (kidId, kind, date) => db.marks.filter(m => m.kidId === kidId && m.kind === kind && (!date || m.date === date));
+const smileyCount = kidId => Math.max(0, marksOf(kidId, 'smiley').length - SMILEY_GOAL * marksOf(kidId, 'grab').length);
+const warnCount = (kidId, d = todayISO()) => Math.min(3, marksOf(kidId, 'warn', d).length);
+function addMark(kidId, kind){
+  const m = { id:newId(), kidId, date:todayISO(), kind, author:me().name, created_at:new Date().toISOString() };
+  db.marks.push(m); put('marks', m); save();
+}
+function undoMark(kidId, kind){
+  const m = marksOf(kidId, kind, todayISO()).sort((a,b) => (a.created_at || '').localeCompare(b.created_at || '')).pop();
+  if (!m) return false;
+  db.marks = db.marks.filter(x => x.id !== m.id); drop('marks', { id:m.id }); save();
+  return true;
+}
+const dots = (n, cls = '') => `<span class="sdots ${cls}">${Array.from({ length:SMILEY_GOAL }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+const warnBadge = w => w ? `<span class="wb ${w === 3 ? 'w3' : ''}">⚠️ ${w}</span>` : '';
+
+function renderSmileys(){
+  const T = todayISO();
+  if (!state.smTab) state.smTab = GROUPS[me().group] ? me().group : 'alles';
+  const inTab = k => isActive(k) && (state.smTab === 'alles' || k.group === state.smTab);
+  const here = db.kids.filter(k => inTab(k) && checkinFor(k.id, T));
+  const kids = (state.smAll || !here.length ? db.kids.filter(k => inTab(k) && (isRecent(k) || state.smAll)) : here).sort(byName);
+  const grab = db.kids.filter(k => inTab(k) && smileyCount(k.id) >= SMILEY_GOAL).sort(byName);
+  const board = db.kids.filter(k => inTab(k) && warnCount(k.id, T)).sort((a,b) => warnCount(b.id, T) - warnCount(a.id, T) || byName(a,b));
+  const tabs = [['alles','Alles'],['onder','Onderbouw'],['boven','Bovenbouw'],['bezoeker','Bezoekers']];
+  app.innerHTML = `
+  <div class="page">
+    <div class="tabs">${tabs.map(([id,l]) => `<button class="tab ${state.smTab === id ? 'active' : ''}" data-action="smTab" data-id="${id}">${l}</button>`).join('')}</div>
+    <div class="page-head"><h1>Smileys</h1><span class="muted">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+    <div class="banner" style="margin:0 0 16px">${icon('info')}<span><b>${SMILEY_GOAL} smileys</b> = iets uit de grabbelbak graaien.
+      Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders of verzorgers in de dienst zitten.</span></div>
+    ${grab.length ? `<h3 class="section-title">🎁 Mag graaien uit de grabbelbak</h3>
+    <div class="card list">${grab.map(k => `
+      <div class="row sm-row"><button class="sm-name" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
+        <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${smileyCount(k.id)} smileys</span></span></button>
+        <button class="btn btn-soft sm" data-action="grabbed" data-id="${k.id}">Gegraaid</button></div>`).join('')}</div>` : ''}
+    ${board.length ? `<h3 class="section-title">⚠️ Op het bord</h3>
+    <div class="card list">${board.map(k => { const w = warnCount(k.id, T); return `
+      <button class="row" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
+        <span class="row-main"><b>${esc(k.name)}${w > 1 ? ' ' + '|'.repeat(w - 1) : ''}</b><span class="muted" style="${w === 3 ? 'color:var(--bad-text);font-weight:700' : ''}">${w}e waarschuwing: ${WARN_TEXT[w].toLowerCase()}</span></span>${warnBadge(w)}</button>`; }).join('')}</div>` : ''}
+    <h3 class="section-title">${here.length && !state.smAll ? 'Vandaag ingecheckt' : 'Kinderen'}</h3>
+    <div class="card list">${kids.length ? kids.map(k => { const n = smileyCount(k.id), w = warnCount(k.id, T); return `
+      <div class="row sm-row"><button class="sm-name" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
+        <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${dots(Math.min(n, SMILEY_GOAL))} ${n}/${SMILEY_GOAL} ${warnBadge(w)}</span></span></button>
+        <button class="sm-btn smile" data-action="addSmiley" data-id="${k.id}" title="Smiley geven" aria-label="Smiley geven aan ${esc(k.name)}">😊</button>
+        <button class="sm-btn warn" data-action="addWarn" data-id="${k.id}" title="Waarschuwing geven" aria-label="Waarschuwing geven aan ${esc(k.name)}" ${w >= 3 ? 'disabled' : ''}>⚠️</button></div>`; }).join('')
+      : `<div class="empty">Geen kinderen in deze groep.</div>`}</div>
+    <div class="banner">${icon('info')}<span>${state.smAll ? 'Je ziet nu <b>alle</b> kinderen.' : here.length ? 'Je ziet de kinderen die vandaag zijn ingecheckt.' : 'Nog niemand ingecheckt vandaag, dus je ziet de kinderen van de afgelopen 60 dagen.'} Per ongeluk getikt? Tik op de naam om het terug te draaien.</span>
+      <button class="btn btn-outline sm" data-action="smAll">${state.smAll ? 'Minder tonen' : 'Alle kinderen'}</button></div>
+  </div>`;
+}
+function openSmiley(id){
+  const k = kidById(id); if (!k) return;
+  const T = todayISO(), n = smileyCount(id), w = warnCount(id, T), fn = esc(firstName(k.name));
+  const todayS = marksOf(id, 'smiley', T).length, grabs = marksOf(id, 'grab').length, grabToday = marksOf(id, 'grab', T).length;
+  openModal(`
+    <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
+      <div><h2>${esc(k.name)}</h2><span class="muted">${GROUPS[k.group]}${grabs ? ` · ${grabs}× gegraaid` : ''}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div class="field"><span>Smileys</span>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">${dots(Math.min(n, SMILEY_GOAL), 'big')}<b style="font-size:18px">${n}/${SMILEY_GOAL}</b></div>
+        <div class="muted" style="margin-top:6px">${n >= SMILEY_GOAL ? `🎁 ${fn} mag iets uit de grabbelbak graaien!` : `Nog ${SMILEY_GOAL - n} tot de grabbelbak.`}${todayS ? ` Vandaag ${todayS} gekregen.` : ''}</div>
+        ${n >= SMILEY_GOAL ? `<button class="btn btn-primary btn-block" style="margin-top:10px" data-action="grabbed" data-id="${id}" data-modal="1">🎁 Heeft gegraaid (−${SMILEY_GOAL} smileys)</button>` : ''}
+        <div class="sm-actions">
+          <button class="btn btn-soft" data-action="addSmiley" data-id="${id}" data-modal="1">😊 Smiley geven</button>
+          <button class="btn btn-outline" data-action="undoSmiley" data-id="${id}" ${todayS ? '' : 'disabled'}>↩︎ Smiley terug</button>
+        </div>
+        ${grabToday ? `<button class="textlink" style="margin-top:10px;font-size:14px;color:var(--brand)" data-action="undoGrab" data-id="${id}">Graaien van vandaag terugdraaien</button>` : ''}</div>
+      <div class="field" style="margin-top:8px"><span>Waarschuwingen vandaag</span>
+        <ol class="wsteps">${[1,2,3].map(i => `<li class="${i <= w ? 'on' : ''} ${i === 3 ? 'w3' : ''}">${i <= w ? '⚠️' : '○'} ${i}e: ${WARN_TEXT[i]}</li>`).join('')}</ol>
+        <div class="sm-actions">
+          <button class="btn btn-soft" style="background:var(--bad-soft);color:var(--bad-text)" data-action="addWarn" data-id="${id}" data-modal="1" ${w >= 3 ? 'disabled' : ''}>⚠️ Waarschuwing</button>
+          <button class="btn btn-outline" data-action="undoWarn" data-id="${id}" ${w ? '' : 'disabled'}>↩︎ Terug</button>
+        </div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" data-action="closeModal">Klaar</button></div>`);
 }
 function lastSeenText(k){
   const ls = lastSeen(k.id);
@@ -1852,6 +1960,30 @@ const actions = {
   closeModal: () => closeModal(),
   homeTab: d => { state.homeTab = d.id; render(); },
   ciTab: d => { state.ciTab = d.id; render(); },
+  smTab: d => { state.smTab = d.id; render(); },
+  smAll: () => { state.smAll = !state.smAll; render(); },
+  openSmiley: d => openSmiley(d.id),
+  addSmiley: d => {
+    const k = kidById(d.id); if (!k) return;
+    addMark(k.id, 'smiley'); const n = smileyCount(k.id);
+    toast(n >= SMILEY_GOAL ? `🎁 ${firstName(k.name)} mag graaien uit de grabbelbak!` : `😊 ${firstName(k.name)}: ${n} van de ${SMILEY_GOAL} smileys`);
+    render(); if (d.modal) openSmiley(k.id);
+  },
+  addWarn: d => {
+    const k = kidById(d.id); if (!k) return;
+    const w = warnCount(k.id) + 1; if (w > 3) return;
+    if (w === 3 && !confirm(`3e waarschuwing voor ${firstName(k.name)}: eruit en naar ouders of verzorgers in de dienst?`)) return;
+    addMark(k.id, 'warn'); toast(`⚠️ ${firstName(k.name)}: ${WARN_TEXT[w].toLowerCase()}`);
+    render(); if (d.modal) openSmiley(k.id);
+  },
+  undoSmiley: d => { if (undoMark(d.id, 'smiley')) toast('Smiley teruggedraaid'); render(); openSmiley(d.id); },
+  undoWarn: d => { if (undoMark(d.id, 'warn')) toast('Waarschuwing teruggedraaid'); render(); openSmiley(d.id); },
+  undoGrab: d => { if (undoMark(d.id, 'grab')) toast('Graaien teruggedraaid'); render(); openSmiley(d.id); },
+  grabbed: d => {
+    const k = kidById(d.id); if (!k || smileyCount(k.id) < SMILEY_GOAL) return;
+    addMark(k.id, 'grab'); toast(`🎁 ${firstName(k.name)} heeft gegraaid`);
+    render(); if (d.modal) openSmiley(k.id);
+  },
   rosterTab: d => { state.rosterTab = d.id; render(); },
   toggleAll: () => { state.showAll = !state.showAll; renderKidList(); },
   leaderCheckin: () => openLeaderCheckin(),
@@ -2063,6 +2195,7 @@ const actions = {
     if (!isAdmin() || !k || !confirm(`${k.name} verwijderen? Ook alle check-ins van dit kind worden verwijderd.`)) return;
     db.kids = db.kids.filter(x => x.id !== k.id);
     db.checkins = db.checkins.filter(c => c.kidId !== k.id);
+    db.marks = db.marks.filter(m => m.kidId !== k.id);
     Object.values(db.rosters).forEach(list => list.forEach(r => { if (r.kidId === k.id) r.kidId = null; }));
     drop('kids', { id:k.id });
     save(); closeModal(); render(); toast(`${k.name} verwijderd`);
