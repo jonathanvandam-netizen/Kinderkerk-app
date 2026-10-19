@@ -93,8 +93,8 @@ Nieuw kind: item 'nieuw' (🌟, standaard 50 punten per groep, instelbaar bij Pu
 zonder check-ins krijgen de knop níet (keuze van Jonathan). Naam lijkt op een bestaand kind (`similarKids`: zelfde naam zonder
 hoofdletters/accenten, alleen voornaam, of kleine typfout bij (bijna) gelijke voornaam; broertjes/zusjes met dezelfde
 achternaam níet): waarschuwing tijdens typen en bevestigen bij opslaan.
-Meer is ingedeeld in Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten), Kinderen en team (Kinderen beheren,
-Historie, Team) en Gegevens (beheerder).
+Meer is ingedeeld in Algemeen (Team), Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten), Kinderen
+(Kinderen beheren, Historie) en Gegevens (beheerder).
 Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**

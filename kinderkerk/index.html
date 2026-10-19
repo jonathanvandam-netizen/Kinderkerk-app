@@ -457,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 38';
+const APP_VERSION = '2026-10-19 · 39';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1875,15 +1875,16 @@ async function loadCalendar(fresh){
    ===================================================================== */
 function renderMeer(){
   const groups = [
+    ['Algemeen', [
+      ['team','Team','Alle leiding per groep','users']]],
     ['Op zondag', [
       ['gebed','Gebedsverlangens','Wie bidt er, en alle gebedsverlangens','heart'],
       ['roosters','Sheets','Wie doet de sheets? (bovenbouw)','monitor'],
       ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
       ['punten','Punten','Hoeveel punten een kind krijgt','check']]],
-    ['Kinderen en team', [
+    ['Kinderen', [
       ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','user'],
-      ['historie','Historie','Aantallen en wie er regelmatig komt','chart'],
-      ['team','Team','Alle leiding per groep','users']]],
+      ['historie','Historie','Aantallen en wie er regelmatig komt','chart']]],
   ];
   app.innerHTML = `
   <div class="page">
