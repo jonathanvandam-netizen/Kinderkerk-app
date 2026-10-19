@@ -90,8 +90,8 @@ per ding, opgeteld, geen punten voor alleen aanwezig): bovenbouw Bijbel 10, Werk
 onderbouw Bijbel 10, Werkblad 15, Geld 10; bezoekers als onderbouw.
 Gedrag (eigen knop in de menubalk, `#/gedrag`; `#/smileys` werkt ook): per kind smileys geven (😊) en waarschuwingen (⚠️). 7 smileys =
 iets uit de grabbelbak graaien; knop "Gegraaid" trekt er 7 af (rest telt door). Waarschuwingen tellen per zondag:
-1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders/verzorgers in de dienst (bevestigen). Lijst = vandaag
-ingecheckte kinderen (anders recent), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";
+1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders/verzorgers in de dienst (bevestigen). Lijst = alleen vandaag
+ingecheckte kinderen; onderin knop "Alle kinderen" (de rest van de groep), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";
 tik op de naam om terug te draaien. Opslag: tabel `marks` (kid_id, date, kind smiley/warn/grab, author), lokaal `db.marks`.
 Gouden Week komt later (Jonathan legt uit).
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).

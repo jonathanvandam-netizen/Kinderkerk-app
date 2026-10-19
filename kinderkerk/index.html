@@ -404,7 +404,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 10';
+const APP_VERSION = '2026-10-19 · 11';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1254,8 +1254,8 @@ function renderSmileys(){
   if (!state.smTab) state.smTab = GROUPS[me().group] ? me().group : 'alles';
   const inTab = k => isActive(k) && (state.smTab === 'alles' || k.group === state.smTab);
   const here = db.kids.filter(k => inTab(k) && checkinFor(k.id, T));
-  const kids = (state.smAll || !here.length ? db.kids.filter(k => inTab(k) && (isRecent(k) || state.smAll)) : here).sort(byName);
-  const grab = db.kids.filter(k => inTab(k) && smileyCount(k.id) >= SMILEY_GOAL).sort(byName);
+  const others = db.kids.filter(k => inTab(k) && !checkinFor(k.id, T)).sort(byName);
+  const grab = (state.smAll ? db.kids.filter(inTab) : here).filter(k => smileyCount(k.id) >= SMILEY_GOAL).sort(byName);
   const board = db.kids.filter(k => inTab(k) && warnCount(k.id, T)).sort((a,b) => warnCount(b.id, T) - warnCount(a.id, T) || byName(a,b));
   const tabs = [['alles','Alles'],['onder','Onderbouw'],['boven','Bovenbouw'],['bezoeker','Bezoekers']];
   app.innerHTML = `
@@ -1273,16 +1273,21 @@ function renderSmileys(){
     <div class="card list">${board.map(k => { const w = warnCount(k.id, T); return `
       <button class="row" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
         <span class="row-main"><b>${esc(k.name)}${w > 1 ? ' ' + '|'.repeat(w - 1) : ''}</b><span class="muted" style="${w === 3 ? 'color:var(--bad-text);font-weight:700' : ''}">${w}e waarschuwing: ${WARN_TEXT[w].toLowerCase()}</span></span>${warnBadge(w)}</button>`; }).join('')}</div>` : ''}
-    <h3 class="section-title">${here.length && !state.smAll ? 'Vandaag ingecheckt' : 'Kinderen'}</h3>
-    <div class="card list">${kids.length ? kids.map(k => { const n = smileyCount(k.id), w = warnCount(k.id, T); return `
+    <h3 class="section-title">Vandaag ingecheckt</h3>
+    <div class="card list">${here.length ? here.sort(byName).map(smRow).join('')
+      : `<div class="empty">Nog niemand ingecheckt${state.smTab === 'alles' ? '' : ' in deze groep'}. Check eerst kinderen in bij Check-in.</div>`}</div>
+    <p class="muted" style="font-size:13.5px;margin:10px 4px 0">Per ongeluk getikt? Tik op de naam om het terug te draaien.</p>
+    <button class="btn btn-outline btn-block" style="margin-top:20px" data-action="smAll">${icon(state.smAll ? 'x' : 'users')} ${state.smAll ? 'Alle kinderen verbergen' : 'Alle kinderen'}${others.length ? ` (${others.length})` : ''}</button>
+    ${state.smAll ? `<h3 class="section-title">Alle kinderen (niet ingecheckt)</h3>
+    <div class="card list">${others.length ? others.map(smRow).join('') : `<div class="empty">Geen andere kinderen in deze groep.</div>`}</div>` : ''}
+  </div>`;
+}
+function smRow(k){
+  const n = smileyCount(k.id), w = warnCount(k.id); return `
       <div class="row sm-row"><button class="sm-name" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
         <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${dots(Math.min(n, SMILEY_GOAL))} ${n}/${SMILEY_GOAL} ${warnBadge(w)}</span></span></button>
         <button class="sm-btn smile" data-action="addSmiley" data-id="${k.id}" title="Smiley geven" aria-label="Smiley geven aan ${esc(k.name)}">😊</button>
-        <button class="sm-btn warn" data-action="addWarn" data-id="${k.id}" title="Waarschuwing geven" aria-label="Waarschuwing geven aan ${esc(k.name)}" ${w >= 3 ? 'disabled' : ''}>⚠️</button></div>`; }).join('')
-      : `<div class="empty">Geen kinderen in deze groep.</div>`}</div>
-    <div class="banner">${icon('info')}<span>${state.smAll ? 'Je ziet nu <b>alle</b> kinderen.' : here.length ? 'Je ziet de kinderen die vandaag zijn ingecheckt.' : 'Nog niemand ingecheckt vandaag, dus je ziet de kinderen van de afgelopen 60 dagen.'} Per ongeluk getikt? Tik op de naam om het terug te draaien.</span>
-      <button class="btn btn-outline sm" data-action="smAll">${state.smAll ? 'Minder tonen' : 'Alle kinderen'}</button></div>
-  </div>`;
+        <button class="sm-btn warn" data-action="addWarn" data-id="${k.id}" title="Waarschuwing geven" aria-label="Waarschuwing geven aan ${esc(k.name)}" ${w >= 3 ? 'disabled' : ''}>⚠️</button></div>`;
 }
 function openSmiley(id){
   const k = kidById(id); if (!k) return;
