@@ -56,6 +56,19 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
     <h2><span class="num">2</span> Mailservice koppelen (eerst!)</h2>
     <p style="margin:0">Bij een gratis Supabase-project kun je de inlogmail pas aanpassen als er een eigen mailservice is gekoppeld.
       Zonder die koppeling stuurt Supabase ook maar 2 mails per uur. Daarom eerst dit. We gebruiken <b>Brevo</b> (gratis, 300 mails per dag).</p>
+    <p style="margin:12px 0 0"><b>Makkelijkst: via je eigen Gmail</b> (geen Brevo nodig, tot 500 mails per dag)</p>
+    <ol>
+      <li>Ga in een nieuw tabblad naar <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a> en log in.
+        (Lukt dat niet? Zet eerst <b>Verificatie in 2 stappen</b> aan bij je Google-account → Beveiliging.)</li>
+      <li>Vul als naam <code>Kinderkerk Supabase</code> in en tik op <b>Maken</b>. Je krijgt een <b>app-wachtwoord</b> van 16 letters. Kopieer het (zonder spaties).</li>
+      <li>Ga in Supabase naar <b>Authentication → Emails</b>, tabblad <b>SMTP Settings</b>, en zet <b>Enable Custom SMTP</b> aan. Vul in:<br>
+        Sender email: <i>je Gmail-adres</i> · Sender name: <code>Kinderkerk De Deur</code><br>
+        Host: <code>smtp.gmail.com</code> · Port: <code>587</code><br>
+        Username: <i>je Gmail-adres</i> · Password: <i>het app-wachtwoord</i></li>
+      <li>Tik onderaan op <b>Save changes</b>. Klaar: ga door naar stap 3.</li>
+    </ol>
+    <div class="note">Het app-wachtwoord is geheim: deel het met niemand, ook niet met Claude. Je gewone Gmail-wachtwoord blijft gewoon werken.</div>
+    <p style="margin:16px 0 0;color:var(--muted)"><i>Of, als je liever Brevo gebruikt:</i></p>
     <p style="margin:12px 0 0"><b>A. In Brevo</b> (nieuw tabblad: <a href="https://www.brevo.com" target="_blank" rel="noopener">brevo.com</a>)</p>
     <ol>
       <li>Maak een gratis account aan en log in.</li>
