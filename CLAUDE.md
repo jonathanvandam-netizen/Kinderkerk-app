@@ -66,7 +66,9 @@ afvinken; open actiepunten op het overzicht), eerdere vergaderingen, Delen = not
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
-Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'); startwaarden afgeleid uit Zap!.
+Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,
+per ding, opgeteld, geen punten voor alleen aanwezig): bovenbouw Bijbel 10, Werkblad 10, Geld 5, Bijbeltekst 10;
+onderbouw Bijbel 10, Werkblad 15, Geld 10; bezoekers als onderbouw.
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)

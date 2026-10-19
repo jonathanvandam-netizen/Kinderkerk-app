@@ -388,7 +388,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-18 · 18';
+const APP_VERSION = '2026-10-19 · 1';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -458,11 +458,11 @@ const ITEMS = [
 ];
 const itemEmoji = id => ITEMS.find(i => i.id === id)?.emoji || '';
 /* Punten: alleen om te weten hoeveel (fysieke) punten een kind krijgt. Een beheerder past de waarden aan onder Meer → Punten.
-   Startwaarden afgeleid uit Zap!. */
+   Startwaarden opgegeven door Jonathan (punten per meegenomen ding, opgeteld; bezoekers als onderbouw). */
 const DEFAULT_POINTS = {
-  onder:{ aanwezig:5, bijbel:5, werkblad:10, geld:5 },
-  boven:{ aanwezig:5, bijbel:5, werkblad:5, geld:0, bijbeltekst:5 },
-  bezoeker:{ aanwezig:5, bijbel:5, werkblad:10, geld:5 },
+  onder:{ aanwezig:0, bijbel:10, werkblad:15, geld:10 },
+  boven:{ aanwezig:0, bijbel:10, werkblad:10, geld:5, bijbeltekst:10 },
+  bezoeker:{ aanwezig:0, bijbel:10, werkblad:15, geld:10 },
 };
 const pointsCfg = () => ({ ...DEFAULT_POINTS, ...(db.settings?.points || {}) });
 function pointsFor(group, items){
@@ -1311,7 +1311,7 @@ function renderPunten(){
   <div class="page">
     <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
     <div class="page-head"><h1>Punten</h1></div>
-    <div class="banner" style="margin:0 0 16px">${icon('info')}<span>Bij het inchecken laat de app zien hoeveel punten een kind krijgt: punten voor <b>aanwezig zijn</b>, plus punten voor elk ding dat het heeft meegenomen. De punten zelf deel je uit zoals altijd.</span></div>
+    <div class="banner" style="margin:0 0 16px">${icon('info')}<span>Bij het inchecken laat de app zien hoeveel punten een kind krijgt: punten voor elk ding dat het heeft meegenomen, bij elkaar opgeteld. Wil je ook punten geven voor alleen aanwezig zijn, vul dat dan in bij <b>Aanwezig</b>. De punten zelf deel je uit zoals altijd.</span></div>
     <div class="card list" style="overflow-x:auto"><table class="t pt-table">
       <thead><tr><th></th><th class="c">Onder</th><th class="c">Boven</th><th class="c">Bezoek</th></tr></thead>
       <tbody>${rows.map(([id, label]) => `<tr><td><b>${label}</b></td><td class="c">${cell('onder', id)}</td><td class="c">${cell('boven', id)}</td><td class="c">${cell('bezoeker', id)}</td></tr>`).join('')}</tbody>
