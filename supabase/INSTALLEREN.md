@@ -19,6 +19,9 @@ Daar kopieer je stap 2 en 3 met één knop, met je e-mailadres er al in.
 4. Klik op **Run**. Je ziet dan "Success".
 
 ## 3. Inlogmail met code
+**Let op:** bij een gratis project kun je de mails pas aanpassen als de eigen mailservice (stap 7, Brevo) is gekoppeld.
+Doe stap 7 dus eerst. De hulppagina zet de stappen in de goede volgorde.
+
 De app werkt met een code van 6 cijfers in plaats van een link. Op een iPhone werkt een link
 namelijk niet goed in een geïnstalleerde app. Pas daarom twee mails aan:
 

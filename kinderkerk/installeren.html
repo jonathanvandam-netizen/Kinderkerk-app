@@ -53,17 +53,46 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
   </section>
 
   <section class="card">
-    <h2><span class="num">2</span> Inlogmail met code</h2>
-    <p style="margin:0">Ga in Supabase naar <b>Authentication → Emails</b> (of <b>Email Templates</b>). Doe het volgende bij <b>Magic Link</b> én bij <b>Confirm signup</b>:</p>
+    <h2><span class="num">2</span> Mailservice koppelen (eerst!)</h2>
+    <p style="margin:0">Bij een gratis Supabase-project kun je de inlogmail pas aanpassen als er een eigen mailservice is gekoppeld.
+      Zonder die koppeling stuurt Supabase ook maar 2 mails per uur. Daarom eerst dit. We gebruiken <b>Brevo</b> (gratis, 300 mails per dag).</p>
+    <p style="margin:12px 0 0"><b>A. In Brevo</b> (nieuw tabblad: <a href="https://www.brevo.com" target="_blank" rel="noopener">brevo.com</a>)</p>
     <ol>
-      <li><button class="soft" data-copy="subject">Kopieer onderwerp</button> en plak het bij <b>Subject</b>.</li>
-      <li><button class="soft" data-copy="body">Kopieer bericht</button>, maak het vak <b>Message body</b> leeg en plak het erin.</li>
-      <li>Tik op <b>Save</b>.</li>
+      <li>Maak een gratis account aan en log in.</li>
+      <li>Klik rechtsboven op je naam → <b>Senders, Domains &amp; Dedicated IPs</b> → tab <b>Senders</b> → <b>Add a sender</b>.
+        Naam: <code>Kinderkerk De Deur</code>, e-mail: het adres waar de inlogmails vandaan komen. Bevestig dat adres via de mail die Brevo stuurt.</li>
+      <li>Klik rechtsboven op je naam → <b>SMTP &amp; API</b> → tab <b>SMTP</b>. Daar staan <b>SMTP Server</b>, <b>Port</b> en <b>Login</b>.
+        Klik op <b>Generate a new SMTP key</b>, geef hem een naam (bijv. <code>supabase</code>) en kopieer de sleutel.
+        Laat dit tabblad open.</li>
     </ol>
+    <p style="margin:12px 0 0"><b>B. In Supabase</b></p>
+    <ol>
+      <li>Klik links op <b>Authentication</b> (het icoon met de personen). Kies in het menu daarnaast <b>Emails</b> en daarna bovenin het tabblad <b>SMTP Settings</b>.</li>
+      <li>Zet <b>Enable Custom SMTP</b> aan en vul in:<br>
+        Sender email: <i>het adres uit stap A2</i> · Sender name: <code>Kinderkerk De Deur</code><br>
+        Host: <code>smtp-relay.brevo.com</code> · Port: <code>587</code><br>
+        Username: <i>de Login uit Brevo</i> · Password: <i>de SMTP-sleutel uit Brevo</i></li>
+      <li>Tik onderaan op <b>Save changes</b>.</li>
+    </ol>
+    <div class="note">De SMTP-sleutel van Brevo is geheim: deel hem met niemand, ook niet met Claude.</div>
   </section>
 
   <section class="card">
-    <h2><span class="num">3</span> Sleutel doorgeven</h2>
+    <h2><span class="num">3</span> Inlogmail met code</h2>
+    <p style="margin:0">Nog steeds in Supabase, bij <b>Authentication → Emails</b>, nu het tabblad <b>Templates</b>. Je ziet een rij met soorten mails.
+      Doe het volgende eerst bij <b>Magic Link</b> en daarna nog een keer bij <b>Confirm sign up</b>:</p>
+    <ol>
+      <li>Tik op <b>Magic Link</b> (of <b>Confirm sign up</b>).</li>
+      <li><button class="soft" data-copy="subject">Kopieer onderwerp</button>. Tik in het vak <b>Subject</b>, selecteer de tekst die erin staat en plak eroverheen.</li>
+      <li><button class="soft" data-copy="body">Kopieer bericht</button>. Het grote vak eronder heet <b>Message body</b> (soms met de tabjes <b>Source</b> en <b>Preview</b>: kies <b>Source</b>).
+        Tik erin, houd ingedrukt, kies <b>Selecteer alles</b> en daarna <b>Plak</b>.</li>
+      <li>Tik onderaan op <b>Save changes</b>.</li>
+    </ol>
+    <div class="note">Kun je de vakken niet aanpassen (grijs)? Dan is stap 2 nog niet opgeslagen.</div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">4</span> Sleutel doorgeven</h2>
     <ol>
       <li>Ga naar <b>Project Settings → API Keys</b>.</li>
       <li>Kopieer de <b>Publishable key</b> (begint met <code>sb_publishable_</code>) en stuur die naar Claude.</li>
@@ -72,14 +101,16 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
   </section>
 
   <section class="card">
-    <h2><span class="num">4</span> Agenda-koppeling</h2>
+    <h2><span class="num">5</span> Agenda-koppeling</h2>
     <p style="margin:0">Hiermee kan iedereen zijn beurten en de vergaderingen in de agenda van zijn telefoon zetten.</p>
     <ol>
       <li><button class="soft" data-file="agenda.sql">Kopieer de agenda-code</button>, ga naar <b>SQL Editor → New query</b>, plak en tik op <b>Run</b>.</li>
-      <li>Ga naar <b>Edge Functions</b> en kies <b>Deploy a new function → Via Editor</b>.</li>
-      <li><button class="soft" data-file="agenda-functie.txt">Kopieer de functie</button>, maak het vak met code helemaal leeg en plak het erin.</li>
-      <li>Noem de functie precies <code>agenda</code> en tik op <b>Deploy function</b>.</li>
-      <li>Open de functie, ga naar <b>Details</b> of <b>Settings</b> en zet <b>Verify JWT</b> (of <b>Enforce JWT verification</b>) <b>uit</b>. Tik op <b>Save</b>.
+      <li>Ga links naar <b>Edge Functions</b> en kies <b>Deploy a new function → Via Editor</b>. Krijg je voorbeelden te zien, sla die over.</li>
+      <li><button class="soft" data-file="agenda-functie.txt">Kopieer de functie</button>. Tik in het vak met code, houd ingedrukt, kies <b>Selecteer alles</b> en daarna <b>Plak</b>.</li>
+      <li>Onder het codevak staat een balk met een vakje voor de naam en rechts de knop <b>Deploy function</b>.
+        Vul als naam <code>agenda</code> in en tik op <b>Deploy function</b>.
+        <br><i>Zie je die balk niet op de iPad?</i> Draai de iPad liggend, of knijp met twee vingers om uit te zoomen, en scroll helemaal naar beneden.</li>
+      <li>Ga terug naar <b>Edge Functions</b>, tik op <b>agenda</b> en open het tabblad <b>Details</b>. Zet <b>Verify JWT</b> (of <b>Enforce JWT verification</b>) <b>uit</b> en tik op <b>Save changes</b>.
         Een agenda-app kan namelijk niet inloggen; de persoonlijke link in de app beschermt de gegevens.</li>
     </ol>
   </section>
