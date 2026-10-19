@@ -57,8 +57,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 Home (compacte begroeting + leiding check-in; kaart Gebed boven Kind ziek; tabs Vandaag/Notities (Gebed-tab bewust weg, dubbel); tellers in één kaart; "Programma" = thema,
 leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
-leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), Sheets indeling (alleen bovenbouw,
-uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
+leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
 verzoek van Jonathan); daarvoor is Gebed.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
@@ -104,8 +103,10 @@ het kind zelf) en een onderbouwkind voor de collecte; "Ander kind" kiest opnieuw
 beurt → langst geleden → toeval, zodat ook kinderen die weinig komen even vaak bidden. Beurten = marks 'pray' (ref = id van
 het gebedspunt) en 'collecte'; losse gebedspunten = marks 'prayer' (tekst in `note`). Tik op een kindnaam = alle
 gebedspunten van dat kind + nieuw punt. Op Home en Check-in staat op een dag zonder zondag/check-ins: "Hé, vandaag is het
-geen zondag. Zoek je de gebedslijst? Klik hier." Sheets "Planning uitbreiden" kiest ook eerlijk (bovenbouw die de laatste
-60 dagen kwam, minst vaak sheets eerst); is het kind van vandaag er niet, dan stelt de app een vervanger voor.
+geen zondag. Zoek je de gebedslijst? Klik hier." Sheets (Meer → Sheets, `#/roosters`): niet meer vooruit ingepland. Op zondag kiest de app met "Kies wie de sheets doet"
+eerlijk (`fairPick` + `sheetTurns`) uit de ingecheckte bovenbouw; "Ander kind" en "Zelf een kind kiezen" kunnen ook.
+Overzicht "Hoe vaak al?" en "Eerdere keren". Opslag blijft `rosters` (kind 'sheets'). In de planning staat voor
+toekomstige zondagen "kiest de app op zondag". Migratie demoRev 4 haalde oude vooruit-planning weg.
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)
