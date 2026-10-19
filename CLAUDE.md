@@ -78,7 +78,8 @@ Home (compacte begroeting + grote knop "Kinderen inchecken" met daaronder "Leidi
 het incheckvenster en Meer); de tellers zijn klikbaar (Kinderen/Totaal = "Wie is er?", Leiding = leiding inchecken). Leiding op de planning telt automatisch
 als aanwezig (`leaderPlanned`), extra leiding check je in (`leaderExtra`, tabel leader_checkins); tabs Vandaag/Notities (Gebed-tab bewust weg, dubbel); tellers in één kaart; "Programma" = thema,
 leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
-Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
+Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen; volgorde = wie de
+laatste 12 weken het vaakst kwam bovenaan, gelijk = op naam; ingecheckte kinderen blijven op hun plek),
 leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
 verzoek van Jonathan); daarvoor is Gebed.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;

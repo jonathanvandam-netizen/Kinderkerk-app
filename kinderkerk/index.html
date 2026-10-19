@@ -457,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 35';
+const APP_VERSION = '2026-10-19 · 36';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1538,7 +1538,10 @@ function renderKidList(){
   const hidden = kids.filter(k => !isRecent(k)).length;
   if (!state.showAll && !q) kids = kids.filter(isRecent);
   if (q) kids = kids.filter(k => k.name.toLowerCase().includes(q));
-  kids.sort(byName);
+  // Sneller inchecken: wie de laatste 12 weken het vaakst kwam staat bovenaan (gelijk = op naam)
+  const since = addDays(T, -84), freq = {};
+  for (const c of db.checkins) if (c.date >= since && c.date <= T) freq[c.kidId] = (freq[c.kidId] || 0) + 1;
+  kids.sort((a,b) => (freq[b.id] || 0) - (freq[a.id] || 0) || byName(a,b));
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
     const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
@@ -1550,7 +1553,7 @@ function renderKidList(){
     : `<div class="empty">${q ? `Geen kind gevonden met “${esc(state.search)}”.` : 'Geen kinderen in deze groep.'}</div>`;
   $('#allbanner').innerHTML = state.showAll
     ? `${icon('info')}<span>Je ziet nu <b>alle</b> kinderen, ook wie langer dan 60 dagen niet is geweest.</span><button class="btn btn-outline sm" data-action="toggleAll">Alleen recent</button>`
-    : `${icon('info')}<span>Niet gevonden? Je ziet alleen kinderen die in de afgelopen 60 dagen zijn geweest${hidden ? ` (${hidden} verborgen)` : ''}.</span><button class="btn btn-outline sm" data-action="toggleAll">${icon('search')} Alle kinderen</button>`;
+    : `${icon('info')}<span>Wie het vaakst komt staat bovenaan. Niet gevonden? Je ziet alleen kinderen die in de afgelopen 60 dagen zijn geweest${hidden ? ` (${hidden} verborgen)` : ''}.</span><button class="btn btn-outline sm" data-action="toggleAll">${icon('search')} Alle kinderen</button>`;
 }
 /* =====================================================================
    SMILEYS EN WAARSCHUWINGEN
