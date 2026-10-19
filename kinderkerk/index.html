@@ -491,7 +491,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 45';
+const APP_VERSION = '2026-10-19 · 46';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2453,7 +2453,8 @@ function renderQuiz(){
     ${list.length ? `<div class="card pad" style="margin-bottom:16px">
       <button class="btn ${w7 ? 'btn-primary' : 'btn-soft'} btn-block" data-action="quizPlay">▶️ Quiz spelen in de app (${quizCount(list.length)})</button>
       <div class="btn-row" style="margin-top:10px"><button class="btn btn-outline" style="flex:1" data-action="quizPptx">${icon('download')} PowerPoint</button><button class="btn btn-outline" style="flex:1" data-action="quizXlsx">${icon('download')} Spreadsheet</button></div>
-      <div class="muted" style="font-size:13px;margin-top:8px">De spreadsheet opent ook in Google Sheets en Excel.</div></div>` : ''}
+      <button class="btn btn-soft btn-block" style="margin-top:10px" data-action="quizCopy">${icon('note')} Kopiëren en plakken in Google Sheets</button>
+      <div class="muted" style="font-size:13px;margin-top:8px">Kopiëren: open een leeg Google Sheet, tik op vakje A1 en kies Plakken.</div></div>` : ''}
     ${dates.map(d => `
       <h3 class="section-title">${esc(quizWeekLabel(d))}</h3>
       <div class="card list">${quizOnDate(d).map(n => { const x = quizOf(n); return `
@@ -2492,13 +2493,24 @@ function loadScript(src){
   return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = fail; document.head.appendChild(s); });
 }
 async function loadPptx(){ if (!window.PptxGenJS) await loadScript('vendor/pptxgen.bundle.js'); }
-async function shareFile(blob, name, type){
-  const file = new File([blob], name, { type });
-  if (navigator.canShare?.({ files:[file] })){
-    try { await navigator.share({ files:[file], title:name }); return; } catch(e){ if (e.name === 'AbortError') return; }
-  }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('Gedownload');
+/* Een gemaakt bestand aanbieden. Eerst maken, dan zelf op "Delen / bewaren" tikken: de iPhone opent het deelvenster
+   alleen direct na een tik, niet na het (soms trage) maken van het bestand. Downloaden werkt niet in de app op het beginscherm. */
+let readyFile = null, readyUrl = '';
+function offerFile(blob, name, type, what){
+  readyFile = new File([blob], name, { type });
+  if (readyUrl) URL.revokeObjectURL(readyUrl);
+  const url = readyUrl = URL.createObjectURL(readyFile);
+  const share = !!navigator.canShare?.({ files:[readyFile] }), ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  openModal(`
+    <div class="modal-head"><div><h2>${what} is klaar ✓</h2><span class="muted">${esc(name)}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      ${share ? `<button class="btn btn-primary btn-block" data-action="fileShare">${icon('share')} Delen / bewaren</button>` : ''}
+      <a class="btn ${share ? 'btn-outline' : 'btn-primary'} btn-block" style="margin-top:10px" href="${url}" download="${esc(name)}">${icon('download')} Downloaden</a>
+      <p class="muted" style="font-size:14px;margin:12px 0 0">${ios
+        ? `Tik op <b>Delen / bewaren</b> en kies <b>Bewaar in Bestanden</b> (of meteen ${what === 'PowerPoint' ? '<b>PowerPoint</b>' : '<b>Sheets</b> of <b>Excel</b>'}). Daarna open je het bestand vanuit de app Bestanden.`
+        : what === 'PowerPoint' ? 'Open het bestand daarna in PowerPoint, Keynote of Google Presentaties.' : 'Open het bestand daarna in Google Sheets (Bestand → Importeren) of Excel.'}</p>
+    </div>`);
 }
 const quizFileName = (p, ext) => `Quiz ${p.theme.replace(/[\\/:*?"<>|]/g, '')}.${ext}`;
 async function logoData(){
@@ -2524,7 +2536,7 @@ async function makeQuizPptx(){
     if (isMc(x)) x.opts.forEach((o, j) => {
       const col = j % 2, row = Math.floor(j / 2), bx = 0.6 + col * 6.15, by = 3.4 + row * 1.85;
       const good = answer && j === x.ok, dim = answer && j !== x.ok;
-      s.addShape(pptx.ShapeType.roundRect, { x:bx, y:by, w:5.95, h:1.6, rectRadius:0.15, fill:{ color:good ? '2FA36B' : dim ? 'E8EAF0' : COLORS[j] }, line:{ color:good ? '1F7A4D' : 'FFFFFF', width:good ? 4 : 0 } });
+      s.addShape(pptx.ShapeType.roundRect, { x:bx, y:by, w:5.95, h:1.6, rectRadius:0.15, fill:{ color:good ? '2FA36B' : dim ? 'E8EAF0' : COLORS[j] }, ...(good ? { line:{ color:'1F7A4D', width:4 } } : {}) });
       s.addText(`${LETTERS[j]}   ${o}${good ? '   ✓' : ''}`, { x:bx + 0.3, y:by, w:5.4, h:1.6, fontFace:FONT, fontSize:o.length > 40 ? 20 : 26, bold:true, color:dim ? '8A93A6' : 'FFFFFF', valign:'middle', fit:'shrink' });
     });
     else if (answer) {
@@ -2536,7 +2548,7 @@ async function makeQuizPptx(){
   const end = pptx.addSlide(); end.background = { color:BLUE };
   end.addText('Goed gedaan! 🎉', { x:0.5, y:2.8, w:12.33, h:1.5, fontFace:FONT, fontSize:60, bold:true, color:'FFFFFF', align:'center' });
   const blob = await pptx.write({ outputType:'blob' });
-  await shareFile(blob, quizFileName(p, 'pptx'), 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  offerFile(blob, quizFileName(p, 'pptx'), 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'PowerPoint');
 }
 async function makeQuizXlsx(){
   const p = quizPeriod(), list = p ? quizList(p) : []; if (!list.length) return;
@@ -2577,7 +2589,7 @@ async function makeQuizXlsx(){
   zip.file('xl/sharedStrings.xml', shared);
   zip.file('xl/worksheets/sheet1.xml', sheet);
   const blob = await zip.generateAsync({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  await shareFile(blob, quizFileName(p, 'xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  offerFile(blob, quizFileName(p, 'xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Spreadsheet');
 }
 /* ---------- Roosters ---------- */
 /* Sheets (alleen bovenbouw): op zondag kiest de app eerlijk een kind uit de bovenbouw die er is
@@ -2839,6 +2851,19 @@ const actions = {
   quizShow: () => { state.quizShow = true; openQuizPlay(); },
   quizPptx: () => makeQuizPptx(),
   quizXlsx: () => makeQuizXlsx(),
+  fileShare: async () => {
+    if (!readyFile) return;
+    try { await navigator.share({ files:[readyFile], title:readyFile.name }); closeModal(); }
+    catch(e){ if (e.name !== 'AbortError') toast('Delen lukte niet. Probeer Downloaden.'); }
+  },
+  quizCopy: async () => {
+    const p = quizPeriod(), list = p ? quizList(p) : [];
+    const clean = t => String(t).replace(/[\t\n]+/g, ' ');
+    const lines = [['Nr','Week','Vraag','Soort','A','B','C','D','Goede antwoord'],
+      ...list.map((n, i) => { const x = quizOf(n), o = isMc(x) ? x.opts : []; return [i + 1, weekInfo(n.date)?.week || '', x.q, isMc(x) ? 'Meerkeuze' : 'Open', o[0] || '', o[1] || '', o[2] || '', o[3] || '', quizAnswer(x)]; })];
+    try { await navigator.clipboard.writeText(lines.map(r => r.map(clean).join('\t')).join('\n')); toast('Gekopieerd! Plak het in Google Sheets'); }
+    catch(e){ toast('Kopiëren lukte niet'); }
+  },
   quizStep: d => { state.quizIdx = (state.quizIdx || 0) + Number(d.id); state.quizShow = false; openQuizPlay(); },
   hideTerugblik: d => { try { localStorage.setItem(TERUGBLIK_KEY, JSON.stringify([...terugblikHidden(), d.id])); } catch(e){} render(); },
   shareTerugblik: async d => {

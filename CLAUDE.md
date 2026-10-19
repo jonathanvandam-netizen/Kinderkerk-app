@@ -125,7 +125,9 @@ een knop "❓ Quizvraag bedenken" (voor die zondag; in week 7 "Quiz van vandaag:
 leeg) of meerkeuze A–D (min. 2 antwoorden, tik op de letter van het goede). Quizpagina en het venster op Home: vragen van die week, tikken = aanpassen/weghalen,
 "Quiz spelen in de app" (groot scherm, gekleurde A–D-vakken, Antwoord tonen), downloaden als PowerPoint (PptxGenJS 3.12.0 in
 `vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia) of
-spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel, met sharedStrings + docProps zodat Excel, Google Sheets, Numbers en iPhone-voorvertoning hem openen). Bestand via deelvenster of download.
+spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel, met sharedStrings + docProps zodat Excel, Google Sheets, Numbers en iPhone-voorvertoning hem openen). Eerst maken, dan venster "… is klaar" met knop "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster
+alleen direct na een tik, niet na het trage maken; downloaden werkt niet in de app op het beginscherm) en een downloadlink.
+Extra knop "Kopiëren en plakken in Google Sheets" (tabs naar het klembord, werkt altijd).
 Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q","a"}` of `quiz:{"q","opts":[…],"ok":i}` (`QUIZ_PREFIX`, `quizOf`).
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
