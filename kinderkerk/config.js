@@ -5,5 +5,5 @@ window.KK_CONFIG = {
   supabaseUrl: 'https://jbtnszlbvuypvotbhapb.supabase.co',
   supabaseKey: 'sb_publishable_3kLD4XQm9Rug4qYcz0xnVg_b1sZ-eLT',
   calendarFunction: 'Agenda',   // naam van de Edge Function voor de agenda (let op hoofdletters)
-  slidesScript: '',             // URL van de Google Apps Script web-app voor de quiz naar Google Slides (eindigt op /exec)
+  slidesScript: 'https://script.google.com/macros/s/AKfycbxB3_tri7BOrPdr7vS8gVNi2_dH6g5gp92zC28hbblzCX7vU_kElJXe9rR6XPNo8Un6QQ/exec',   // URL van de Google Apps Script web-app voor de quiz naar Google Slides (eindigt op /exec)
 };
