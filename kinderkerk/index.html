@@ -451,7 +451,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 24';
+const APP_VERSION = '2026-10-19 · 25';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1158,7 +1158,7 @@ function renderHome(){
         <div class="hello-top"><span class="hello-logo">${logoImg()}</span>
           <div><div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div>
           <h1>${greeting()}, ${esc(firstName(me().name))}!</h1></div></div>
-        ${(m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${m.date === T ? 'vandaag' : fmtDate(m.date, {weekday:'long', day:'numeric', month:'long'})}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday())}
+        ${(m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${dayLabel(m.date)}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday())}
         <button class="btn btn-primary btn-block" data-action="leaderCheckin">${icon('checkin')} Leiding check-in</button>
       </div>
       <a class="card row" href="#/gebed" style="border-radius:var(--radius)">
@@ -1173,7 +1173,7 @@ function renderHome(){
     </aside>
     <section>
       <div class="tabs home-tabs">
-        ${[['vandaag','Vandaag','calendar'],['notities','Notities','note']].map(([id,l,ic]) => {
+        ${[['vandaag',isSunday(T) ? 'Vandaag' : 'Overzicht','calendar'],['notities','Notities','note']].map(([id,l,ic]) => {
           const n = 0;
           return `<button class="tab ${state.homeTab === id ? 'active' : ''}" data-action="homeTab" data-id="${id}">${icon(ic)} ${l}${n ? ` <span class="count">${n}</span>` : ''}</button>`; }).join('')}
       </div>
@@ -1182,12 +1182,13 @@ function renderHome(){
   </div></div>`;
 }
 function homeVandaag(){
-  const T = todayISO();
-  const cs = checkinsOn(T);
+  const T = todayISO(), D = kkDay();
+  const cs = checkinsOn(D);
   const g = grp => cs.filter(c => kidById(c.kidId).group === grp).length;
-  const leaders = db.leaders.filter(l => leaderIn(l.id, T)).length;
+  const leaders = db.leaders.filter(l => leaderIn(l.id, D)).length;
   const S = nextSunday(T);
   return `
+    ${D !== T ? `<h3 class="section-title" style="margin-top:0">${cap(dayLabel(D))}</h3>` : ''}
     <div class="card stats1">
       <div class="cell"><div class="lbl">Kinderen</div><div class="num">${cs.length}</div></div>
       <div class="cell"><div class="lbl">Leiding</div><div class="num">${leaders}</div></div>
@@ -1198,7 +1199,7 @@ function homeVandaag(){
       <a class="btn btn-primary" href="#/checkin">${icon('checkin')} Inchecken</a>
       <button class="btn btn-soft" data-action="whoIsIn">${icon('users')} Wie is er?</button>
     </div>
-    <h3 class="section-title">${S === T ? 'Programma vandaag' : 'Programma zondag ' + fmtDate(S, {day:'numeric', month:'long'})}</h3>
+    <h3 class="section-title">Programma ${dayLabel(S)}</h3>
     ${planCard(S, true)}
     ${homeBirthdays()}`;
 }
@@ -1377,11 +1378,11 @@ function homeNotities(){
 
 /* ---------- Leiding check-in ---------- */
 function openLeaderCheckin(){
-  const T = todayISO();
+  const T = kkDay();
   const n = db.leaders.filter(l => leaderIn(l.id, T)).length;
   const sorted = [...db.leaders].sort((a,b) => (a.name === me().name ? -1 : b.name === me().name ? 1 : byName(a,b)));
   openModal(`
-    <div class="modal-head"><div><h2>Leiding check-in</h2><span class="muted">${n} van ${db.leaders.length} aanwezig vandaag</span></div>
+    <div class="modal-head"><div><h2>Leiding check-in</h2><span class="muted">${n} van ${db.leaders.length} aanwezig ${dayLabel(T)}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="list">${sorted.map(l => { const on = leaderIn(l.id, T); return `
       <button class="row" data-action="toggleLeader" data-id="${l.id}">
@@ -1394,13 +1395,13 @@ function openLeaderCheckin(){
 
 /* ---------- Wie is ingecheckt ---------- */
 function openWhoIsIn(){
-  const cs = checkinsOn(todayISO()).map(c => ({ c, k:kidById(c.kidId) })).sort((a,b) => byName(a.k, b.k));
+  const cs = checkinsOn(kkDay()).map(c => ({ c, k:kidById(c.kidId) })).sort((a,b) => byName(a.k, b.k));
   const section = grp => { const l = cs.filter(x => x.k.group === grp); if (!l.length) return '';
     return `<div class="list-head">${GROUPS[grp]} · ${l.length}</div>` + l.map(({c,k}) => `
       <button class="row" data-action="openCheckin" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
         <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${c.items.map(itemEmoji).join(' ') || '—'}${c.prayer ? ' · 🙏 gebed' : ''} · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span></span></span>${icon('chev','chev')}</button>`).join(''); };
   openModal(`
-    <div class="modal-head"><div><h2>Wie is ingecheckt?</h2><span class="muted">${cs.length} kinderen vandaag</span></div>
+    <div class="modal-head"><div><h2>Wie is ingecheckt?</h2><span class="muted">${cs.length} kinderen ${dayLabel(kkDay())}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="list">${cs.length ? section('onder') + section('boven') + section('bezoeker') : '<div class="empty">Nog niemand ingecheckt.</div>'}</div>`);
 }
@@ -1409,15 +1410,15 @@ function openWhoIsIn(){
    CHECK-IN
    ===================================================================== */
 function renderCheckin(){
-  const T = todayISO();
+  const T = kkDay();
   const tabs = [['alles','Alles'],['onder','Onderbouw'],['boven','Bovenbouw'],['bezoeker','Bezoekers']];
   const countIn = grp => checkinsOn(T).filter(c => grp === 'alles' || kidById(c.kidId).group === grp).length;
   app.innerHTML = `
   <div class="page">
     <div class="tabs">${tabs.map(([id,l]) => `<button class="tab ${state.ciTab === id ? 'active' : ''}" data-action="ciTab" data-id="${id}">${l} <span class="count">${countIn(id)}</span></button>`).join('')}</div>
-    ${notSundayBanner()}
+    ${notSundayBanner(true)}
     <div class="page-head"><h1>Check-in${state.ciTab !== 'alles' ? ' ' + GROUPS[state.ciTab].toLowerCase() : ''}</h1>
-      <span class="muted">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+      <span class="muted">${cap(dayLabel(T))}</span></div>
     <div class="toolbar">
       <label class="search">${icon('search')}<input id="ci-search" data-input="search" placeholder="Zoek een kind" value="${esc(state.search)}" autocomplete="off"></label>
       <button class="btn btn-primary" data-action="addKid">${icon('plus')} Kind</button>
@@ -1428,7 +1429,7 @@ function renderCheckin(){
   renderKidList();
 }
 function renderKidList(){
-  const T = todayISO();
+  const T = kkDay();
   const q = state.search.trim().toLowerCase();
   let kids = db.kids.filter(k => (state.ciTab === 'alles' || k.group === state.ciTab) && (isActive(k) || state.showAll));
   const hidden = kids.filter(k => !isRecent(k)).length;
@@ -1458,15 +1459,15 @@ const SMILEY_GOAL = 7;
 const WARN_TEXT = ['', 'Naam op het bord', 'Streepje achter de naam', 'Eruit: naar ouders of verzorgers in de dienst'];
 const marksOf = (kidId, kind, date) => db.marks.filter(m => m.kidId === kidId && m.kind === kind && (!date || m.date === date));
 const smileyCount = kidId => Math.max(0, marksOf(kidId, 'smiley').length - SMILEY_GOAL * marksOf(kidId, 'grab').length);
-const warnCount = (kidId, d = todayISO()) => Math.min(3, marksOf(kidId, 'warn', d).length);
+const warnCount = (kidId, d = kkDay()) => Math.min(3, marksOf(kidId, 'warn', d).length);
 function addMark(kidId, kind, extra = {}){
-  const m = { id:newId(), kidId, date:todayISO(), kind, author:me().name, created_at:new Date().toISOString(), ...extra };
+  const m = { id:newId(), kidId, date:kkDay(), kind, author:me().name, created_at:new Date().toISOString(), ...extra };
   db.marks.push(m); put('marks', m); save();
   return m;
 }
 function dropMark(m){ db.marks = db.marks.filter(x => x.id !== m.id); drop('marks', { id:m.id }); save(); }
 function undoMark(kidId, kind){
-  const m = marksOf(kidId, kind, todayISO()).sort((a,b) => (a.created_at || '').localeCompare(b.created_at || '')).pop();
+  const m = marksOf(kidId, kind, kkDay()).sort((a,b) => (a.created_at || '').localeCompare(b.created_at || '')).pop();
   if (!m) return false;
   db.marks = db.marks.filter(x => x.id !== m.id); drop('marks', { id:m.id }); save();
   return true;
@@ -1475,7 +1476,7 @@ const dots = (n, cls = '') => `<span class="sdots ${cls}">${Array.from({ length:
 const warnBadge = w => w ? `<span class="wb ${w === 3 ? 'w3' : ''}">⚠️ ${w}</span>` : '';
 
 function renderSmileys(){
-  const T = todayISO();
+  const T = kkDay();
   if (!state.smTab) state.smTab = GROUPS[me().group] ? me().group : 'alles';
   const inTab = k => isActive(k) && (state.smTab === 'alles' || k.group === state.smTab);
   const here = db.kids.filter(k => inTab(k) && checkinFor(k.id, T));
@@ -1486,7 +1487,7 @@ function renderSmileys(){
   app.innerHTML = `
   <div class="page">
     <div class="tabs">${tabs.map(([id,l]) => `<button class="tab ${state.smTab === id ? 'active' : ''}" data-action="smTab" data-id="${id}">${l}</button>`).join('')}</div>
-    <div class="page-head"><h1>Gedrag</h1><span class="muted">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+    <div class="page-head"><h1>Gedrag</h1><span class="muted">${cap(dayLabel(T))}</span></div>
     <div class="banner" style="margin:0 0 16px">${icon('info')}<span><b>${SMILEY_GOAL} smileys</b> = iets uit de grabbelbak graaien.
       Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders of verzorgers in de dienst zitten.</span></div>
     ${grab.length ? `<h3 class="section-title">🎁 Mag graaien uit de grabbelbak</h3>
@@ -1498,7 +1499,7 @@ function renderSmileys(){
     <div class="card list">${board.map(k => { const w = warnCount(k.id, T); return `
       <button class="row" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
         <span class="row-main"><b>${esc(k.name)}${w > 1 ? ' ' + '|'.repeat(w - 1) : ''}</b><span class="muted" style="${w === 3 ? 'color:var(--bad-text);font-weight:700' : ''}">${w}e waarschuwing: ${WARN_TEXT[w].toLowerCase()}</span></span>${warnBadge(w)}</button>`; }).join('')}</div>` : ''}
-    <h3 class="section-title">Vandaag ingecheckt</h3>
+    <h3 class="section-title">Ingecheckt ${dayLabel(T)}</h3>
     <div class="card list">${here.length ? here.sort(byName).map(smRow).join('')
       : `<div class="empty">Nog niemand ingecheckt${state.smTab === 'alles' ? '' : ' in deze groep'}. Check eerst kinderen in bij Check-in.</div>`}</div>
     <p class="muted" style="font-size:13.5px;margin:10px 4px 0">Per ongeluk getikt? Tik op de naam om het terug te draaien.</p>
@@ -1516,7 +1517,7 @@ function smRow(k){
 }
 function openSmiley(id){
   const k = kidById(id); if (!k) return;
-  const T = todayISO(), n = smileyCount(id), w = warnCount(id, T), fn = esc(firstName(k.name));
+  const T = kkDay(), n = smileyCount(id), w = warnCount(id, T), fn = esc(firstName(k.name));
   const todayS = marksOf(id, 'smiley', T).length, grabs = marksOf(id, 'grab').length, grabToday = marksOf(id, 'grab', T).length;
   openModal(`
     <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
@@ -1525,14 +1526,14 @@ function openSmiley(id){
     <div class="modal-body">
       <div class="field"><span>Smileys</span>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">${dots(Math.min(n, SMILEY_GOAL), 'big')}<b style="font-size:18px">${n}/${SMILEY_GOAL}</b></div>
-        <div class="muted" style="margin-top:6px">${n >= SMILEY_GOAL ? `🎁 ${fn} mag iets uit de grabbelbak graaien!` : `Nog ${SMILEY_GOAL - n} tot de grabbelbak.`}${todayS ? ` Vandaag ${todayS} gekregen.` : ''}</div>
+        <div class="muted" style="margin-top:6px">${n >= SMILEY_GOAL ? `🎁 ${fn} mag iets uit de grabbelbak graaien!` : `Nog ${SMILEY_GOAL - n} tot de grabbelbak.`}${todayS ? ` ${cap(dayLabel(T))} ${todayS} gekregen.` : ''}</div>
         ${n >= SMILEY_GOAL ? `<button class="btn btn-primary btn-block" style="margin-top:10px" data-action="grabbed" data-id="${id}" data-modal="1">🎁 Heeft gegraaid (−${SMILEY_GOAL} smileys)</button>` : ''}
         <div class="sm-actions">
           <button class="btn btn-soft" data-action="addSmiley" data-id="${id}" data-modal="1">😊 Smiley geven</button>
           <button class="btn btn-outline" data-action="undoSmiley" data-id="${id}" ${todayS ? '' : 'disabled'}>↩︎ Smiley terug</button>
         </div>
-        ${grabToday ? `<button class="textlink" style="margin-top:10px;font-size:14px;color:var(--brand)" data-action="undoGrab" data-id="${id}">Graaien van vandaag terugdraaien</button>` : ''}</div>
-      <div class="field" style="margin-top:8px"><span>Waarschuwingen vandaag</span>
+        ${grabToday ? `<button class="textlink" style="margin-top:10px;font-size:14px;color:var(--brand)" data-action="undoGrab" data-id="${id}">Graaien terugdraaien</button>` : ''}</div>
+      <div class="field" style="margin-top:8px"><span>Waarschuwingen ${dayLabel(T)}</span>
         <ol class="wsteps">${[1,2,3].map(i => `<li class="${i <= w ? 'on' : ''} ${i === 3 ? 'w3' : ''}">${i <= w ? '⚠️' : '○'} ${i}e: ${WARN_TEXT[i]}</li>`).join('')}</ol>
         <div class="sm-actions">
           <button class="btn btn-soft" style="background:var(--bad-soft);color:var(--bad-text)" data-action="addWarn" data-id="${id}" data-modal="1" ${w >= 3 ? 'disabled' : ''}>⚠️ Waarschuwing</button>
@@ -1545,10 +1546,10 @@ function lastSeenText(k){
   const ls = lastSeen(k.id);
   if (!ls) return 'Nog niet geweest';
   const weeks = Math.round((new Date(todayISO()) - new Date(ls)) / 6048e5);
-  return weeks === 0 ? 'Vandaag' : weeks === 1 ? 'Vorige week geweest' : `${weeks} weken geleden`;
+  return ls === todayISO() ? 'Vandaag' : weeks === 0 ? 'Afgelopen zondag' : weeks === 1 ? 'Vorige week geweest' : `${weeks} weken geleden`;
 }
 
-function openCheckin(kidId, date = todayISO()){
+function openCheckin(kidId, date = kkDay()){
   const k = kidById(kidId); if (!k) return;
   const ex = checkinFor(kidId, date);
   const items = new Set(ex?.items || []);
@@ -1564,9 +1565,9 @@ function openCheckin(kidId, date = todayISO()){
         return `<div class="hint bday" style="display:block">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, past ? {day:'numeric', month:'long'} : {weekday:'long'})} ${age(k.birthdate, bd)} jaar!
           ${sung ? `<div style="margin-top:8px;font-weight:600">🎉 Al gezongen op ${fmtDate(sung, {day:'numeric', month:'long'})}</div>`
             : `<div style="margin-top:10px"><button type="button" class="chip ${items.has('jarig') ? 'on' : ''}" data-action="toggleChip" data-id="jarig">🎂 Vandaag gezongen <span class="pts">+${pointsCfg()[k.group]?.jarig ?? 0} punten</span><span class="tick">✓</span></button></div>`}</div>`; })(birthdayCycle(k, date))}
-      <div class="datebar"><span>${icon('calendar')} ${date === todayISO() ? 'Vandaag, ' + fmtDate(date, {day:'numeric', month:'long'}) : cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</span>
+      <div class="datebar"><span>${icon('calendar')} ${date === todayISO() ? 'Vandaag, ' + fmtDate(date, {day:'numeric', month:'long'}) : cap(dayLabel(date))}</span>
         <button type="button" class="textlink" style="font-size:14px;color:var(--brand)" data-action="pickDate">Andere datum</button></div>
-      <label class="field" id="ci-date-field" ${date === todayISO() ? 'hidden' : ''}><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
+      <label class="field" id="ci-date-field" ${date === kkDay() ? 'hidden' : ''}><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
       <div class="field"><span>Meegenomen</span>
         <div class="chips">${ITEMS.filter(i => !i.special && (!i.boven || k.group === 'boven')).map(i =>
           `<button type="button" class="chip ${items.has(i.id) ? 'on' : ''}" data-action="toggleChip" data-id="${i.id}">${i.emoji} ${i.label}<span class="tick">✓</span></button>`).join('')}</div></div>
@@ -2043,7 +2044,7 @@ function renderTeam(){
         isAdmin() ? leaderAccess(x) : ''].filter(Boolean).join(' · ') || label;
       return `<button class="row ${isAdmin() ? '' : 'static'}" ${isAdmin() ? `data-action="editLeader" data-id="${x.id}"` : ''}><span class="av-wrap"><span class="av av-leiding" ${x.away ? 'style="opacity:.55"' : ''}>${initials(x.name)}</span>${x.away ? `<span class="away-badge">${awayIcon(x.away)}</span>` : ''}</span>
         <span class="row-main"><b>${esc(x.name)}${x.role === 'beheerder' ? '<span class="role">Beheerder</span>' : ''}</b><span class="muted">${sub}</span></span>
-        ${leaderIn(x.id, T) ? `<span class="badge ok">${icon('check')} Vandaag</span>` : ''}${isAdmin() ? icon('chev','chev') : ''}</button>`; }).join(''); };
+        ${leaderIn(x.id, kkDay()) ? `<span class="badge ok">${icon('check')} ${isSunday(todayISO()) ? 'Vandaag' : 'Was er'}</span>` : ''}${isAdmin() ? icon('chev','chev') : ''}</button>`; }).join(''); };
   app.innerHTML = `
   <div class="page">
     <div class="page-head"><h1>Team</h1>${isAdmin() ? `<button class="btn btn-primary" data-action="addLeader">${icon('plus')} Leiding</button>` : ''}</div>
@@ -2152,10 +2153,10 @@ function renderRoosters(){
     .sort((a,b) => a.n - b.n || byName(a.k, b.k));
   app.innerHTML = `
   <div class="page">
-    <div class="page-head"><h1>Sheets</h1><span class="muted">Bovenbouw · ${D === T ? 'vandaag' : fmtDate(D, {weekday:'long', day:'numeric', month:'long'})}</span></div>
+    <div class="page-head"><h1>Sheets</h1><span class="muted">Bovenbouw · ${dayLabel(D)}</span></div>
     ${D !== T ? `<div class="banner" style="margin:0 0 16px">${icon('info')}<span>Vandaag is het geen zondag. Je ziet ${fmtDate(D, {weekday:'long', day:'numeric', month:'long'})}.</span></div>` : ''}
     <div class="card duty" style="margin-bottom:12px"><span class="row-icon">${icon('monitor')}</span>
-      <span style="flex:1"><small>${D === T ? 'Vandaag' : cap(fmtDate(D, {weekday:'long', day:'numeric', month:'long'}))} doet de sheets</small><b>${k ? esc(k.name) : 'Nog niemand gekozen'}</b></span>
+      <span style="flex:1"><small>${cap(dayLabel(D))} doet de sheets</small><b>${k ? esc(k.name) : 'Nog niemand gekozen'}</b></span>
       ${k ? `<button class="btn btn-outline sm" data-action="pickSheets" data-day="${D}" data-other="1">${icon('refresh')} Ander kind</button>` : ''}</div>
     ${!k ? (boven.length ? `<button class="btn btn-primary btn-block" data-action="pickSheets" data-day="${D}">🎲 Kies wie de sheets doet</button>`
       : `<div class="card empty">Nog geen kinderen van de bovenbouw ingecheckt.</div>`) : ''}
@@ -2243,6 +2244,15 @@ function openEditZiekte(id){
    ===================================================================== */
 const isSunday = d => weekday(d) === 0;
 const prayDay = () => { const T = todayISO(); return isSunday(T) || checkinsOn(T).length ? T : demoAnchor(T); };   // vandaag, of de laatste zondag
+const kkDay = prayDay;   // de kinderkerkdag waar check-in, Gedrag, Gebed en Sheets over gaan: vandaag op zondag, anders afgelopen zondag
+/* "vandaag" alleen voor vandaag; doordeweeks "afgelopen zondag 18 oktober" of "aankomende zondag 25 oktober" */
+function dayLabel(d){
+  const T = todayISO(), dm = fmtDate(d, { day:'numeric', month:'long' });
+  if (d === T) return 'vandaag';
+  if (!isSunday(T) && d === demoAnchor(T)) return 'afgelopen zondag ' + dm;
+  if (d === nextSunday(T)) return 'aankomende zondag ' + dm;
+  return fmtDate(d, { weekday:'long', day:'numeric', month:'long' });
+}
 function prayerPoints(d){
   return [...checkinsOn(d).filter(c => c.prayer).map(c => ({ id:c.id, kidId:c.kidId, text:c.prayer })),
           ...db.marks.filter(m => m.kind === 'prayer' && m.date === d && kidById(m.kidId)).map(m => ({ id:m.id, kidId:m.kidId, text:m.note || '', loose:m }))];
@@ -2271,9 +2281,9 @@ function pickCollecte(d){
   const k = fairPick(kids, prayTurns('collecte'), busy) || fairPick(kids, prayTurns('collecte'));
   return k && addMark(k.id, 'collecte', { date:d });
 }
-function notSundayBanner(){
+function notSundayBanner(checkin){
   const T = todayISO(); if (isSunday(T) || checkinsOn(T).length) return '';
-  return `<a class="notsunday" href="#/gebed">${icon('heart')}<span>Hé, vandaag is het geen zondag. Zoek je de gebedslijst? <b>Klik hier.</b></span></a>`;
+  return `<a class="notsunday" href="#/gebed">${icon('heart')}<span>Hé, vandaag is het geen zondag.${checkin ? ` Je ziet de check-in van ${dayLabel(kkDay())}.` : ''} Zoek je de gebedslijst? <b>Klik hier.</b></span></a>`;
 }
 function renderGebed(){
   const T = todayISO(), D = prayDay(), points = prayerPoints(D), marks = prayMarks(D);
@@ -2286,7 +2296,7 @@ function renderGebed(){
   older.forEach(p => (byDate[p.date] ||= []).push(p));
   app.innerHTML = `
   <div class="page">
-    <div class="page-head"><h1>Gebed</h1><span class="muted">${D === T ? 'Vandaag' : cap(fmtDate(D, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+    <div class="page-head"><h1>Gebed</h1><span class="muted">${cap(dayLabel(D))}</span></div>
     ${D !== T ? `<div class="banner" style="margin:0 0 16px">${icon('info')}<span>Vandaag is het geen zondag. Je ziet de gebedspunten van ${fmtDate(D, {weekday:'long', day:'numeric', month:'long'})}.</span></div>` : ''}
     <h3 class="section-title">Wie bidt er?</h3>
     <div class="card list">
@@ -2428,7 +2438,7 @@ const actions = {
   leaderCheckin: () => openLeaderCheckin(),
   whoIsIn: () => openWhoIsIn(),
   toggleLeader: d => {
-    const T = todayISO();
+    const T = kkDay();
     const row = { leaderId:d.id, date:T };
     if (leaderIn(d.id, T)){ db.leaderCheckins = db.leaderCheckins.filter(l => !(l.leaderId === d.id && l.date === T)); drop('leader_checkins', row); }
     else { db.leaderCheckins.push(row); put('leader_checkins', row); }
@@ -2559,7 +2569,7 @@ const actions = {
   },
   pickDate: () => { const f = $('#ci-date-field'); f.hidden = false; const i = $('#ci-date'); i.focus(); try { i.showPicker(); } catch(e){} },
   saveCheckin: d => {
-    const date = $('#ci-date').value || todayISO();
+    const date = $('#ci-date').value || kkDay();
     const items = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.id);
     const prayer = $('#ci-prayer').value.trim();
     const ex = checkinFor(d.id, date);
@@ -2809,7 +2819,7 @@ document.addEventListener('change', e => {
   if (e.target.dataset?.change === 'importPreview') renderImportPreview();
   if (e.target.dataset?.change === 'backupFile' && e.target.files[0]) (CLOUD ? cloudImportFile : restoreBackup)(e.target.files[0]);
   if (e.target.dataset?.change === 'notulist'){ const m = db.meetings.find(x => x.id === e.target.dataset.id); if (m){ m.notulist = e.target.value || null; put('meetings', m); save(); toast('Notulist opgeslagen'); } }
-  if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || todayISO());
+  if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || kkDay());
 });
 document.addEventListener('submit', e => {
   const k = e.target.dataset?.submit; if (!k) return;

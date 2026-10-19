@@ -125,6 +125,10 @@ hoofdletter, ingesteld via `calendarFunction` in config.js) die een .ics maakt; 
 tabel `calendar_tokens` (`supabase/agenda.sql`, los van schema.sql, opnieuw draaien kan). Tijden van Jonathan: kinderkerk
 10:30–12:15 (10:30 briefing en gebed, 10:45–11:00 klaarzetten), vergadering 12:45, groot 1,5 uur, klein 30 min.
 Vergaderingen staan in beide keuzes. Getest met een .ics-parser; Deno is hier niet beschikbaar.
+Dagen: `kkDay()` = vandaag op zondag (of als er vandaag al check-ins zijn), anders afgelopen zondag. Check-in, Gedrag,
+Gebed, Sheets, leiding check-in en "Wie is er?" gaan over `kkDay()`; programma en "Jij hebt leiding" over aankomende
+zondag. Teksten via `dayLabel(d)`: "vandaag" alleen voor vandaag, doordeweeks "afgelopen zondag 18 oktober" /
+"aankomende zondag 25 oktober". Home-tab heet doordeweeks "Overzicht".
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)
