@@ -108,6 +108,10 @@ Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is w
 zoals het rooster dat de leiding gewend is (Datum | Bovenbouw | Onderbouw | Thema, kopregel per periode; op de telefoon
 staat het thema onder de namen), of "Uitgebreid" (kaarten; keuze per toestel in localStorage `kk-planview`), met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; iedereen
 mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
+Planning verder vullen (beheerder, knop onder de planning): `planPattern` zoekt per groep in de laatste 12 ingevulde zondagen de
+kleinste cyclus (1–6 weken) waarbij ≥75% klopt (losse ruilen storen niet), `planFillPlan` vult alleen lege zondagen tot een half jaar
+vooruit (of tot het eind van de laatste periode); bevestigen met uitleg van het gevonden patroon. Herinnering voor beheerders op Home
+en Planning als de planning binnen 8 weken op is (`planRunsOut`). Getest: 0 afwijkingen van het echte rooster (`dienst()`).
 Periodes (Planning, alleen beheerder): 7 weken, thema per groep (bovenbouw leeg = zelfde als onderbouw); week 6 = bidden, week 7 =
 puntenwinkeltje + vergadering, om en om klein/groot (nieuwe periode stelt start +7 weken en de andere vergadering voor).
 Per zondag onderwerp + Bijbelgedeelte per groep (leeg = periodethema; bovenbouw leeg = als onderbouw, tenzij de

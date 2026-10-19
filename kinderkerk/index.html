@@ -507,7 +507,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 55';
+const APP_VERSION = '2026-10-19 · 56';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1337,6 +1337,9 @@ function renderHome(){
         <span class="row-main"><b>Gebedsverlangens</b><span class="muted">${(n => isSunday(T) || checkinsOn(T).length ? (n ? n + ' gebedspunt' + (n > 1 ? 'en' : '') + ' · wie bidt er?' : 'Wie bidt er vandaag?') : 'Gebedslijst en gebedspunten')(prayerPoints(T).length)}</span></span>${icon('chev','chev')}
       </a>
       ${terugblikCard()}
+      ${(l => l ? `<a class="card row" href="#/planning" style="border-radius:var(--radius)">
+        <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('calendar')}</span>
+        <span class="row-main"><b>Planning bijna op</b><span class="muted">Ingevuld tot ${fmtDate(l, {day:'numeric', month:'long'})}. Vul hem verder in bij Planning.</span></span>${icon('chev','chev')}</a>` : '')(planRunsOut())}
       ${isAdmin() && (lastBackupDays() ?? 99) > 35 ? `<a class="card row" href="#/meer" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('download')}</span>
         <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">Bewaar af en toe een kopie op je toestel: Meer → Gegevens</span></span>${icon('chev','chev')}</a>` : ''}
@@ -2286,9 +2289,45 @@ function renderPlanning(){
     ${!dates.length ? '<div class="card empty">Je bent het komende jaar nog niet ingepland.</div>'
       : planView() === 'tabel' ? planTable(dates) : `<div class="stack">${dates.map(d => planCard(d)).join('')}</div>`}
     ${!state.planMine || dates.length >= state.planCount ? `<button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>` : ''}
+    ${isAdmin() ? `${(l => l ? `<div class="banner" style="background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span>De planning is ingevuld tot <b>${fmtDate(l, {day:'numeric', month:'long'})}</b>.</span></div>` : '')(planRunsOut())}
+      <button class="btn btn-outline btn-block" style="margin-top:10px" data-action="planFill">🔁 Planning verder vullen</button>` : ''}
     <div class="banner">${icon('info')}<span>Tik op een zondag (of een regel in de tabel) om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Wie de sheets doet, kiest de app op zondag (Meer → Sheets).</span></div>
   </div>`;
 }
+/* ---------- Planning verder vullen (beheerder) ----------
+   Per groep zoekt de app het vaste patroon in de laatste 12 ingevulde zondagen (bijv. bovenbouw wisselt elke week,
+   onderbouw 2 weken wel/2 niet): de kleinste cyclus van 1–6 weken waarbij minstens 75% klopt. Daarmee worden lege
+   zondagen gevuld tot een half jaar vooruit (of tot het eind van de laatste periode). Ingevulde zondagen blijven staan. */
+const weeksBetween = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 6048e5);
+const lastPlanned = () => db.sundays.filter(s => s.onder.length || s.boven.length).map(s => s.date).sort().pop() || null;
+function planPattern(grp){
+  const dates = db.sundays.filter(s => s[grp].length).map(s => s.date).sort().slice(-12);
+  if (dates.length < 4) return null;
+  const end = dates[dates.length - 1], key = ids => [...ids].sort().join(',');
+  for (let L = 1; L <= 6 && dates.length >= 2 * L; L++){
+    const phases = {}, order = {};   // order: de volgorde van de namen zoals ze het laatst in de planning stonden
+    dates.forEach(d => { const ids = sundayOf(d)[grp], ph = weeksBetween(d, end) % L, k = key(ids); (phases[ph] ||= {})[k] = (phases[ph][k] || 0) + 1; order[k] = ids; });
+    if (Object.keys(phases).length < L) continue;
+    let match = 0; const tmpl = {};
+    for (const ph in phases){ const [k, n] = Object.entries(phases[ph]).sort((a,b) => b[1] - a[1])[0]; tmpl[ph] = order[k].filter(id => leaderById(id)); match += n; }
+    if (match / dates.length >= 0.75) return { L, tmpl, end };
+  }
+  return null;
+}
+const patternFor = (pat, date) => pat.tmpl[((weeksBetween(date, pat.end) % pat.L) + pat.L) % pat.L] || [];
+function planFillPlan(){
+  const T = todayISO(), last = periodsSorted().pop();
+  let until = addDays(nextSunday(T), 7 * 26);
+  if (last && periodEnd(last) > until) until = periodEnd(last);
+  const pats = { onder:planPattern('onder'), boven:planPattern('boven') }, rows = [];
+  for (let d = nextSunday(T); d <= until; d = addDays(d, 7)){
+    const s = sundayOf(d), n = { ...s, onder:[...s.onder], boven:[...s.boven] }; let changed = false;
+    for (const g of ['onder','boven']) if (!n[g].length && pats[g]){ n[g] = patternFor(pats[g], d); changed = changed || n[g].length > 0; }
+    if (changed) rows.push(n);
+  }
+  return { pats, rows, until };
+}
+const planRunsOut = () => { const l = lastPlanned(); return isAdmin() && (!l || l < addDays(todayISO(), 7 * 8)) ? (l || todayISO()) : null; };
 function periodBlock(){
   const T = todayISO(), list = periodsSorted();
   const w = weekInfo(nextSunday(T)), cur = w?.p;
@@ -2933,6 +2972,17 @@ const actions = {
     const k = kidById(d.id); if (!k) return;
     k.group = d.group; upd('kids', { id:k.id, group:k.group }); save(); render();
     toast(`${firstName(k.name)} staat nu in de ${d.group === 'onder' ? 'onderbouw' : 'bovenbouw'}`);
+  },
+  planFill: () => {
+    if (!isAdmin()) return;
+    const { pats, rows, until } = planFillPlan();
+    const desc = g => { const p = pats[g]; if (!p) return 'geen vast patroon gevonden, vul zelf in';
+      const teams = [...new Set(Object.values(p.tmpl).map(ids => ids.map(id => leaderById(id)?.name).filter(Boolean).join(' & ')))].filter(Boolean);
+      return `${p.L === 1 ? 'elke week dezelfde' : `cyclus van ${p.L} weken`} (${teams.join(' / ')})`; };
+    if (!rows.length) return alert(`Er is niets om in te vullen tot ${fmtDate(until, {day:'numeric', month:'long', year:'numeric'})}.\n\nOnderbouw: ${desc('onder')}\nBovenbouw: ${desc('boven')}`);
+    if (!confirm(`${rows.length} zondagen invullen, tot en met ${fmtDate(until, {day:'numeric', month:'long', year:'numeric'})}.\n\nOnderbouw: ${desc('onder')}\nBovenbouw: ${desc('boven')}\n\nWat al is ingevuld, blijft staan. Ruilen kan daarna gewoon. Doorgaan?`)) return;
+    rows.forEach(n => { db.sundays = db.sundays.filter(x => x.date !== n.date).concat(n); });
+    put('sundays', rows); save(); render(); toast(`${rows.length} zondagen ingevuld ✓`);
   },
   quizNew: d => openQuizAdd(d.date || quizDate()),
   qfType: (d, el) => {
