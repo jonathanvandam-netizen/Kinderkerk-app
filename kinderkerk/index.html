@@ -457,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 36';
+const APP_VERSION = '2026-10-19 · 37';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -498,6 +498,7 @@ const ICONS = {
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   checkin:'<path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/><path d="M11 6h10M11 12h10M11 18h10"/>',
   menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6"/>',
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
   chart:'<path d="M5 20V11M11 20V5M17 20v-7M3 20h18"/>',
   calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
@@ -1892,22 +1893,24 @@ async function loadCalendar(fresh){
    MEER
    ===================================================================== */
 function renderMeer(){
-  const items = [
-    ['gebed','Gebedsverlangens','Wie bidt er, en alle gebedsverlangens','heart'],
-    ['team','Team','Alle leiding per groep','users'],
-    ['historie','Historie','Aantallen en wie er regelmatig komt','chart'],
-    ['roosters','Sheets','Wie doet de sheets? (bovenbouw)','monitor'],
-    ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
-    ['punten','Punten','Hoeveel punten een kind krijgt','check'],
-    ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','users'],
-    ...(isAdmin() ? [['import','Kinderen importeren','Echte kinderen in één keer toevoegen','users']] : []),
+  const groups = [
+    ['Op zondag', [
+      ['gebed','Gebedsverlangens','Wie bidt er, en alle gebedsverlangens','heart'],
+      ['roosters','Sheets','Wie doet de sheets? (bovenbouw)','monitor'],
+      ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
+      ['punten','Punten','Hoeveel punten een kind krijgt','check']]],
+    ['Kinderen en team', [
+      ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','user'],
+      ['historie','Historie','Aantallen en wie er regelmatig komt','chart'],
+      ['team','Team','Alle leiding per groep','users']]],
   ];
   app.innerHTML = `
   <div class="page">
     <div class="page-head"><h1>Meer</h1></div>
     ${showInstall() ? `<div style="margin-bottom:16px">${installCard(false)}</div>` : ''}
+    ${groups.map(([title, items], i) => `<h3 class="section-title" ${i ? '' : 'style="margin-top:0"'}>${title}</h3>
     <div class="card list">${items.map(([r,t,s,ic]) => `
-      <a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}</b><span class="muted">${s}</span></span>${icon('chev','chev')}</a>`).join('')}</div>
+      <a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}</b><span class="muted">${s}</span></span>${icon('chev','chev')}</a>`).join('')}</div>`).join('')}
     ${isAdmin() ? `<h3 class="section-title">Gegevens</h3>
     ${CLOUD ? '' : `<div class="banner" style="margin:0 0 12px;background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span><b>Alles staat nu alleen op dit toestel.</b> Andere leiding ziet het niet, en als je de websitegegevens van Safari wist, is het weg. Maak daarom regelmatig een back-up, tot de database gekoppeld is.</span></div>`}
     <div class="card list">
@@ -2120,7 +2123,7 @@ function renderPlanning(){
     ${!dates.length ? '<div class="card empty">Je bent het komende jaar nog niet ingepland.</div>'
       : planView() === 'tabel' ? planTable(dates) : `<div class="stack">${dates.map(d => planCard(d)).join('')}</div>`}
     ${!state.planMine || dates.length >= state.planCount ? `<button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>` : ''}
-    <div class="banner">${icon('info')}<span>Tik op een zondag (of een regel in de tabel) om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Sheets en bidden pas je aan bij <a href="#/roosters">Roosters</a>.</span></div>
+    <div class="banner">${icon('info')}<span>Tik op een zondag (of een regel in de tabel) om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Wie de sheets doet, kiest de app op zondag (Meer → Sheets).</span></div>
   </div>`;
 }
 function periodBlock(){

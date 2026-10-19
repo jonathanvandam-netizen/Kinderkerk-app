@@ -6,7 +6,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 ## Afspraken
 - Alleen **leiding** gebruikt de app, op telefoon én iPad/tablet.
 - Jonathan wil nu al met echte kinderen werken. **Echte kindernamen komen nooit in de code of de repository**
-  (die is openbaar, net als de website). Ze komen er alleen in via Meer → Kinderen importeren (beheerder):
+  (die is openbaar, net als de website). Ze komen er alleen in via de importpagina `#/import` (beheerder; staat sinds versie 37 niet meer in Meer, alles is al geïmporteerd):
   in demomodus alleen in de browser van dat toestel, in databasemodus in Supabase (alleen voor ingelogde leiding).
   Importregel: `Naam;groep;geboortedatum` (datum als 9-10-2013, 2013-10-09 of 9 oktober 2013; toekomst/ongeldig = leeg).
   Dubbel = zelfde naam én groep. Verzonnen demokinderen (`demo:true` of naam in `DEMO_KIDS`) haal je weg via
@@ -93,6 +93,8 @@ Nieuw kind: item 'nieuw' (🌟, standaard 50 punten per groep, instelbaar bij Pu
 zonder check-ins krijgen de knop níet (keuze van Jonathan). Naam lijkt op een bestaand kind (`similarKids`: zelfde naam zonder
 hoofdletters/accenten, alleen voornaam, of kleine typfout bij (bijna) gelijke voornaam; broertjes/zusjes met dezelfde
 achternaam níet): waarschuwing tijdens typen en bevestigen bij opslaan.
+Meer is ingedeeld in Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten), Kinderen en team (Kinderen beheren,
+Historie, Team) en Gegevens (beheerder).
 Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**
