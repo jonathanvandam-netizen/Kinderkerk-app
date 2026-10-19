@@ -41,6 +41,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
 - `supabase/schema.sql` = tabellen, regels en triggers; `supabase/INSTALLEREN.md` = stappenplan voor Jonathan.
+  Hulppagina `kinderkerk/installeren.html` (online /installeren.html): kopieerknoppen voor de database-code (met e-mail
+  ingevuld) en de inlogmail; pages.yml zet `schema.sql` ernaast (`kinderkerk/schema.sql` staat in .gitignore).
   Het schema is getest op een lokale Postgres met een nagebootst `auth`-schema.
 - `kinderkerk/vendor/supabase.js` = supabase-js 2.45.4 (UMD), in de repo zodat de app ook offline opent.
 - `kinderkerk/manifest.webmanifest` voor installeren als app (naam "Kinderkerk"), `kinderkerk/sw.js` zodat de app ook

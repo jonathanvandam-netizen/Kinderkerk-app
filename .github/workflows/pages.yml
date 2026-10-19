@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # database-code naast de hulppagina installeren.html zetten
+      - run: cp supabase/schema.sql kinderkerk/schema.sql
       - uses: actions/upload-pages-artifact@v3
         with:
           path: kinderkerk

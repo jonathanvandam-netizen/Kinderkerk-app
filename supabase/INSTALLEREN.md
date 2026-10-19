@@ -2,6 +2,9 @@
 
 Duurt ongeveer 10 minuten. Je hoeft niets te programmeren.
 
+**Makkelijkst (ook op iPad):** open https://jonathanvandam-netizen.github.io/Kinderkerk-app/installeren.html.
+Daar kopieer je stap 2 en 3 met één knop, met je e-mailadres er al in.
+
 ## 1. Project aanmaken
 1. Log in op [supabase.com](https://supabase.com) en klik op **New project**.
 2. Naam: `kinderkerk`. Kies een sterk databasewachtwoord en bewaar het goed.
