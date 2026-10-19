@@ -171,6 +171,10 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .datebar svg.i{width:18px;height:18px}
 .av-wrap{position:relative;flex:none;display:flex}
 .away-badge{position:absolute;right:-6px;bottom:-5px;width:24px;height:24px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:14px;box-shadow:0 0 0 2px var(--card)}
+.absent-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-2);border-radius:10px;padding:6px 6px 6px 12px;font-size:15px;font-weight:400}
+.absent-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}.absent-dates label{display:flex;flex-direction:column;gap:2px;font-weight:400;font-size:13px}
+#absent-box input{font:inherit;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--input);color:var(--text);width:100%}
+.hero-duty.clash{background:var(--warn-soft);color:var(--warn-text)}.hero-duty.clash a{color:inherit;font-weight:800;margin-left:4px}
 .away-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .away-presets .chip{padding:5px 10px;font-size:13.5px}
 .check-line{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin:-4px 0 14px;cursor:pointer}
@@ -472,7 +476,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
 #tour .tour-foot .step{font-size:13px;color:var(--muted);font-weight:700;margin-right:auto}
 #tour .tour-progress{height:4px;border-radius:4px;background:var(--surface-3);margin-bottom:10px;overflow:hidden}#tour .tour-progress i{display:block;height:100%;background:var(--brand);border-radius:4px;transition:width .25s}
 #tour .tour-step{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:2px}
-#toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toast);color:var(--toast-text);padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toast);color:var(--toast-text);padding:10px 18px;border-radius:22px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;width:max-content;max-width:calc(100vw - 32px);text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media(min-width:800px){#toast{bottom:28px}}
 </style>
@@ -498,7 +502,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 53';
+const APP_VERSION = '2026-10-19 · 54';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1114,6 +1118,20 @@ function weekTags(date){
     ${w.week === 7 ? `<span class="tag warn">👥 ${meetingLabel(w.p.meeting)}</span>` : ''}</div>`;
 }
 const sundayOf = date => db.sundays.find(s => s.date === date) || { date, theme:'', passage:'', themeBoven:'', passageBoven:'', prep:'', onder:[], boven:[] };
+/* Afwezig: elke leiding geeft in Mijn account zelf op wanneer hij niet kan. Opslag in de bestaande tabel notes,
+   text = 'afwezig:{"leader","from","to","why"}' (geen extra database-stap). De planning zet dan ⚠️ bij die naam. */
+const ABSENT_PREFIX = 'afwezig:';
+const absentOf = n => { if (!n.text || !n.text.startsWith(ABSENT_PREFIX)) return null; try { return JSON.parse(n.text.slice(ABSENT_PREFIX.length)); } catch(e){ return null; } };
+const absences = id => db.notes.map(n => ({ n, a:absentOf(n) })).filter(x => x.a && x.a.leader === id).sort((a,b) => a.a.from.localeCompare(b.a.from));
+const absentOn = (id, d) => absences(id).find(x => x.a.from <= d && d <= (x.a.to || x.a.from))?.a || null;
+const plannedOn = (id, d) => { const s = sundayOf(d); return s.onder.includes(id) || s.boven.includes(id); };
+/* Zondagen waarop ik ingepland sta maar niet kan (vanaf vandaag) */
+const myClashes = () => db.sundays.filter(s => s.date >= todayISO() && plannedOn(db.session, s.date) && absentOn(db.session, s.date)).map(s => s.date).sort();
+function swapLink(date){
+  const grp = sundayOf(date).onder.includes(db.session) ? 'onderbouw' : 'bovenbouw';
+  const text = `Hoi! Ik kan ${fmtDate(date, {weekday:'long', day:'numeric', month:'long'})} niet bij de kinderkerk (${grp}). Wie wil ruilen of het overnemen? 🙏\nPas het daarna aan in de app bij Planning.`;
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
 const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.onder.includes(db.session) || s.boven.includes(db.session))).sort((a,b) => a.date.localeCompare(b.date))[0];
 
 /* ---------- UI-state ---------- */
@@ -1304,7 +1322,8 @@ function renderHome(){
         <div class="hello-top"><span class="hello-logo">${logoImg()}</span>
           <div><div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div>
           <h1>${greeting()}, ${esc(firstName(me().name))}!</h1></div></div>
-        ${(m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${dayLabel(m.date)}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday())}
+        ${(c => c ? `<div class="hero-duty clash">⚠️ Je staat ingepland op <b>${fmtDate(c, {day:'numeric', month:'long'})}</b>, maar je kunt dan niet. <a href="${swapLink(c)}" target="_blank" rel="noopener">Vervanger zoeken</a></div>`
+          : (m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${dayLabel(m.date)}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday()))(myClashes()[0])}
         <a class="btn btn-primary btn-block" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
         <button class="btn btn-soft btn-block" style="margin-top:8px" data-action="leaderCheckin">${icon('users')} Leiding inchecken</button>
       </div>
@@ -1933,6 +1952,19 @@ function renderLogin(){
     ${a.step === 'sent' ? '' : `<div class="hero-logo">${logoImg()}</div>`}${body}</div></div>`;
   setTimeout(() => ($('#lg-code') || $('#lg-email') || $('#pf-name'))?.focus(), 50);
 }
+function absentBox(){
+  const list = absences(db.session).filter(x => (x.a.to || x.a.from) >= todayISO());
+  const span = a => fmtDate(a.from, {day:'numeric', month:'short'}) + (a.to && a.to !== a.from ? ' t/m ' + fmtDate(a.to, {day:'numeric', month:'short'}) : '');
+  return `<span>Wanneer kan ik niet?</span>
+    ${list.map(x => `<div class="absent-row"><span>🗓️ <b>${span(x.a)}</b>${x.a.why ? ` · ${esc(x.a.why)}` : ''}</span><button type="button" class="icon-btn sm" title="Weghalen" data-action="absentDel" data-id="${x.n.id}">${icon('x')}</button></div>`).join('')}
+    <div id="absent-form" hidden>
+      <div class="absent-dates"><label><span class="muted">Van</span><input type="date" id="ab-from"></label><label><span class="muted">Tot en met</span><input type="date" id="ab-to"></label></div>
+      <input id="ab-why" placeholder="Reden (mag leeg), bijv. vakantie" autocomplete="off" style="margin-top:8px">
+      <div class="btn-row" style="margin-top:8px"><button type="button" class="btn btn-primary sm" data-action="absentSave">Opslaan</button></div>
+    </div>
+    <button type="button" class="btn btn-outline sm" id="absent-add" data-action="absentAdd" style="align-self:flex-start">${icon('plus')} Datum toevoegen</button>
+    <span class="muted" style="font-weight:400;font-size:13px">De planning laat dan zien dat je niet kunt.</span>`;
+}
 function openProfile(){
   const u = me();
   openModal(`
@@ -1944,6 +1976,7 @@ function openProfile(){
         <div class="row static"><span class="row-main"><span class="muted">Rol</span><b>${u.role === 'beheerder' ? 'Beheerder' : 'Leiding'}</b></span></div>
         <div class="row static"><span class="row-main"><span class="muted">Groep</span><b>${GROUPS[u.group] || 'Algemeen'}</b></span></div>
       </div>
+      <div class="field" style="margin:18px 0 0" id="absent-box">${absentBox()}</div>
       <div class="field" style="margin:18px 0 0"><span>Weergave <span class="muted" style="font-weight:400">(op dit toestel)</span></span>
         <div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
           `<button type="button" class="chip ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
@@ -2149,9 +2182,9 @@ function renderImportPreview(){
 const AWAY_ICONS = [[/zwanger/i,'🤰'],[/ziek|operatie|herstel/i,'🤒'],[/vakantie|reis/i,'🏖️']];   // al het andere: overig
 const awayIcon = text => text ? (AWAY_ICONS.find(([re]) => re.test(text)) || [, '🗓️'])[1] : '';
 const AWAY_PRESETS = ['Zwangerschapsverlof','Ziek','Vakantie','Afwezig'];
-function leaderNames(ids){
+function leaderNames(ids, date){
   const l = ids.map(leaderById).filter(Boolean);
-  return l.length ? l.map(x => (x.id === db.session ? '<span class="me-tag">Jij</span>' : esc(x.name)) + (x.away ? ` <span title="${esc(x.away)}">${awayIcon(x.away)}</span>` : '')).join(', ') : '<span class="muted">nog niemand</span>';
+  return l.length ? l.map(x => (x.id === db.session ? '<span class="me-tag">Jij</span>' : esc(x.name)) + (x.away ? ` <span title="${esc(x.away)}">${awayIcon(x.away)}</span>` : '') + (date && absentOn(x.id, date) ? ' <span title="Kan niet">⚠️</span>' : '')).join(', ') : '<span class="muted">nog niemand</span>';
 }
 function topicBlock(date){
   const o = sundayTopic(date, 'onder'), b = sundayTopic(date, 'boven');
@@ -2165,17 +2198,18 @@ function planCard(date, compact){
     ${compact ? '' : `<small>${date === T ? 'Vandaag' : fmtDate(date, {weekday:'long', day:'numeric', month:'long'})}</small>`}
     ${weekTags(date)}
     ${topicBlock(date)}
-    <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span>
+    <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder, date)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven, date)}</span>
       ${(r => { const k = r && kidById(r.kidId); return `<span>Sheets</span><span>${k ? esc(k.name) : `<span class="muted">${date >= todayISO() ? 'kiest de app op zondag' : 'niemand'}</span>`}</span>`; })(db.rosters.sheets.find(x => x.date === date))}</div>
     ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
   </a>`;
 }
 /* Planning als tabel, zoals het rooster dat de leiding gewend is: Datum | Bovenbouw | Onderbouw | Thema */
 function planView(){ try { return localStorage.getItem('kk-planview') || 'tabel'; } catch(e){ return 'tabel'; } }
-function nameList(ids){
+function nameList(ids, date){
   const l = ids.map(leaderById).filter(Boolean);
   if (!l.length) return '<span class="muted">–</span>';
-  const n = l.map(x => `<span class="${x.away ? 'away' : ''}" ${x.away ? `title="${esc(x.away)}"` : ''}>${x.id === db.session ? `<b class="me-tag">${esc(x.name)}</b>` : esc(x.name)}${x.away ? ' ' + awayIcon(x.away) : ''}</span>`);
+  const n = l.map(x => { const no = date && absentOn(x.id, date);
+    return `<span class="${x.away || no ? 'away' : ''}" ${x.away || no ? `title="${esc(no ? 'Kan niet' + (no.why ? ': ' + no.why : '') : x.away)}"` : ''}>${x.id === db.session ? `<b class="me-tag">${esc(x.name)}</b>` : esc(x.name)}${x.away ? ' ' + awayIcon(x.away) : ''}${no ? ' ⚠️' : ''}</span>`; });
   return n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + (n.length === 2 ? ' &amp; ' : ' en ') + n[n.length - 1];
 }
 function planTable(dates){
@@ -2195,7 +2229,7 @@ function planTable(dates){
     const cls = `click ${d === cur ? 'today' : ''}`;
     return head + `<tr class="${cls}" data-action="editPlan" data-date="${d}">
       <td><span class="d">${fmtDate(d, {day:'numeric', month:'short'}).replace('.', '')}</span>${w ? `<span class="wk">week ${w.week}</span>` : ''}</td>
-      <td>${nameList(s.boven)}</td><td>${nameList(s.onder)}</td><td class="tc">${theme}</td></tr>
+      <td>${nameList(s.boven, d)}</td><td>${nameList(s.onder, d)}</td><td class="tc">${theme}</td></tr>
       ${special || o.theme || b.theme ? `<tr class="trow ${cls}" data-action="editPlan" data-date="${d}"><td></td><td colspan="2">${theme}</td></tr>` : ''}`;
   }).join('');
   return `<div class="card" style="padding:0;overflow:hidden"><table class="t plan-table">
@@ -2267,11 +2301,13 @@ function openEditPeriod(id){
 function openEditPlan(date){
   const s = sundayOf(date), w = weekInfo(date), split = w && periodSplit(w.p);
   const chips = (grp, on) => [...db.leaders].sort((a,b) => (a.group === grp ? 0 : 1) - (b.group === grp ? 0 : 1) || byName(a,b)).map(l =>
-    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away ? `title="${esc(l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' ' + awayIcon(l.away) : ''}<span class="tick">✓</span></button>`).join('');
+    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away || absentOn(l.id, date) ? `title="${esc(absentOn(l.id, date) ? 'Kan niet' : l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' ' + awayIcon(l.away) : ''}${absentOn(l.id, date) ? ' ⚠️' : ''}<span class="tick">✓</span></button>`).join('');
+  const mine = date >= todayISO() && plannedOn(db.session, date);
   openModal(`
     <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">${(w => w ? `Week ${w.week} van ${PERIOD_WEEKS} · ${esc(periodLabel(w.p))}` : 'Thema en leiding')(weekInfo(date))}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
+      ${mine ? `<a class="btn btn-soft btn-block" style="margin-bottom:14px" href="${swapLink(date)}" target="_blank" rel="noopener">🔁 Kun je niet? Vervanger zoeken via WhatsApp</a>` : ''}
       <div class="subhead" style="border-top:0;padding-top:0"><i style="background:var(--onder)"></i>Onderbouw</div>
       <label class="field"><span>Onderwerp</span><input id="pl-theme" value="${esc(s.theme)}" placeholder="${esc(defaultTheme(date, 'onder') || 'Bijv. Dag 1 t/m 3')}" autocomplete="off"></label>
       <label class="field"><span>Bijbelgedeelte</span><input id="pl-passage" value="${esc(s.passage)}" placeholder="Bijv. Genesis 1" autocomplete="off"></label>
@@ -2837,6 +2873,21 @@ const actions = {
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
   closeModal: () => closeModal(),
   openTerugblik: d => openTerugblik(d.id),
+  absentAdd: () => { $('#absent-form').hidden = false; $('#absent-add').hidden = true; $('#ab-from').focus(); },
+  absentSave: () => {
+    const from = $('#ab-from').value, to = $('#ab-to').value || from, why = $('#ab-why').value.trim();
+    if (!from) return toast('Kies een datum');
+    if (to < from) return toast('"Tot en met" ligt vóór "Van"');
+    const n = { id:newId(), date:from, author:me().name, text:ABSENT_PREFIX + JSON.stringify({ leader:db.session, from, to, why }) };
+    db.notes.push(n); put('notes', n); save();
+    $('#absent-box').innerHTML = absentBox(); render();
+    const c = myClashes().filter(d => d >= from && d <= to);
+    toast(c.length ? `⚠️ Je staat op ${c.map(d => fmtDate(d, {day:'numeric', month:'short'})).join(', ')} ingepland` : 'Opgeslagen');
+  },
+  absentDel: d => {
+    db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save();
+    $('#absent-box').innerHTML = absentBox(); render();
+  },
   quizNew: d => openQuizAdd(d.date || quizDate()),
   qfType: (d, el) => {
     el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el));

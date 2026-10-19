@@ -95,6 +95,10 @@ hoofdletters/accenten, alleen voornaam, of kleine typfout bij (bijna) gelijke vo
 achternaam níet): waarschuwing tijdens typen en bevestigen bij opslaan.
 Meer is ingedeeld in Algemeen (Team), Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten), Kinderen
 (Kinderen beheren, Historie) en Gegevens (beheerder).
+Afwezig + vervanger (bewust rustig): Mijn account → "Wanneer kan ik niet?" (van/t/m/reden; opslag in tabel `notes`,
+text = `afwezig:{"leader","from","to","why"}`, `absentOn`). Planning zet ⚠️ achter die naam (tabel, kaarten, chips). Op Home alleen
+bij een botsing een gele regel met "Vervanger zoeken" (`myClashes`); in het venster van een zondag waarop jij leiding hebt de knop
+"🔁 Kun je niet? Vervanger zoeken via WhatsApp" (`swapLink` = wa.me met kant-en-klare tekst).
 Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**
