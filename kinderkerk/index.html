@@ -450,7 +450,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 18';
+const APP_VERSION = '2026-10-19 · 19';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1672,9 +1672,39 @@ function openProfile(){
         <div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
           `<button type="button" class="chip ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
         <span class="muted" style="font-weight:400;font-size:13px">Automatisch volgt de instelling van je telefoon of tablet.</span></div>
+      <div class="field" style="margin:18px 0 0" id="cal-box"><span>Agenda op je telefoon</span>${CLOUD ? '<span class="muted" style="font-weight:400">Laden…</span>'
+        : '<span class="muted" style="font-weight:400;font-size:14px">Je beurten en vergaderingen in je eigen agenda. Dit werkt zodra de database gekoppeld is.</span>'}</div>
       <button class="btn btn-soft btn-block" style="margin-top:18px" data-action="startTour">🧭 Rondleiding starten</button>
     </div>
     <div class="modal-foot"><button class="btn btn-outline" data-action="logout">Uitloggen</button></div>`);
+  if (CLOUD) loadCalendar();
+}
+/* Agenda-koppeling: persoonlijke link (code in calendar_tokens) naar de Edge Function "agenda".
+   De telefoon abonneert zich op die link en haalt wijzigingen in de planning zelf op. */
+let calToken = null;
+const calChoice = () => { try { return localStorage.getItem('kk-cal') || 'mijn'; } catch(e){ return 'mijn'; } };
+const calUrl = () => `${CFG.supabaseUrl}/functions/v1/agenda?t=${calToken}&wat=${calChoice()}`;
+async function loadCalendar(fresh){
+  const box = $('#cal-box'); if (!box) return;
+  try {
+    if (fresh || !calToken){
+      let { data, error } = await sb.from('calendar_tokens').select('token').eq('leader_id', db.session).maybeSingle();
+      if (error) throw error;
+      if (!data){ ({ data, error } = await sb.from('calendar_tokens').insert({ leader_id:db.session }).select('token').single()); if (error) throw error; }
+      calToken = data.token;
+    }
+  } catch(e){
+    console.error(e);
+    box.innerHTML = '<span>Agenda op je telefoon</span><span class="muted" style="font-weight:400;font-size:14px">De agenda-koppeling is nog niet ingesteld. Vraag de beheerder (stap 4 van installeren).</span>';
+    return;
+  }
+  box.innerHTML = `<span>Agenda op je telefoon</span>
+    <div class="chips">${[['mijn','Alleen mijn beurten'],['alles','Alle zondagen']].map(([v,l]) => `<button type="button" class="chip ${calChoice() === v ? 'on' : ''}" data-action="calChoice" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
+    <a class="btn btn-primary btn-block" style="margin-top:4px" href="${calUrl().replace(/^https:/, 'webcal:')}">📅 Zet in mijn agenda</a>
+    <button type="button" class="btn btn-outline btn-block" data-action="calCopy">Link kopiëren (voor Google Agenda)</button>
+    <span class="muted" style="font-weight:400;font-size:13px">Vergaderingen staan er ook in. Wijzigt de planning, dan past je agenda zich vanzelf aan
+      (iPhone: meestal binnen een uur, Google Agenda: kan tot een dag duren).
+      <button type="button" class="textlink" style="font-size:13px;color:var(--brand);display:inline" data-action="calReset">Nieuwe link maken</button></span>`;
 }
 
 /* =====================================================================
@@ -2637,6 +2667,12 @@ const actions = {
   },
   profile: () => openProfile(),
   startTour: () => startTour(),
+  calChoice: d => { try { localStorage.setItem('kk-cal', d.id); } catch(e){} loadCalendar(); },
+  calCopy: async () => { try { await navigator.clipboard.writeText(calUrl()); toast('Link gekopieerd'); } catch(e){ prompt('Kopieer deze link:', calUrl()); } },
+  calReset: async () => {
+    if (!confirm('Een nieuwe link maken? De oude link werkt dan niet meer; zet de agenda daarna opnieuw op je telefoon.')) return;
+    await sb.from('calendar_tokens').delete().eq('leader_id', db.session); calToken = null; loadCalendar(true); toast('Nieuwe link gemaakt');
+  },
   tourNext: () => { tourStep = Math.min(TOUR.length - 1, tourStep + 1); drawTour(); },
   tourPrev: () => { tourStep = Math.max(0, tourStep - 1); drawTour(); },
   tourEnd: () => endTour(),

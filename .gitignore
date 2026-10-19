@@ -4,3 +4,5 @@ Thumbs.db
 .env
 .env.*
 kinderkerk/schema.sql
+kinderkerk/agenda.sql
+kinderkerk/agenda-functie.txt

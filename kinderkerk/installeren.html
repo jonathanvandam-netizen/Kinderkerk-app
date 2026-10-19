@@ -70,6 +70,19 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
     </ol>
     <div class="note">De <b>Secret key</b> (begint met <code>sb_secret_</code>) deel je nooit, met niemand.</div>
   </section>
+
+  <section class="card">
+    <h2><span class="num">4</span> Agenda-koppeling</h2>
+    <p style="margin:0">Hiermee kan iedereen zijn beurten en de vergaderingen in de agenda van zijn telefoon zetten.</p>
+    <ol>
+      <li><button class="soft" data-file="agenda.sql">Kopieer de agenda-code</button>, ga naar <b>SQL Editor → New query</b>, plak en tik op <b>Run</b>.</li>
+      <li>Ga naar <b>Edge Functions</b> en kies <b>Deploy a new function → Via Editor</b>.</li>
+      <li><button class="soft" data-file="agenda-functie.txt">Kopieer de functie</button>, maak het vak met code helemaal leeg en plak het erin.</li>
+      <li>Noem de functie precies <code>agenda</code> en tik op <b>Deploy function</b>.</li>
+      <li>Open de functie, ga naar <b>Details</b> of <b>Settings</b> en zet <b>Verify JWT</b> (of <b>Enforce JWT verification</b>) <b>uit</b>. Tik op <b>Save</b>.
+        Een agenda-app kan namelijk niet inloggen; de persoonlijke link in de app beschermt de gegevens.</li>
+    </ol>
+  </section>
 </main>
 <script>
 const TEXT = {
@@ -95,6 +108,10 @@ $('#copy-sql').addEventListener('click', e => {
   const email = $('#email').value.trim().toLowerCase().replace(/'/g, '');
   copy(schema.replace('JOUW-EMAIL@voorbeeld.nl', email), e.target, '✓ Gekopieerd, nu plakken in Supabase');
 });
+const files = {};
+['agenda.sql', 'agenda-functie.txt'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
+document.querySelectorAll('[data-file]').forEach(b => b.addEventListener('click', () => files[b.dataset.file]
+  ? copy(files[b.dataset.file], b, '✓ Gekopieerd') : alert('Nog aan het laden. Probeer het zo nog een keer.')));
 document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy(TEXT[b.dataset.copy], b, '✓ Gekopieerd')));
 </script>
 </body>

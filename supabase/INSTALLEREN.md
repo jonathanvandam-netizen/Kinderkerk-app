@@ -42,6 +42,11 @@ namelijk niet goed in een geïnstalleerde app. Pas daarom twee mails aan:
 Deze twee mogen gewoon in de app staan. De regels in de database bepalen wie wat mag zien.
 De **service_role** of **secret key** deel je nooit.
 
+## 4b. Agenda-koppeling (mag ook later)
+Staat op de hulppagina als stap 4: draai `agenda.sql` in de SQL Editor en maak onder **Edge Functions** een functie
+`agenda` met de code uit `functions/agenda/index.ts`; zet daarna **Verify JWT** uit. Daarna kan iedereen in de app via
+**Mijn account → Agenda op je telefoon** zijn beurten en de vergaderingen in zijn eigen agenda zetten.
+
 ## 5. Je gegevens overzetten
 Zodra de sleutel in de app staat, werkt de app met de database. Wat je tot nu toe op je telefoon hebt ingevoerd,
 staat nog in Safari op je telefoon. Zo zet je het over:
