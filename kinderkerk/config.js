@@ -3,5 +3,5 @@
 // Deze sleutel mag openbaar zijn: de database-regels (row level security) beschermen de gegevens.
 window.KK_CONFIG = {
   supabaseUrl: 'https://jbtnszlbvuypvotbhapb.supabase.co',
-  supabaseKey: '',
+  supabaseKey: 'sb_publishable_3kLD4XQm9Rug4qYcz0xnVg_b1sZ-eLT',
 };

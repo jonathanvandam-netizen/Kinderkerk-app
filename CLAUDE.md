@@ -131,10 +131,9 @@ Rooster: bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla); onderbouw
 De demodata volgt dit (`dienst()` in index.html).
 
 ## Open vragen / volgende stappen
-- Supabase-project bestaat al (eu-west-1, Ierland); de Project URL staat in `kinderkerk/config.js`.
-  Nog te doen (stap 2–4 van `supabase/INSTALLEREN.md`): `schema.sql` draaien in de SQL Editor (eigen e-mail onderaan
-  invullen), inlogmails met `{{ .Token }}`, en de anon/publishable key in `config.js`. Plakken in de SQL Editor lukte
-  niet op de iPhone; dit doet Jonathan later op een laptop. Zolang de key leeg is, draait de app in demomodus.
-  Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan het schema niet zelf uitvoeren.
+- Supabase-project (eu-west-1, Ierland) is gekoppeld: Project URL en publishable key staan in `kinderkerk/config.js`
+  (sinds versie 20 draait de app online in databasemodus). Jonathan richtte de database in via installeren.html (iPad).
+  Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan de database niet zelf controleren.
+  Daarna nog: gegevens overzetten (Meer → Gegevens), agenda-koppeling (stap 4 installeren.html).
 - Daarna: eigen SMTP voor de inlogmails (stappenplan met Brevo staat in INSTALLEREN.md stap 7),
   en pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
