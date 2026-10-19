@@ -117,7 +117,8 @@ Rondleiding (`TOUR`): start vanzelf de eerste keer op een toestel (localStorage 
 Tests moeten `kk-tour` op '1' zetten, anders zit de rondleiding in de weg.
 Agenda-koppeling (Mijn account → "Agenda op je telefoon", alleen databasemodus): keuze "Alleen mijn beurten" of "Alle
 zondagen" (localStorage `kk-cal`), knop webcal-link + link kopiëren (Google) + nieuwe link. Link = Edge Function
-`supabase/functions/agenda/index.ts` (`?t=<code>&wat=mijn|alles`, Verify JWT uit) die een .ics maakt; persoonlijke code in
+`supabase/functions/agenda/index.ts` (`?t=<code>&wat=mijn|alles`, Verify JWT uit; in Supabase heet de functie `Agenda` met
+hoofdletter, ingesteld via `calendarFunction` in config.js) die een .ics maakt; persoonlijke code in
 tabel `calendar_tokens` (`supabase/agenda.sql`, los van schema.sql, opnieuw draaien kan). Tijden van Jonathan: kinderkerk
 10:30–12:15 (10:30 briefing en gebed, 10:45–11:00 klaarzetten), vergadering 12:45, groot 1,5 uur, klein 30 min.
 Vergaderingen staan in beide keuzes. Getest met een .ics-parser; Deno is hier niet beschikbaar.
