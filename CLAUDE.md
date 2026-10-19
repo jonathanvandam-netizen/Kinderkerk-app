@@ -189,7 +189,7 @@ zondag. Teksten via `dayLabel(d)`: "vandaag" alleen voor vandaag, doordeweeks "a
 "aankomende zondag 25 oktober". Home-tab heet doordeweeks "Overzicht".
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
-## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)
+## Echte leiding (demo, alleen voornamen)
 Bovenbouw: Jonathan (beheerder; Julian mag ook beheerder worden), Nora, Julian, Jamilla, Sandy (zwangerschapsverlof; normaal met Julian).
 Onderbouw: Melissa, Dina, Tim, Chanel (Tim en Chanel gaan later ook met zwangerschapsverlof).
 Rooster: bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla); onderbouw 2 weken dienst, 2 weken vrij
@@ -197,9 +197,9 @@ Rooster: bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla); onderbouw
 De demodata volgt dit (`dienst()` in index.html).
 
 ## Open vragen / volgende stappen
-- Supabase-project (eu-west-1, Ierland) is gekoppeld (versie 22): schema.sql + agenda.sql + Edge Function `agenda`,
-  eigen SMTP via een apart Gmail-adres voor de app (app-wachtwoord; los van het gedeelde kinderkerk-adres), en de
-  mailtemplates Magic Link + Confirm sign up met `{{ .Token }}`. Sleutel in config.js.
-  Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan de database niet zelf controleren.
-  Nog te doen: gegevens overzetten (Meer → Gegevens), leiding uitnodigen, agenda-koppeling testen.
-- Pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
+- Live in databasemodus (Supabase eu-west-1, eigen SMTP via apart Gmail-adres, mailtemplates met `{{ .Token }}`, agenda, back-ups,
+  uitnodigen via WhatsApp, Google Slides-script in het one80kids-account). Julian is uitgenodigd en beheerder.
+  Vanuit de cloudomgeving zijn Supabase en Google niet bereikbaar, dus Claude kan die niet zelf controleren.
+- Nog te doen (Jonathan): overige leiding uitnodigen, gesprek met de oudsten over privacy, Julian inwerken als tweede beheerder
+  (ook toegang tot Supabase en het one80kids-Google-account), een paar zondagen naast Zap! draaien en dan Zap! stoppen,
+  Gouden Week uitleggen. Advies: eerst de leiding een paar zondagen laten werken en hun feedback ophalen, niet meer functies.
