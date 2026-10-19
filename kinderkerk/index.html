@@ -457,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 34';
+const APP_VERSION = '2026-10-19 · 35';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1656,9 +1656,9 @@ function openCheckin(kidId, date = kkDay()){
   const k = kidById(kidId); if (!k) return;
   const ex = checkinFor(kidId, date);
   const items = new Set(ex?.items || []);
-  // Eerste keer? Net toegevoegd met + Kind: punten voor nieuw kind staan al aan. Geïmporteerde kinderen (al bekend uit Zap!) niet vanzelf.
-  const first = !db.checkins.some(c => c.kidId === kidId && c.id !== ex?.id);
-  if (!ex && first && state.newKidId === kidId) items.add('nieuw');
+  // Nieuw kind (50 punten) alleen voor een kind dat net met "+ Kind" is toegevoegd, niet voor bestaande kinderen zonder check-ins
+  const fresh = state.newKidId === kidId && !db.checkins.some(c => c.kidId === kidId && c.id !== ex?.id);
+  if (!ex && fresh) items.add('nieuw');
   openModal(`
     <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
       <div><h2>${esc(k.name)}</h2><span class="muted">${GROUPS[k.group]}${ex ? ' · al ingecheckt' : ''}</span></div>
@@ -1671,7 +1671,7 @@ function openCheckin(kidId, date = kkDay()){
         return `<div class="hint bday" style="display:block">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, past ? {day:'numeric', month:'long'} : {weekday:'long'})} ${age(k.birthdate, bd)} jaar!
           ${sung ? `<div style="margin-top:8px;font-weight:600">🎉 Al gezongen op ${fmtDate(sung, {day:'numeric', month:'long'})}</div>`
             : `<div style="margin-top:10px"><button type="button" class="chip ${items.has('jarig') ? 'on' : ''}" data-action="toggleChip" data-id="jarig">🎂 Vandaag gezongen <span class="pts">+${pointsCfg()[k.group]?.jarig ?? 0} punten</span><span class="tick">✓</span></button></div>`}</div>`; })(birthdayCycle(k, date))}
-      ${first || items.has('nieuw') ? `<div class="hint soft" style="display:block;background:var(--ok-soft);color:var(--text)">🌟 ${esc(firstName(k.name))} is hier ${first ? 'voor het eerst' : 'nieuw'}!
+      ${fresh || items.has('nieuw') ? `<div class="hint soft" style="display:block;background:var(--ok-soft);color:var(--text)">🌟 ${esc(firstName(k.name))} is nieuw!
         <div style="margin-top:10px"><button type="button" class="chip ${items.has('nieuw') ? 'on' : ''}" data-action="toggleChip" data-id="nieuw">🌟 Nieuw kind <span class="pts">+${pointsCfg()[k.group]?.nieuw ?? 0} punten</span><span class="tick">✓</span></button></div></div>` : ''}
       <div class="datebar"><span>${icon('calendar')} ${date === todayISO() ? 'Vandaag, ' + fmtDate(date, {day:'numeric', month:'long'}) : cap(dayLabel(date))}</span>
         <button type="button" class="textlink" style="font-size:14px;color:var(--brand)" data-action="pickDate">Andere datum</button></div>
