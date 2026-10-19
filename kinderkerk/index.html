@@ -388,7 +388,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 4';
+const APP_VERSION = '2026-10-19 · 5';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -738,7 +738,9 @@ const checkinsOn = d => db.checkins.filter(c => c.date === d && kidById(c.kidId)
 const checkinFor = (kidId, d) => db.checkins.find(c => c.kidId === kidId && c.date === d);
 const leaderIn = (id, d) => db.leaderCheckins.some(l => l.leaderId === id && l.date === d);
 function lastSeen(kidId){ let m = ''; for (const c of db.checkins) if (c.kidId === kidId && c.date > m) m = c.date; return m; }
-const isRecent = k => (lastSeen(k.id) || k.created) >= addDays(todayISO(), -60);
+const isActive = k => !k.inactive;                                           // "Komt niet meer" = inactive
+const isRecent = k => isActive(k) && (lastSeen(k.id) || k.created) >= addDays(todayISO(), -60);
+const cameRecently = k => isActive(k) && lastSeen(k.id) >= addDays(todayISO(), -60);   // echt ingecheckt, niet alleen net toegevoegd
 const byName = (a,b) => a.name.localeCompare(b.name, 'nl');
 /* Periodes: 7 weken, week 6 = bidden, week 7 = puntenwinkeltje + vergadering (om en om klein/groot) */
 const periodsSorted = () => [...(db.periods || [])].sort((a,b) => a.start.localeCompare(b.start));
@@ -786,7 +788,7 @@ const NAV = [
   { id:'vergadering', label:'Vergadering', icon:'users' },
   { id:'meer', label:'Meer', icon:'menu' },
 ];
-const MEER_ROUTES = ['meer','import','punten','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route;
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
@@ -794,7 +796,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -916,7 +918,7 @@ function homeVandaag(){
 }
 function homeBirthdays(){
   const T = todayISO();
-  const list = db.kids.filter(isRecent).map(k => { const d = birthdayCycle(k); return { k, d, sung:d && sungFor(k, d) }; })
+  const list = db.kids.filter(cameRecently).map(k => { const d = birthdayCycle(k); return { k, d, sung:d && sungFor(k, d) }; })
     .filter(x => x.d && (x.d >= addDays(T, -6) || !x.sung)).sort((a,b) => a.d.localeCompare(b.d));
   if (!list.length) return '';
   return `<h3 class="section-title">🎂 Jarig</h3><div class="card list">${list.map(({k,d,sung}) => `
@@ -1132,19 +1134,19 @@ function renderCheckin(){
 function renderKidList(){
   const T = todayISO();
   const q = state.search.trim().toLowerCase();
-  let kids = db.kids.filter(k => state.ciTab === 'alles' || k.group === state.ciTab);
+  let kids = db.kids.filter(k => (state.ciTab === 'alles' || k.group === state.ciTab) && (isActive(k) || state.showAll));
   const hidden = kids.filter(k => !isRecent(k)).length;
   if (!state.showAll && !q) kids = kids.filter(isRecent);
   if (q) kids = kids.filter(k => k.name.toLowerCase().includes(q));
   kids.sort(byName);
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
+    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
       ${c ? `<span class="badge ok">${icon('check')} Ingecheckt</span>` : `<span class="btn btn-soft sm">Inchecken</span>`}
-    </button>`; }).join('')
+    </button>`.replace('class="row"', isActive(k) ? 'class="row"' : 'class="row" style="opacity:.6"'); }).join('')
     : `<div class="empty">${q ? `Geen kind gevonden met “${esc(state.search)}”.` : 'Geen kinderen in deze groep.'}</div>`;
   $('#allbanner').innerHTML = state.showAll
     ? `${icon('info')}<span>Je ziet nu <b>alle</b> kinderen, ook wie langer dan 60 dagen niet is geweest.</span><button class="btn btn-outline sm" data-action="toggleAll">Alleen recent</button>`
@@ -1202,6 +1204,10 @@ function openKid(id){
       <label class="field"><span>Naam</span><input id="kd-name" value="${esc(k.name)}" autocomplete="off"></label>
       <label class="field"><span>Groep</span><select id="kd-group">${Object.entries(GROUPS).map(([v,l]) => `<option value="${v}" ${v === k.group ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="field"><span>Geboortedatum</span><input type="date" id="kd-birth" value="${k.birthdate || ''}" max="${todayISO()}"></label>
+      <div class="field"><span>Komt ${esc(firstName(k.name))} nog?</span>
+        <div class="chips"><button type="button" class="chip ${isActive(k) ? 'on' : ''}" data-action="setKidActive" data-id="${k.id}" data-val="1">Komt nog<span class="tick">✓</span></button>
+        <button type="button" class="chip ${isActive(k) ? '' : 'on'}" data-action="setKidActive" data-id="${k.id}" data-val="0">Komt niet meer<span class="tick">✓</span></button></div>
+        <span class="muted" style="font-weight:400;font-size:13px">Wie niet meer komt, verdwijnt uit check-in, Jarig, Historie en roosters. De gegevens blijven bewaard.</span></div>
       <div class="field"><span>Laatste keren</span>
         <div class="card list">${visits.slice(0,8).map(c => `<div class="row static"><span class="row-main"><b>${cap(fmtDate(c.date, {weekday:'short', day:'numeric', month:'long'}))}</b>
           <span class="muted">${c.items.map(itemEmoji).join(' ') || 'Ingecheckt'}${c.prayer ? ` · 🙏 ${esc(c.prayer)}` : ''}</span></span></div>`).join('')
@@ -1323,6 +1329,7 @@ function renderMeer(){
     ['gebed','Gebedslijst','Alle gebedsverlangens','heart'],
     ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
     ['punten','Punten','Hoeveel punten een kind krijgt','check'],
+    ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','users'],
     ...(isAdmin() ? [['import','Kinderen importeren','Echte kinderen in één keer toevoegen','users']] : []),
   ];
   app.innerHTML = `
@@ -1339,6 +1346,31 @@ function renderMeer(){
         <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Zet alles terug naar de verzonnen voorbeelddata (ook geïmporteerde kinderen gaan weg)'}</span></span></button>
     </div>` : ''}
     <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
+  </div>`;
+}
+
+/* ---------- Kinderen beheren: wie komt er nog? ---------- */
+const OLD_AGE = 13;   // vanaf deze leeftijd te oud voor de kinderkerk (voorstel, per kind aan te passen)
+function renderKinderen(){
+  const f = state.kidFilter || 'actief';
+  const all = [...db.kids].sort(byName);
+  const oud = all.filter(k => isActive(k) && k.birthdate && age(k.birthdate) >= OLD_AGE);
+  const list = f === 'oud' ? oud : f === 'weg' ? all.filter(k => !isActive(k)) : all.filter(isActive);
+  const tabs = [['actief','Komen nog', all.filter(isActive).length], ['oud', `${OLD_AGE}+ jaar`, oud.length], ['weg','Gestopt', all.filter(k => !isActive(k)).length]];
+  app.innerHTML = `
+  <div class="page">
+    <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
+    <div class="page-head"><h1>Kinderen beheren</h1><span class="muted">${all.length} kinderen</span></div>
+    <div class="tabs">${tabs.map(([id,l,n]) => `<button class="tab ${f === id ? 'active' : ''}" data-action="kidFilter" data-id="${id}">${l} <span class="count">${n}</span></button>`).join('')}</div>
+    ${f === 'oud' && oud.length ? `<div class="banner" style="margin:0 0 12px">${icon('info')}<span>Deze kinderen zijn ${OLD_AGE} jaar of ouder. Gaan ze niet meer naar de kinderkerk? Zet ze dan allemaal in één keer op <b>Komt niet meer</b>.</span>
+      <button class="btn btn-primary sm" data-action="retireOld">Allemaal: komt niet meer</button></div>` : ''}
+    <div class="card list">${list.map(k => { const ls = lastSeen(k.id); return `
+      <div class="row static"><span class="av av-${k.group}" ${isActive(k) ? '' : 'style="opacity:.55"'}>${initials(k.name)}</span>
+        <span class="row-main" data-action="openKid" data-id="${k.id}" style="cursor:pointer"><b>${esc(k.name)}</b>
+          <span class="muted">${GROUPS[k.group]}${k.birthdate ? ' · ' + age(k.birthdate) + ' jaar' : ''} · ${ls ? 'laatst ' + fmtDate(ls, {day:'numeric', month:'short', year:'numeric'}) : 'nog niet ingecheckt'}</span></span>
+        <button class="btn ${isActive(k) ? 'btn-outline' : 'btn-soft'} sm" data-action="toggleKidActive" data-id="${k.id}">${isActive(k) ? 'Komt niet meer' : 'Komt weer'}</button></div>`; }).join('')
+      || `<div class="empty">${f === 'weg' ? 'Iedereen komt nog.' : f === 'oud' ? `Geen kinderen van ${OLD_AGE} jaar of ouder.` : 'Nog geen kinderen.'}</div>`}</div>
+    <div class="banner">${icon('info')}<span>Tik op een naam om de gegevens aan te passen. Wie niet meer komt, verdwijnt uit check-in, Jarig, Historie en roosters, maar je kunt diegene hier altijd terugzetten.</span></div>
   </div>`;
 }
 
@@ -1674,7 +1706,7 @@ function renderRoosters(){
 function openEditRoster(date){
   const key = state.rosterTab;
   const r = db.rosters[key].find(x => x.date === date);
-  const opts = db.kids.filter(k => k.group === 'boven').sort(byName);
+  const opts = db.kids.filter(k => k.group === 'boven' && isActive(k)).sort(byName);
   openModal(`
     <div class="modal-head"><div><h2>${fmtDate(date)}</h2><span class="muted">${key === 'sheets' ? 'Sheets indeling' : 'Bidden bovenbouw'}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -1792,6 +1824,23 @@ const actions = {
   resetPoints: () => {
     if (!isAdmin() || !confirm('Alle punten terugzetten naar de startwaarden?')) return;
     db.settings = { ...db.settings, points:DEFAULT_POINTS }; put('settings', { key:'points', value:DEFAULT_POINTS }); save(); render(); toast('Startwaarden teruggezet');
+  },
+  kidFilter: d => { state.kidFilter = d.id; render(); },
+  setKidActive: (d, el) => {
+    const k = kidById(d.id); if (!k) return;
+    k.inactive = d.val === '0'; upd('kids', { id:k.id, inactive:k.inactive }); save();
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el));
+    render(); toast(k.inactive ? `${firstName(k.name)}: komt niet meer` : `${firstName(k.name)} komt weer`);
+  },
+  toggleKidActive: d => {
+    const k = kidById(d.id); if (!k) return;
+    k.inactive = !k.inactive; upd('kids', { id:k.id, inactive:k.inactive }); save(); render();
+    toast(k.inactive ? `${firstName(k.name)}: komt niet meer` : `${firstName(k.name)} komt weer`);
+  },
+  retireOld: () => {
+    const oud = db.kids.filter(k => isActive(k) && k.birthdate && age(k.birthdate) >= OLD_AGE);
+    if (!oud.length || !confirm(`${oud.length} kinderen van ${OLD_AGE} jaar of ouder op "Komt niet meer" zetten?`)) return;
+    oud.forEach(k => { k.inactive = true; upd('kids', { id:k.id, inactive:true }); }); save(); render(); toast(`${oud.length} kinderen op "Komt niet meer" gezet`);
   },
   removeDemoKids: () => {
     const n = db.kids.filter(isDemoKid).length;
@@ -2061,7 +2110,7 @@ const actions = {
   },
   extendRoster: () => {
     const list = db.rosters[state.rosterTab];
-    const boven = db.kids.filter(k => k.group === 'boven').sort(byName);
+    const boven = db.kids.filter(k => k.group === 'boven' && isActive(k)).sort(byName);
     if (!boven.length) return;
     let last = list.reduce((m,r) => r.date > m ? r.date : m, addDays(todayISO(), -7));
     let idx = Math.max(0, boven.findIndex(k => k.id === list.find(r => r.date === last)?.kidId));

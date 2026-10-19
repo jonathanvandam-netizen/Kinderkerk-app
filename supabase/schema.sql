@@ -29,7 +29,8 @@ create table public.kids (
   name    text not null check (name <> ''),
   groep   text not null check (groep in ('onder','boven','bezoeker')),
   created date not null default current_date,
-  birthdate date
+  birthdate date,
+  inactive boolean not null default false   -- "Komt niet meer"
 );
 
 create table public.checkins (

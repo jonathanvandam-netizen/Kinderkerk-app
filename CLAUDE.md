@@ -58,6 +58,9 @@ verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check
 Jarig zingen: bij het inchecken knop "🎂 Vandaag gezongen" (+100 punten, instelbaar) van 6 dagen vóór tot 4 weken ná
 de verjaardag zolang er nog niet gezongen is (kind trakteert vaak later). Opgeslagen als item 'jarig' in de check-in.
 Home toont bij Jarig "Gezongen" of "🎵 Nog zingen".
+Jarig op Home alleen voor kinderen die de laatste 60 dagen echt zijn ingecheckt (niet alleen geïmporteerd).
+Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
+gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt" met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; iedereen
 mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
 Periodes (Planning, alleen beheerder): 7 weken, thema per groep (bovenbouw leeg = zelfde als onderbouw); week 6 = bidden, week 7 =
