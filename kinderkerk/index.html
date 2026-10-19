@@ -428,7 +428,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 12';
+const APP_VERSION = '2026-10-19 · 13';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -614,7 +614,7 @@ function seed(){
     sundays:seedSundays(T).map(x => Object.assign(x, dienst(x.date, leaders, anchor))),
     periods:seedPeriods(T),
     settings:{},
-    demoRev:2,
+    demoRev:3,
     ...seedMeetings(T, leaders),
     illnesses:[
       ['Hand-, voet- en mondziekte','ok','Mag komen, mits fit genoeg om mee te doen.'],
@@ -739,6 +739,17 @@ if (!CLOUD && (db.demoRev || 0) < 2){
     if (OLD_TOPICS.has(mine.prep || '')) mine.prep = x.prep;
   });
   db.demoRev = 2; save();
+}
+/* Correctie (2026-10-19): een oudere versie zette op een maandag de periodes een week te laat
+   (Scheppingsverhaal op 18-10 i.p.v. 11-10). Alleen precies die verkeerde datums worden rechtgezet. */
+if (!CLOUD && (db.demoRev || 0) < 3){
+  const fix = { '2026-10-18':'2026-10-11', '2026-08-30':'2026-08-23' };
+  const wrong = db.periods.find(p => p.start === '2026-10-18' && p.theme === 'Scheppingsverhaal');
+  if (wrong) db.periods.forEach(p => { if (fix[p.start] && !db.periods.some(x => x.start === fix[p.start])) p.start = fix[p.start]; });
+  // lege vergaderingen op de verkeerde datums weghalen (alleen als er niets in staat)
+  if (wrong) db.meetings = db.meetings.filter(m => !['2026-10-11','2026-11-29'].includes(m.date)
+    || db.agenda.some(a => a.meetingId === m.id) || db.actions.some(a => a.meetingId === m.id));
+  db.demoRev = 3; save();
 }
 function whoListRaw(a){ return Array.isArray(a.who) ? a.who : a.who ? [a.who] : []; }
 
