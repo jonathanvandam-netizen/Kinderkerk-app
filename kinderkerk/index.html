@@ -228,13 +228,15 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .textlink svg.i{width:18px;height:18px;color:var(--muted)}
 
 /* ---------- Tabs ---------- */
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow:hidden;touch-action:manipulation}
 .tabs::-webkit-scrollbar{display:none}
-.tab{background:none;border:0;font:inherit;font-weight:700;color:var(--muted);padding:10px 12px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab{flex:1 1 auto;justify-content:center;min-width:0;background:none;border:0;font:inherit;font-weight:700;color:var(--muted);padding:10px 8px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .tab svg.i{width:18px;height:18px}
 .tab.active{color:var(--text);border-color:var(--brand)}
 .tab .count{background:var(--surface-3);color:var(--muted);font-size:12px;padding:1px 7px;border-radius:999px}
 .tab.active .count{background:var(--brand-soft);color:var(--brand)}
+@media(max-width:430px){.tab{font-size:14px;padding:10px 4px;gap:4px}.tab .count{font-size:11px;padding:1px 6px}}
+@media(max-width:374px){.tabs{gap:0}.tab{font-size:12px;padding:10px 0;gap:3px;letter-spacing:-.2px}.tab .count{padding:1px 5px;font-size:10.5px}}
 
 /* ---------- Statistiek ---------- */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -287,7 +289,8 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 
 /* ---------- Toolbar / zoeken ---------- */
 .toolbar{display:flex;gap:10px;margin-bottom:12px}
-.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:0 14px;color:var(--muted)}
+.toolbar .btn{flex:none}
+.search{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:0 14px;color:var(--muted)}
 .search svg.i{width:18px;height:18px}
 .search input{border:0;outline:0;font:inherit;flex:1;padding:10px 0;background:transparent;color:var(--text);min-width:0}
 .search:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -428,7 +431,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 13';
+const APP_VERSION = '2026-10-19 · 14';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1223,7 +1226,7 @@ function openWhoIsIn(){
    ===================================================================== */
 function renderCheckin(){
   const T = todayISO();
-  const tabs = [['alles','Alles tonen'],['onder','Onderbouw'],['boven','Bovenbouw'],['bezoeker','Bezoekers']];
+  const tabs = [['alles','Alles'],['onder','Onderbouw'],['boven','Bovenbouw'],['bezoeker','Bezoekers']];
   const countIn = grp => checkinsOn(T).filter(c => grp === 'alles' || kidById(c.kidId).group === grp).length;
   app.innerHTML = `
   <div class="page">
