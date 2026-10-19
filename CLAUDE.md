@@ -8,7 +8,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Jonathan wil nu al met echte kinderen werken. **Echte kindernamen komen nooit in de code of de repository**
   (die is openbaar, net als de website). Ze komen er alleen in via Meer → Kinderen importeren (beheerder):
   in demomodus alleen in de browser van dat toestel, in databasemodus in Supabase (alleen voor ingelogde leiding).
-  Verzonnen demokinderen hebben `demo:true` en kunnen bij het importeren worden weggehaald.
+  Importregel: `Naam;groep;geboortedatum` (datum als 9-10-2013, 2013-10-09 of 9 oktober 2013; toekomst/ongeldig = leeg).
+  Dubbel = zelfde naam én groep. Verzonnen demokinderen hebben `demo:true` en kunnen bij het importeren worden weggehaald.
   Namen uit schermafbeeldingen van Zap! nooit overnemen in code, tests of commits.
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).

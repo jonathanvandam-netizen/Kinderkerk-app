@@ -388,7 +388,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 1';
+const APP_VERSION = '2026-10-19 · 2';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1325,17 +1325,38 @@ function renderPunten(){
    Echte namen komen NIET in de code (de repository is openbaar). Ze worden hier ingevoerd:
    demomodus = alleen in deze browser, databasemodus = in Supabase (alleen zichtbaar voor ingelogde leiding). */
 const groupOf = t => /boven/i.test(t) ? 'boven' : /onder/i.test(t) ? 'onder' : /bezoek|gast/i.test(t) ? 'bezoeker' : null;
+const MONTHS = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+/* Geboortedatum uit "9-10-2013", "9/10/2013", "2013-10-09" of "9 oktober 2013"; null als het geen (geldige) datum is */
+function parseBirthdate(t){
+  t = t.trim().toLowerCase();
+  let y, m, d, x;
+  if ((x = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) [, y, m, d] = x;
+  else if ((x = t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/))) [, d, m, y] = x;
+  else if ((x = t.match(/^(\d{1,2})\s+([a-zé]+)\.?\s+(\d{4})$/))){ d = x[1]; y = x[3]; m = MONTHS.findIndex(n => n.startsWith(x[2].slice(0, 3))) + 1; if (!m) return null; }
+  else return null;
+  const str = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const dt = new Date(str + 'T12:00:00');
+  return isNaN(dt) || iso(dt) !== str || str > todayISO() ? null : str;   // geen 31 februari, niet in de toekomst
+}
 function parseImport(text, fallback, skipDemo){
   const rows = [];
   text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).forEach((line, i) => {
-    const parts = line.split(/[;\t]|,(?=[^,]*$)/).map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean);
+    let parts = line.split(/[;\t]/).map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean);
+    if (parts.length === 1 && line.includes(',')) parts = line.split(',').map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean);
     if (i === 0 && /^naam\b/i.test(parts[0])) return;            // kopregel uit een export
-    const g = parts.length > 1 ? groupOf(parts.slice(1).join(' ')) : null;
-    const name = (g ? parts[0] : parts.join(' ')).replace(/\s+/g, ' ');
-    if (name) rows.push({ name, group:g || fallback });
+    let group = null, birthdate = null, badDate = false;
+    const nameParts = [parts[0]];
+    parts.slice(1).forEach(p => {
+      const g = groupOf(p), d = parseBirthdate(p);
+      if (g) group = g; else if (d) birthdate = d; else if (/\d{4}/.test(p)) badDate = true; else nameParts.push(p);
+    });
+    const name = nameParts.join(' ').replace(/\s+/g, ' ');
+    if (name) rows.push({ name, group:group || fallback, birthdate, badDate });
   });
-  const seen = new Set(db.kids.filter(k => !(skipDemo && k.demo)).map(k => k.name.toLowerCase()));
-  return rows.map(r => { const key = r.name.toLowerCase(), dup = seen.has(key); seen.add(key); return { ...r, dup }; });
+  // Dubbel = zelfde naam in dezelfde groep (twee kinderen met dezelfde naam in verschillende groepen mag)
+  const key = (n, g) => n.toLowerCase() + '|' + g;
+  const seen = new Set(db.kids.filter(k => !(skipDemo && k.demo)).map(k => key(k.name, k.group)));
+  return rows.map(r => { const k = key(r.name, r.group), dup = seen.has(k); seen.add(k); return { ...r, dup }; });
 }
 function renderImport(){
   if (!isAdmin()){ app.innerHTML = `<div class="page"><div class="card empty">Alleen beheerders kunnen kinderen importeren.</div></div>`; return; }
@@ -1349,8 +1370,8 @@ function renderImport(){
       : '<b>De namen blijven alleen op dit toestel</b> (in deze browser). Ze komen niet online en niet in de code. Zodra de echte database gekoppeld is, zetten we ze daarin over.'}</span></div>
     <div class="card pad">
       <label class="field"><span>Namen</span>
-        <textarea id="im-text" data-input="importText" rows="8" placeholder="Eén kind per regel, bijvoorbeeld:&#10;Noah&#10;Mila de Jong;onderbouw&#10;Levi Jansen;bovenbouw"></textarea>
-        <span class="muted" style="font-weight:400;font-size:13px">Eén naam per regel. Zet er eventueel <b>;onderbouw</b>, <b>;bovenbouw</b> of <b>;bezoeker</b> achter. Een lijst uit Excel of Google Sheets (kolommen Naam en Groep) mag je ook plakken.</span></label>
+        <textarea id="im-text" data-input="importText" rows="8" placeholder="Eén kind per regel, bijvoorbeeld:&#10;Noah&#10;Mila de Jong;onderbouw&#10;Levi Jansen;bovenbouw;9-10-2014"></textarea>
+        <span class="muted" style="font-weight:400;font-size:13px">Eén naam per regel. Zet er eventueel <b>;onderbouw</b>, <b>;bovenbouw</b> of <b>;bezoeker</b> achter, en een geboortedatum (bijv. <b>;9-10-2014</b> of <b>;9 oktober 2014</b>). Een lijst uit Excel of Google Sheets (kolommen Naam, Groep, Geboortedatum) mag je ook plakken.</span></label>
       <label class="field"><span>Groep als er niets achter de naam staat</span>${(v => `<select id="im-group" data-change="importPreview">${Object.entries(GROUPS).map(([k,l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)('onder')}</label>
       ${demoCount && !CLOUD ? `<label class="check-line"><input type="checkbox" id="im-clear" data-change="importPreview" checked> De ${demoCount} verzonnen demokinderen weghalen</label>` : ''}
       <div id="im-preview"></div>
@@ -1364,7 +1385,8 @@ function renderImportPreview(){
   if (!rows.length){ el.innerHTML = ''; return; }
   const n = g => rows.filter(r => r.group === g && !r.dup).length, dups = rows.filter(r => r.dup).length;
   el.innerHTML = `<div class="hint soft" style="background:var(--brand-soft);color:var(--brand-text);display:block">
-    <b>${rows.length - dups} kinderen</b>: ${n('onder')} onderbouw, ${n('boven')} bovenbouw${n('bezoeker') ? `, ${n('bezoeker')} bezoeker${n('bezoeker') > 1 ? 's' : ''}` : ''}${dups ? `<br>${dups} ${dups === 1 ? 'naam staat' : 'namen staan'} er al in en ${dups === 1 ? 'wordt' : 'worden'} overgeslagen.` : ''}</div>`;
+    <b>${rows.length - dups} kinderen</b>: ${n('onder')} onderbouw, ${n('boven')} bovenbouw${n('bezoeker') ? `, ${n('bezoeker')} bezoeker${n('bezoeker') > 1 ? 's' : ''}` : ''}
+    · ${rows.filter(r => !r.dup && r.birthdate).length} met geboortedatum${rows.some(r => r.badDate) ? `<br>Niet herkend als datum (wordt leeg gelaten): ${rows.filter(r => r.badDate).map(r => esc(r.name)).join(', ')}` : ''}${dups ? `<br>${dups} ${dups === 1 ? 'naam staat' : 'namen staan'} er al in en ${dups === 1 ? 'wordt' : 'worden'} overgeslagen.` : ''}</div>`;
 }
 
 /* ---------- Planning: thema en leiding per zondag ---------- */
@@ -1737,7 +1759,7 @@ const actions = {
       db.checkins = db.checkins.filter(c => !demo.has(c.kidId));
       Object.values(db.rosters).forEach(list => list.forEach(r => { if (demo.has(r.kidId)) r.kidId = null; }));
     }
-    const kids = rows.map(r => ({ id:newId(), name:r.name, group:r.group, created:todayISO(), birthdate:null }));
+    const kids = rows.map(r => ({ id:newId(), name:r.name, group:r.group, created:todayISO(), birthdate:r.birthdate || null }));
     db.kids.push(...kids); put('kids', kids); save();
     toast(`${kids.length} kinderen toegevoegd`); location.hash = '#/checkin';
   },
