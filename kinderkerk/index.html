@@ -97,7 +97,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .bottomnav a.active{color:var(--brand);background:var(--glass-active);box-shadow:0 1px 4px rgba(20,30,60,.12),inset 0 1px 0 var(--glass-hi)}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
 body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
-@media(min-width:800px){
+@media(min-width:1000px){
   body{padding-bottom:0}
   .mainnav{display:flex}
   .bottomnav{display:none}
@@ -348,6 +348,30 @@ table.t td{padding:11px 16px;border-top:1px solid var(--border)}
 table.t td.c,table.t th.c{text-align:center}
 table.t tr.today td{background:var(--brand-soft);font-weight:700}
 table.t tr.click{cursor:pointer}
+.plan-table{table-layout:fixed}
+table.t.plan-table th,table.t.plan-table td{padding:10px 8px;vertical-align:top;font-size:14.5px;line-height:1.35}
+table.t.plan-table th{text-transform:none;letter-spacing:0;font-size:13px}
+table.t.plan-table th:first-child,table.t.plan-table td:first-child{padding-left:14px;width:72px}
+table.t.plan-table th.tc,table.t.plan-table td.tc{width:34%}
+.plan-table .d{font-weight:800;white-space:nowrap}.plan-table .wk{display:block;font-size:12px;color:var(--muted);font-weight:600}
+table.t.plan-table tr.per td{background:var(--surface-2);font-weight:800;font-size:13px;color:var(--brand);padding:7px 14px}
+table.t.plan-table tr.today td{font-weight:400;background:var(--brand-soft)}
+.plan-table .sp{font-weight:800}.plan-table .mt{display:block;font-size:12.5px;color:var(--warn-text);font-weight:700}
+.plan-table .gb{font-size:12px;color:var(--muted);font-weight:700;margin-right:4px}
+.plan-table .away{opacity:.55}
+table.t.plan-table tr.trow{display:none}
+table.t.plan-table tr.trow td{border-top:0;padding-top:0;font-size:13.5px;color:var(--muted)}
+table.t.plan-table tr.trow td b{color:var(--text)}
+@media(max-width:599px){
+  table.t.plan-table{table-layout:auto}
+  table.t.plan-table .tc{display:none}
+  table.t.plan-table tr.trow{display:table-row}
+  table.t.plan-table th:first-child,table.t.plan-table td:first-child{width:64px}
+}
+@media(max-width:374px){table.t.plan-table th,table.t.plan-table td{font-size:13.5px;padding:9px 6px}table.t.plan-table th:first-child,table.t.plan-table td:first-child{padding-left:10px;width:56px}}
+.seg{display:inline-flex;background:var(--surface-3);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;font:inherit;font-weight:700;font-size:13.5px;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(20,30,60,.12)}
 table.t tr.click:hover td{background:var(--surface-2)}
 .okmark{color:var(--ok)}
 .plan{display:block;width:100%;text-align:left;font:inherit;color:inherit;padding:16px;cursor:pointer;text-decoration:none}
@@ -404,7 +428,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 11';
+const APP_VERSION = '2026-10-19 · 12';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1659,6 +1683,37 @@ function planCard(date, compact){
     ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
   </a>`;
 }
+/* Planning als tabel, zoals het rooster dat de leiding gewend is: Datum | Bovenbouw | Onderbouw | Thema */
+function planView(){ try { return localStorage.getItem('kk-planview') || 'tabel'; } catch(e){ return 'tabel'; } }
+function nameList(ids){
+  const l = ids.map(leaderById).filter(Boolean);
+  if (!l.length) return '<span class="muted">–</span>';
+  const n = l.map(x => `<span class="${x.away ? 'away' : ''}" ${x.away ? `title="${esc(x.away)}"` : ''}>${x.id === db.session ? `<b class="me-tag">${esc(x.name)}</b>` : esc(x.name)}${x.away ? ' ' + awayIcon(x.away) : ''}</span>`);
+  return n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + (n.length === 2 ? ' &amp; ' : ' en ') + n[n.length - 1];
+}
+function planTable(dates){
+  const T = todayISO(), cur = nextSunday(T);
+  let lastP = null;
+  const rows = dates.map(d => {
+    const s = sundayOf(d), w = weekInfo(d), o = sundayTopic(d, 'onder'), b = sundayTopic(d, 'boven'), own = !!(s.theme || s.themeBoven);
+    let head = '';
+    if (w && w.p.id !== lastP){ head = `<tr class="per"><td colspan="4">${esc(periodLabel(w.p))}</td></tr>`; lastP = w.p.id; }
+    if (!w) lastP = null;
+    const special = w?.week === 6 ? '🙏 Bidden' : w?.week === 7 ? '🛍️ Winkeltje' : '';
+    const word = special.split(' ')[1] || '', hasWord = t => word && (t || '').toLowerCase().includes(word.toLowerCase().slice(0, 6));
+    const theme = (special && !own ? `<span class="sp">${special}</span>`
+      : (o.theme === b.theme ? (o.theme ? esc(o.theme) : '<span class="muted">–</span>')
+        : `<span class="gb">Onder</span>${esc(o.theme || '–')}<br><span class="gb">Boven</span>${esc(b.theme || '–')}`) + (special && !hasWord(o.theme) ? ` · <span class="sp">${special}</span>` : ''))
+      + (w?.week === 7 ? `<span class="mt">👥 ${meetingLabel(w.p.meeting)}</span>` : '');
+    const cls = `click ${d === cur ? 'today' : ''}`;
+    return head + `<tr class="${cls}" data-action="editPlan" data-date="${d}">
+      <td><span class="d">${fmtDate(d, {day:'numeric', month:'short'}).replace('.', '')}</span>${w ? `<span class="wk">week ${w.week}</span>` : ''}</td>
+      <td>${nameList(s.boven)}</td><td>${nameList(s.onder)}</td><td class="tc">${theme}</td></tr>
+      ${special || o.theme || b.theme ? `<tr class="trow ${cls}" data-action="editPlan" data-date="${d}"><td></td><td colspan="2">${theme}</td></tr>` : ''}`;
+  }).join('');
+  return `<div class="card" style="padding:0;overflow:hidden"><table class="t plan-table">
+    <thead><tr><th>Datum</th><th>Bovenbouw</th><th>Onderbouw</th><th class="tc">Thema</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 function renderPlanning(){
   const first = nextSunday(todayISO());
   let dates = Array.from({ length:state.planCount }, (_, i) => addDays(first, 7*i));
@@ -1670,11 +1725,14 @@ function renderPlanning(){
   <div class="page">
     <div class="page-head"><h1>Planning</h1></div>
     ${periodBlock()}
-    <div class="page-head" style="margin:22px 0 10px"><h3 class="section-title" style="margin:0">Wie is wanneer aan de beurt</h3>
+    <h3 class="section-title" style="margin:22px 0 10px">Wie is wanneer aan de beurt</h3>
+    <div class="btn-row" style="justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="seg"><button class="${planView() === 'tabel' ? 'on' : ''}" data-action="planView" data-id="tabel">Tabel</button><button class="${planView() === 'kaarten' ? 'on' : ''}" data-action="planView" data-id="kaarten">Uitgebreid</button></div>
       <button class="chip ${state.planMine ? 'on' : ''}" data-action="planMine">Alleen mijn beurten<span class="tick">✓</span></button></div>
-    <div class="stack">${dates.map(d => planCard(d)).join('') || '<div class="card empty">Je bent het komende jaar nog niet ingepland.</div>'}</div>
+    ${!dates.length ? '<div class="card empty">Je bent het komende jaar nog niet ingepland.</div>'
+      : planView() === 'tabel' ? planTable(dates) : `<div class="stack">${dates.map(d => planCard(d)).join('')}</div>`}
     ${!state.planMine || dates.length >= state.planCount ? `<button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>` : ''}
-    <div class="banner">${icon('info')}<span>Tik op een zondag om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Sheets en bidden pas je aan bij <a href="#/roosters">Roosters</a>.</span></div>
+    <div class="banner">${icon('info')}<span>Tik op een zondag (of een regel in de tabel) om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Sheets en bidden pas je aan bij <a href="#/roosters">Roosters</a>.</span></div>
   </div>`;
 }
 function periodBlock(){
@@ -2178,6 +2236,7 @@ const actions = {
     db.periods = db.periods.filter(x => x.id !== p.id); drop('periods', { id:p.id }); save(); closeModal(); render();
   },
   planMine: () => { state.planMine = !state.planMine; render(); },
+  planView: d => { try { localStorage.setItem('kk-planview', d.id); } catch(e){} render(); },
   morePlan: () => { state.planCount += 8; render(); },
   savePlan: d => {
     const ids = sel => [...document.querySelectorAll(sel + ' .chip.on')].map(c => c.dataset.id);
