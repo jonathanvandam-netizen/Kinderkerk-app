@@ -99,14 +99,6 @@ Afwezig + vervanger (bewust rustig): Mijn account → "Wanneer kan ik niet?" (va
 text = `afwezig:{"leader","from","to","why"}`, `absentOn`). Planning zet ⚠️ achter die naam (tabel, kaarten, chips). Op Home alleen
 bij een botsing een gele regel met "Vervanger zoeken" (`myClashes`); in het venster van een zondag waarop jij leiding hebt de knop
 "🔁 Kun je niet? Vervanger zoeken via WhatsApp" (`swapLink` = wa.me met kant-en-klare tekst).
-Meldingen (push, standaard UIT; Mijn account → "Meldingen aanzetten", alleen databasemodus; iPhone alleen vanaf het beginscherm):
-keuze "morgen heb jij leiding" (zaterdag 17:00 UTC) en "op de vergaderdag" (zondag 08:00 UTC), knop testmelding, uitzetten; uitloggen
-haalt het abonnement van dat toestel weg. Tabel `push_subs` (endpoint, leader_id, sub, prefs; eigen rijen via `my_leader_id()`),
-publieke sleutel in settings 'vapid_public' (`supabase/meldingen.sql`, met pg_cron + pg_net). Edge Function `meldingen`
-(`supabase/functions/meldingen/index.ts`, npm:web-push, Verify JWT uit; tijdklok met kop x-kk-geheim, ?wat=test met de inlog van de
-gebruiker). Geheimen VAPID_PUBLIC/VAPID_PRIVATE/KK_GEHEIM maakt de installeerpagina (stap 9) in de browser; het privédeel komt nooit in
-de repo of bij Claude. sw.js toont de melding en opent bij tikken de app. `swReady()` wacht hooguit 3 s (anders hangt het zonder SW).
-Getest: functie-logica + web-push met browser-sleutels (node), SQL + RLS op lokale Postgres, app met nagebootste pushdienst.
 Groep nakijken (bovenaan Kinderen beheren, alleen als er iets is): onderbouwkind met leeftijd op 1 september ≥ grens (settings
 'groepsgrens', standaard 8, beheerder past aan in de kaart) → "Naar bovenbouw"; bezoeker met ≥3 check-ins → Onderbouw/Bovenbouw/
 "Blijft bezoeker". "Laat zo" = note `groep-ok:{"kid","sep"}` (geldt dat schooljaar; bezoeker altijd).

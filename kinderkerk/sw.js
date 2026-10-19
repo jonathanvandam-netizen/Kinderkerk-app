@@ -23,19 +23,3 @@ self.addEventListener('fetch', e => {
     return res;
   }).catch(() => caches.match(e.request, { ignoreSearch:true }).then(r => r || caches.match('index.html'))));
 });
-
-// Meldingen (alleen als iemand ze in Mijn account heeft aangezet)
-self.addEventListener('push', e => {
-  let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch(err){ d = { body:e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Kinderkerk', { body:d.body || '', icon:'logo-192.png', badge:'logo-192.png', data:{ url:d.url || './' } }));
-});
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  const url = e.notification.data && e.notification.data.url || './';
-  e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
-    const w = list.find(c => 'focus' in c);
-    if (w){ if ('navigate' in w) w.navigate(url).catch(() => {}); return w.focus(); }
-    return clients.openWindow(url);
-  }));
-});

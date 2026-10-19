@@ -507,7 +507,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 58';
+const APP_VERSION = '2026-10-19 · 57';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1975,41 +1975,6 @@ function absentBox(){
     <button type="button" class="btn btn-outline sm" id="absent-add" data-action="absentAdd" style="align-self:flex-start">${icon('plus')} Datum toevoegen</button>
     <span class="muted" style="font-weight:400;font-size:13px">De planning laat dan zien dat je niet kunt.</span>`;
 }
-/* ---------- Meldingen (push) ----------
-   Standaard uit. Wie wil, zet ze aan: de browser maakt een abonnement (met de publieke sleutel uit settings 'vapid_public'),
-   dat komt in de tabel push_subs (supabase/meldingen.sql). De Edge Function "meldingen" stuurt zaterdagavond "Morgen heb jij
-   leiding" en zondagochtend "Vandaag vergadering". sw.js laat de melding zien. */
-const PUSH_PREFS = [['leiding','Dag van tevoren: "morgen heb jij leiding"'], ['vergadering','Op de vergaderdag']];
-const b64ToBytes = b => { const s = atob((b + '='.repeat((4 - b.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
-let pushState = null;   // { sub, row }
-/* serviceWorker.ready blijft hangen als er geen service worker is: daarom hooguit 3 seconden wachten */
-const swReady = () => 'serviceWorker' in navigator ? Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 3000))]) : Promise.resolve(null);
-async function loadPush(){
-  const box = $('#push-box'); if (!box) return;
-  const head = '<span>Meldingen</span>', note = t => `${head}<span class="muted" style="font-weight:400;font-size:14px">${t}</span>`;
-  if (isIOS() && !isStandalone()) return box.innerHTML = note('Zet de app eerst op je beginscherm (Safari → Deel → Zet op beginscherm). Daarna kun je hier meldingen aanzetten.');
-  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return box.innerHTML = note('Deze browser kan geen meldingen krijgen.');
-  if (!db.settings?.vapid_public) return box.innerHTML = note(`Meldingen zijn nog niet ingesteld.${isAdmin() ? ' Beheerder: zie stap 9 van de installeerpagina.' : ''}`);
-  try {
-    const reg = await swReady(); if (!reg) throw new Error('geen service worker');
-    const sub = await reg.pushManager.getSubscription();
-    const row = sub ? (await sb.from('push_subs').select('prefs').eq('endpoint', sub.endpoint).maybeSingle()).data : null;
-    pushState = { sub, row };
-  } catch(e){ console.error(e); pushState = { sub:null, row:null }; }
-  const on = !!(pushState.sub && pushState.row), prefs = pushState.row?.prefs || {};
-  box.innerHTML = on ? `${head}
-      <div class="chips">${PUSH_PREFS.map(([k, l]) => `<button type="button" class="chip ${prefs[k] !== false ? 'on' : ''}" data-action="pushPref" data-id="${k}">${l}<span class="tick">✓</span></button>`).join('')}</div>
-      <div class="btn-row" style="margin-top:8px"><button type="button" class="btn btn-soft sm" data-action="pushTest">Stuur een testmelding</button><button type="button" class="btn btn-outline sm" data-action="pushOff">Meldingen uitzetten</button></div>`
-    : `${head}<button type="button" class="btn btn-outline sm" data-action="pushOn" style="align-self:flex-start">🔔 Meldingen aanzetten</button>
-      <span class="muted" style="font-weight:400;font-size:13px">Staan standaard uit. Bijvoorbeeld zaterdagavond: "Morgen heb jij leiding".</span>`;
-}
-async function pushUnsubscribe(){
-  if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller || !('PushManager' in window)) return;
-  try {
-    const reg = await swReady(), sub = reg && await reg.pushManager.getSubscription();
-    if (sub){ await sb.from('push_subs').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe(); }
-  } catch(e){ console.error(e); }
-}
 function openProfile(){
   const u = me();
   openModal(`
@@ -2022,7 +1987,6 @@ function openProfile(){
         <div class="row static"><span class="row-main"><span class="muted">Groep</span><b>${GROUPS[u.group] || 'Algemeen'}</b></span></div>
       </div>
       <div class="field" style="margin:18px 0 0" id="absent-box">${absentBox()}</div>
-      ${CLOUD ? '<div class="field" style="margin:18px 0 0" id="push-box"><span>Meldingen</span><span class="muted" style="font-weight:400">Laden…</span></div>' : ''}
       <div class="field" style="margin:18px 0 0"><span>Weergave <span class="muted" style="font-weight:400">(op dit toestel)</span></span>
         <div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
           `<button type="button" class="chip ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
@@ -2032,7 +1996,7 @@ function openProfile(){
       <button class="btn btn-soft btn-block" style="margin-top:18px" data-action="startTour">🧭 Rondleiding starten</button>
     </div>
     <div class="modal-foot"><button class="btn btn-outline" data-action="logout">Uitloggen</button></div>`);
-  if (CLOUD){ loadCalendar(); loadPush(); }
+  if (CLOUD) loadCalendar();
 }
 /* Agenda-koppeling: persoonlijke link (code in calendar_tokens) naar de Edge Function "agenda".
    De telefoon abonneert zich op die link en haalt wijzigingen in de planning zelf op. */
@@ -3022,33 +2986,6 @@ const actions = {
     rows.forEach(n => { db.sundays = db.sundays.filter(x => x.date !== n.date).concat(n); });
     put('sundays', rows); save(); render(); toast(`${rows.length} zondagen ingevuld ✓`);
   },
-  pushOn: async () => {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return toast('Meldingen staan uit in je telefooninstellingen');
-    try {
-      const reg = await swReady(); if (!reg) throw new Error('geen service worker');
-      const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64ToBytes(db.settings.vapid_public) });
-      const { error } = await sb.from('push_subs').upsert({ endpoint:sub.endpoint, leader_id:db.session, sub:sub.toJSON(), prefs:{ leiding:true, vergadering:true } });
-      if (error) throw error;
-      toast('Meldingen staan aan 🔔');
-    } catch(e){ console.error(e); toast('Aanzetten lukte niet'); }
-    loadPush();
-  },
-  pushOff: async () => { await pushUnsubscribe(); toast('Meldingen staan uit'); loadPush(); },
-  pushPref: async (d, el) => {
-    if (!pushState?.sub || !pushState.row) return;
-    const prefs = { ...pushState.row.prefs, [d.id]:!el.classList.contains('on') };
-    el.classList.toggle('on');
-    const { error } = await sb.from('push_subs').update({ prefs }).eq('endpoint', pushState.sub.endpoint);
-    if (error) toast('Opslaan lukte niet'); else pushState.row.prefs = prefs;
-  },
-  pushTest: async () => {
-    try {
-      const { data, error } = await sb.functions.invoke(`${CFG.pushFunction || 'meldingen'}?wat=test`, { method:'POST' });
-      if (error) throw error;
-      toast(data?.sent ? 'Testmelding verstuurd' : 'Geen melding verstuurd: zet meldingen opnieuw aan');
-    } catch(e){ console.error(e); toast('Testmelding lukte niet. Is de functie "meldingen" ingesteld?'); }
-  },
   quizNew: d => openQuizAdd(d.date || quizDate()),
   qfType: (d, el) => {
     el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el));
@@ -3471,7 +3408,6 @@ const actions = {
     if (CLOUD){
       if (outbox.length && !confirm(`Er ${outbox.length === 1 ? 'is nog 1 wijziging' : `zijn nog ${outbox.length} wijzigingen`} niet opgeslagen omdat er geen internet is. Toch uitloggen? Dan gaan ze verloren.`)) return;
       outbox = []; keepOutbox(); sessionUser = null;
-      await pushUnsubscribe();   // geen meldingen meer voor deze persoon op dit toestel
       try { localStorage.removeItem(CACHE_KEY); } catch(e){}
       await sb.auth.signOut().catch(() => {}); db = emptyDb(); syncBadge();
     }
