@@ -75,7 +75,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 
 ## Functies
 Home (compacte begroeting + grote knop "Kinderen inchecken" met daaronder "Leiding inchecken"; kaart Gebedsverlangens (Kind ziek? bewust niet op Home, wel in
-het incheckvenster en Meer); onder de tellers "Wie is er?". Leiding op de planning telt automatisch
+het incheckvenster en Meer); de tellers zijn klikbaar (Kinderen/Totaal = "Wie is er?", Leiding = leiding inchecken). Leiding op de planning telt automatisch
 als aanwezig (`leaderPlanned`), extra leiding check je in (`leaderExtra`, tabel leader_checkins); tabs Vandaag/Notities (Gebed-tab bewust weg, dubbel); tellers in één kaart; "Programma" = thema,
 leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),

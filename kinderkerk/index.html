@@ -154,7 +154,8 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .hello .hero-duty{margin:0 0 12px}
 /* Tellers in één kaart */
 .stats1{display:grid;grid-template-columns:repeat(3,1fr);padding:14px 0 12px}
-.stats1 .cell{padding:0 16px}
+.stats1 .cell{padding:0 16px;background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.stats1 .cell .lbl svg.i{width:13px;height:13px;vertical-align:-1px;opacity:.6}
 .stats1 .cell + .cell{border-left:1px solid var(--border)}
 .stats1 .lbl{font-size:13px;color:var(--muted);font-weight:700}
 .stats1 .num{font-size:30px;font-weight:800;line-height:1.15}
@@ -456,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 32';
+const APP_VERSION = '2026-10-19 · 33';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1290,12 +1291,11 @@ function homeVandaag(){
   return `
     ${D !== T ? `<h3 class="section-title" style="margin-top:0">${cap(dayLabel(D))}</h3>` : ''}
     <div class="card stats1">
-      <div class="cell"><div class="lbl">Kinderen</div><div class="num">${cs.length}</div></div>
-      <div class="cell"><div class="lbl">Leiding</div><div class="num">${leaders}</div></div>
-      <div class="cell"><div class="lbl">Totaal</div><div class="num">${cs.length + leaders}</div></div>
+      <button class="cell" data-action="whoIsIn" title="Welke kinderen zijn er?"><div class="lbl">Kinderen ${icon('chev')}</div><div class="num">${cs.length}</div></button>
+      <button class="cell" data-action="leaderCheckin" title="Welke leiding is er?"><div class="lbl">Leiding ${icon('chev')}</div><div class="num">${leaders}</div></button>
+      <button class="cell" data-action="whoIsIn" title="Wie is er?"><div class="lbl">Totaal ${icon('chev')}</div><div class="num">${cs.length + leaders}</div></button>
       <div class="dots"><span><i class="dot" style="background:var(--onder)"></i>${g('onder')} onderbouw</span><span><i class="dot" style="background:var(--boven)"></i>${g('boven')} bovenbouw</span>${g('bezoeker') ? `<span><i class="dot" style="background:var(--bezoeker)"></i>${g('bezoeker')} bezoeker${g('bezoeker') > 1 ? 's' : ''}</span>` : ''}</div>
     </div>
-    <button class="btn btn-soft btn-block" style="margin-top:12px" data-action="whoIsIn">${icon('users')} Wie is er?</button>
     <h3 class="section-title">Programma ${dayLabel(S)}</h3>
     ${planCard(S, true)}
     ${homeBirthdays()}`;
