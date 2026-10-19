@@ -27,7 +27,13 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 ## Techniek (nu)
 - Alles in `kinderkerk/index.html` (vanilla HTML/CSS/JS).
 - Twee modi, gekozen via `kinderkerk/config.js`:
-  - leeg = **demomodus**: nepdata in `localStorage` (`kinderkerk-demo-v8`), inloggen nagebootst.
+  - leeg = **lokale modus**: gegevens in `localStorage` (`kinderkerk-demo-v8`), inloggen nagebootst. Jonathan gebruikt
+    dit nu al **echt** (echte kinderen, planning, notulen) op zijn telefoon. Daarom: `STORE_KEY` nooit ophogen en
+    nooit iets van de gebruiker overschrijven; aanpassingen aan startdata alleen via een veilige samenvoeg-migratie
+    (`demoRev`). Geen "DEMODATA"-label meer en geen knop "Demodata opnieuw laden".
+    Meer → Gegevens (beheerder): Back-up maken (JSON via deelvenster of download) en Back-up terugzetten (alleen lokaal,
+    ook om naar de iPad over te zetten). Bij het koppelen van Supabase moeten de lokale gegevens vanuit zo'n back-up
+    naar de database (nog te bouwen; de oude knop "Demodata in de database zetten" is weg).
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).

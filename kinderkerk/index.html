@@ -364,9 +364,6 @@ table.t tr.click:hover td{background:var(--surface-2)}
 #toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toast);color:var(--toast-text);padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media(min-width:800px){#toast{bottom:28px}}
-.demo-flag{font-size:11px;font-weight:800;background:var(--warn-soft);color:var(--warn-text);padding:3px 8px;border-radius:999px;letter-spacing:.03em}
-.demo-flag ~ .avatar{margin-left:0}
-@media(max-width:420px){.demo-flag{display:none}.demo-flag ~ .avatar{margin-left:auto}}
 </style>
 </head>
 <body>
@@ -374,7 +371,6 @@ table.t tr.click:hover td{background:var(--surface-2)}
   <div class="topbar-inner">
     <a class="brand" href="#/home"><span class="mini-logo" id="mini-logo"></span><span>Kinderkerk</span></a>
     <nav class="mainnav" id="mainnav"></nav>
-    <span class="demo-flag" style="margin-left:auto">DEMODATA</span>
     <button class="avatar" id="avatar" data-action="profile" title="Mijn account"></button>
   </div>
 </header>
@@ -390,7 +386,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 7';
+const APP_VERSION = '2026-10-19 · 8';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -498,6 +494,17 @@ const DEMO_KIDS = {
 };
 const DEMO_KID_NAMES = new Set(Object.values(DEMO_KIDS).flat());
 const isDemoKid = k => !!k.demo || DEMO_KID_NAMES.has(k.name);
+/* Back-up terugzetten (alleen zonder database): vervangt alles op dit toestel; je blijft ingelogd */
+async function restoreBackup(file){
+  let data; try { data = JSON.parse(await file.text()); } catch(e){ return toast('Dit is geen geldig back-upbestand'); }
+  if (data?.app !== 'kinderkerk' || !Array.isArray(data.db?.kids)) return toast('Dit is geen back-up van de kinderkerk-app');
+  const when = data.saved ? new Date(data.saved).toLocaleString('nl-NL', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' }) : 'onbekende datum';
+  if (!confirm(`Alles op dit toestel vervangen door de back-up van ${when}? (${data.db.kids.length} kinderen)`)) return;
+  const email = me().email;
+  db = { ...emptyDb(), ...data.db };
+  db.session = db.leaders.find(l => l.email === email)?.id || db.leaders.find(l => l.role === 'beheerder')?.id || null;
+  save(); render(); toast('Back-up teruggezet');
+}
 function removeDemoKids(){
   const demo = new Set(db.kids.filter(isDemoKid).map(k => k.id));
   db.kids = db.kids.filter(k => !demo.has(k.id));
@@ -754,29 +761,6 @@ async function afterLogin(user){
   db.session = l ? l.id : null;
   state.auth = !l ? { step:'noaccess', email:user.email } : !l.name ? { step:'profile', email:user.email, invite:{ group:l.group } } : { step:'email' };
   render();
-}
-/* Demodata in de database zetten (alleen beheerder, alleen zolang we nog met nepdata werken) */
-async function cloudDemo(){
-  const s = seed();
-  const steps = [
-    () => sb.from('checkins').delete().not('id', 'is', null),
-    () => sb.from('rosters').delete().not('kind', 'is', null),
-    () => sb.from('notes').delete().not('id', 'is', null),
-    () => sb.from('illnesses').delete().not('id', 'is', null),
-    () => sb.from('sundays').delete().not('date', 'is', null),
-    () => sb.from('kids').delete().not('id', 'is', null),
-    () => sb.from('kids').insert(s.kids.map(({ demo, ...k }) => toRow(k))),
-    () => sb.from('checkins').insert(s.checkins.map(toRow)),
-    () => sb.from('notes').insert(s.notes.map(toRow)),
-    () => sb.from('illnesses').insert(s.illnesses.map(toRow)),
-    () => sb.from('rosters').insert(Object.entries(s.rosters).flatMap(([kind, l]) => l.map(r => toRow({ kind, ...r })))),
-    () => sb.from('sundays').insert(s.sundays.map(x => toRow({ ...x, ...dienst(x.date, db.leaders, demoAnchor(todayISO())) }))),
-    // Periodes zijn echte planning: alleen voorbeeld-periodes toevoegen als er nog geen zijn
-    () => db.periods.length ? Promise.resolve({ error:null }) : sb.from('periods').insert(s.periods.map(toRow)),
-  ];
-  toast('Bezig…');
-  for (const step of steps){ const { error } = await step(); if (error){ console.error(error); toast('Mislukt: ' + error.message); return; } }
-  await loadCloud(); render(); toast('Demodata staat in de database');
 }
 
 /* ---------- Data-hulpjes ---------- */
@@ -1359,9 +1343,8 @@ function renderLogin(){
     </form>
     ${showInstall() ? `<button class="textlink" style="margin-top:16px" data-action="install">${icon('download')} Installeer als app</button>` : ''}
     <p class="auth-note">Geen wachtwoord nodig: je krijgt een eenmalige ${CLOUD ? 'code' : 'link'} in je mail. Alleen leiding die is uitgenodigd kan inloggen.</p>
-    ${CLOUD ? '' : `<div class="demo-box"><b>Demo</b><br>
-      <code>jonathan@demo.test</code> beheerder<br>
-      De rest van de leiding is nog niet uitgenodigd. Dat kan onder Meer → Team.</div>`}`;
+    ${CLOUD ? '' : `<div class="demo-box"><b>Nog niet gekoppeld aan de database</b><br>
+      Log in met <code>jonathan@demo.test</code>. De gegevens staan alleen op dit toestel.</div>`}`;
   app.innerHTML = `<div class="auth"><div class="card auth-card">
     ${a.step === 'sent' ? '' : `<div class="hero-logo">${logoImg()}</div>`}${body}</div></div>`;
   setTimeout(() => ($('#lg-code') || $('#lg-email') || $('#pf-name'))?.focus(), 50);
@@ -1405,13 +1388,17 @@ function renderMeer(){
     ${showInstall() ? `<div style="margin-bottom:16px">${installCard(false)}</div>` : ''}
     <div class="card list">${items.map(([r,t,s,ic]) => `
       <a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}</b><span class="muted">${s}</span></span>${icon('chev','chev')}</a>`).join('')}</div>
-    ${!CLOUD || isAdmin() ? `<h3 class="section-title">Testfase</h3>
+    ${isAdmin() ? `<h3 class="section-title">Gegevens</h3>
+    ${CLOUD ? '' : `<div class="banner" style="margin:0 0 12px;background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span><b>Alles staat nu alleen op dit toestel.</b> Andere leiding ziet het niet, en als je de websitegegevens van Safari wist, is het weg. Maak daarom regelmatig een back-up, tot de database gekoppeld is.</span></div>`}
     <div class="card list">
-      ${isAdmin() && db.kids.some(isDemoKid) ? `<button class="row" data-action="removeDemoKids"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('trash')}</span>
+      <button class="row" data-action="backupSave"><span class="row-icon">${icon('download')}</span>
+        <span class="row-main"><b>Back-up maken</b><span class="muted">Bewaar alles als bestand (bijv. in Bestanden of iCloud)</span></span>${icon('chev','chev')}</button>
+      ${CLOUD ? '' : `<button class="row" data-action="backupLoad"><span class="row-icon">${icon('refresh')}</span>
+        <span class="row-main"><b>Back-up terugzetten</b><span class="muted">Ook handig om alles over te zetten naar je iPad</span></span>${icon('chev','chev')}</button>`}
+      ${db.kids.some(isDemoKid) ? `<button class="row" data-action="removeDemoKids"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('trash')}</span>
         <span class="row-main"><b>Demokinderen weghalen</b><span class="muted">${db.kids.filter(isDemoKid).length} verzonnen kinderen; jouw eigen kinderen blijven staan</span></span></button>` : ''}
-      <button class="row" data-action="resetDemo"><span class="row-icon" style="background:var(--warn-soft);color:var(--warn)">${icon('refresh')}</span>
-        <span class="row-main"><b>Demodata ${CLOUD ? 'in de database zetten' : 'opnieuw laden'}</b><span class="muted">${CLOUD ? 'Vervangt alle kinderen, check-ins, roosters en notities door verzonnen data' : 'Zet alles terug naar de verzonnen voorbeelddata (ook geïmporteerde kinderen gaan weg)'}</span></span></button>
-    </div>` : ''}
+    </div>
+    <input type="file" id="backup-file" accept=".json,application/json" hidden data-change="backupFile">` : ''}
     <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
   </div>`;
 }
@@ -1909,6 +1896,17 @@ const actions = {
     if (!oud.length || !confirm(`${oud.length} kinderen van ${OLD_AGE} jaar of ouder op "Komt niet meer" zetten?`)) return;
     oud.forEach(k => { k.inactive = true; upd('kids', { id:k.id, inactive:true }); }); save(); render(); toast(`${oud.length} kinderen op "Komt niet meer" gezet`);
   },
+  backupSave: async () => {
+    const day = todayISO(), name = `kinderkerk-backup-${day}.json`;
+    const text = JSON.stringify({ app:'kinderkerk', version:APP_VERSION, saved:new Date().toISOString(), db:{ ...db, session:null } });
+    const file = new File([text], name, { type:'application/json' });
+    if (navigator.canShare?.({ files:[file] })){
+      try { await navigator.share({ files:[file], title:'Back-up Kinderkerk' }); toast('Back-up gemaakt'); return; } catch(e){ if (e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('Back-up gedownload');
+  },
+  backupLoad: () => $('#backup-file')?.click(),
   removeDemoKids: () => {
     const n = db.kids.filter(isDemoKid).length;
     if (!isAdmin() || !n || !confirm(`De ${n} verzonnen demokinderen weghalen? Hun check-ins gaan ook weg. Jouw eigen kinderen blijven staan.`)) return;
@@ -2213,9 +2211,6 @@ const actions = {
     db.illnesses = db.illnesses.filter(x => x.id !== z.id); drop('illnesses', { id:z.id });
     save(); closeModal(); render();
   },
-  resetDemo: () => {
-    if (CLOUD){ if (isAdmin() && confirm('Alle kinderen, check-ins, roosters, notities en ziektes in de database vervangen door verzonnen data?')) cloudDemo(); return; }
-    if (!confirm(`Alle demodata opnieuw laden? Je wijzigingen gaan verloren${db.kids.some(k => !k.demo) ? ', ook de kinderen die je zelf hebt toegevoegd of geïmporteerd' : ''}.`)) return; const email = me().email; db = seed(); db.session = db.leaders.find(l => l.email === email)?.id || null; save(); toast('Demodata opnieuw geladen'); render(); },
 };
 
 document.addEventListener('click', e => {
@@ -2236,6 +2231,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   if (e.target.dataset?.change === 'importPreview') renderImportPreview();
+  if (e.target.dataset?.change === 'backupFile' && e.target.files[0]) restoreBackup(e.target.files[0]);
   if (e.target.dataset?.change === 'notulist'){ const m = db.meetings.find(x => x.id === e.target.dataset.id); if (m){ m.notulist = e.target.value || null; put('meetings', m); save(); toast('Notulist opgeslagen'); } }
   if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || todayISO());
 });

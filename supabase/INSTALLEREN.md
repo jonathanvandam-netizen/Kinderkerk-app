@@ -42,7 +42,8 @@ De **service_role** of **secret key** deel je nooit.
 ## 5. Proberen
 1. Open de app, vul je e-mailadres in en vul de code uit de mail in.
 2. Vul je naam in.
-3. Ga naar **Meer → Demodata in de database zetten** om met nepkinderen te testen.
+3. Je gegevens van je telefoon (kinderen, planning, vergaderingen) zet Claude dan voor je over vanuit een
+   back-up (**Meer → Gegevens → Back-up maken**).
 4. Zet de leiding in het team via **Meer → Team → + Leiding**. Dat kan zonder e-mailadres; ze staan dan in de
    planning maar kunnen nog niet inloggen. Wil je iemand toegang geven, tik dan op de naam en kies **Uitnodigen**.
    Diegene kan daarna inloggen met dat e-mailadres.
