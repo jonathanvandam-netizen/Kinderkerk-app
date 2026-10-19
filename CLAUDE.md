@@ -20,6 +20,10 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
   "Uitnodigen" (e-mailadres) kan iemand inloggen; toegang intrekken laat iemand in team en planning staan.
+  Uitnodigen kan ook **via WhatsApp** (databasemodus): beheerder tikt "Uitnodigen via WhatsApp" → `make_invite_link` maakt
+  een link `#/uitnodiging/<code>` (één keer bruikbaar, 14 dagen geldig, tabel `invite_links`, `supabase/uitnodigen.sql`);
+  de uitgenodigde opent hem, ziet "Welkom, <naam>!" (`invite_name`), vult zelf zijn e-mailadres in (`accept_invite` zet
+  email + invited) en krijgt meteen een inlogcode. Knoppen: "Stuur via WhatsApp" (wa.me-link) en "Kopieer bericht".
   Per leiding een veld Verlof/afwezig met icoontje op basis van de tekst (`awayIcon`, bewust maar 4 soorten:
   🤰 zwangerschap, 🤒 ziek, 🏖️ vakantie, 🗓️ overig) en snelknoppen. Inloggen: alleen op uitnodiging; Inloggen gaat met een 6-cijferige code uit de mail (werkt ook in de geïnstalleerde
   iPhone-app, een link niet).

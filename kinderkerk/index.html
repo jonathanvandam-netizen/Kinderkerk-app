@@ -456,7 +456,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 28';
+const APP_VERSION = '2026-10-19 · 29';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1742,8 +1742,15 @@ function checkEmail(raw, ownId, err){
   if (db.leaders.some(l => l.email === email && l.id !== ownId)){ err('Dit e-mailadres hoort al bij iemand anders in het team.'); return false; }
   return email;
 }
+/* Uitnodigingslink: #/uitnodiging/<code> */
+const inviteToken = () => (location.hash.match(/^#\/uitnodiging\/([0-9a-f-]{36})/i) || [])[1] || null;
+let inviteLookup = { token:null, name:undefined };
 function renderLogin(){
-  const a = state.auth;
+  const a = state.auth, inv = CLOUD && a.step === 'email' && inviteToken();
+  if (inv && inviteLookup.token !== inv){
+    inviteLookup = { token:inv, name:undefined };
+    sb.rpc('invite_name', { t:inv }).then(({ data, error }) => { inviteLookup.name = error ? '' : (data || ''); if (!db.session) render(); });
+  }
   let body;
   if (a.step === 'loading') body = `<h1>Kinderkerk De Deur</h1><p class="muted">Even laden…</p>`;
   else if (a.step === 'noaccess') body = `
@@ -1776,8 +1783,19 @@ function renderLogin(){
       <option value="" ${!a.invite?.group ? 'selected' : ''}>Algemeen</option></select></label>
     ${a.error ? `<div class="auth-err">${esc(a.error)}</div>` : ''}
     <button class="btn btn-primary btn-block" data-action="createAccount">Account aanmaken</button>`;
+  else if (inv && inviteLookup.name === undefined) body = `<h1>Kinderkerk De Deur</h1><p class="muted">Uitnodiging openen…</p>`;
+  else if (inv && inviteLookup.name) body = `
+    <h1>Welkom, ${esc(firstName(inviteLookup.name))}! 👋</h1>
+    <p class="muted" style="margin:0 0 20px">Je bent uitgenodigd als leiding van de kinderkerk. Vul je e-mailadres in, dan krijg je een inlogcode in je mail.</p>
+    <form data-submit="acceptInvite">
+      <label class="field"><span>Je e-mailadres</span><input id="lg-email" type="email" autocomplete="email" inputmode="email" placeholder="naam@voorbeeld.nl" value="${esc(a.email || '')}"></label>
+      ${a.error ? `<div class="auth-err">${esc(a.error)}</div>` : ''}
+      <button class="btn btn-primary btn-block" type="submit" ${a.busy ? 'disabled' : ''}>${icon('mail')} ${a.busy ? 'Bezig…' : 'Stuur inlogcode'}</button>
+    </form>
+    <p class="auth-note">Geen wachtwoord nodig. Deze uitnodiging werkt één keer.</p>`;
   else body = `
     <h1>Kinderkerk De Deur</h1>
+    ${inv ? `<div class="auth-err" style="margin-bottom:14px">Deze uitnodiging is verlopen of al gebruikt. Vraag een beheerder om een nieuwe link. Heb je al een account? Log dan hieronder in.</div>` : ''}
     <p class="muted" style="margin:0 0 20px">Log in als leiding</p>
     <form data-submit="sendLink">
       <label class="field"><span>E-mailadres</span><input id="lg-email" type="email" autocomplete="email" inputmode="email" placeholder="naam@voorbeeld.nl" value="${esc(a.email || '')}"></label>
@@ -2186,7 +2204,10 @@ function openEditLeader(id){
     ? `<b>Heeft een account</b> en kan inloggen met ${esc(l.email)}.${self ? '' : `<br><button class="btn btn-outline sm" style="margin-top:10px" data-action="uninviteLeader" data-id="${id}">Toegang intrekken</button>`}`
     : l.invited
       ? `<b>Uitgenodigd.</b> ${esc(l.name || 'Diegene')} kan inloggen met ${esc(l.email)}${CLOUD ? ' (via een code in de mail)' : ''}.<br><button class="btn btn-outline sm" style="margin-top:10px" data-action="uninviteLeader" data-id="${id}">Uitnodiging intrekken</button>`
-      : `<b>Nog niet uitgenodigd.</b> Staat wel in het team en de planning, maar kan niet inloggen.<br><button class="btn btn-primary sm" style="margin-top:10px" data-action="inviteLeader" data-id="${id}">${icon('mail')} Uitnodigen</button>`;
+      : `<b>Nog niet uitgenodigd.</b> Staat wel in het team en de planning, maar kan niet inloggen.<br>
+        <span class="btn-row" style="margin-top:10px">${CLOUD ? `<button class="btn btn-primary sm" data-action="inviteLink" data-id="${id}">${icon('share')} Uitnodigen via WhatsApp</button>` : ''}
+        <button class="btn ${CLOUD ? 'btn-outline' : 'btn-primary'} sm" data-action="inviteLeader" data-id="${id}">${icon('mail')} Uitnodigen met e-mailadres</button></span>
+        <span id="ld-invite"></span>`;
   openModal(`
     <div class="modal-head"><span class="av av-leiding">${initials(l.name)}</span><div><h2>${esc(l.name)}</h2><span class="muted">${leaderAccess(l)}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -2475,6 +2496,7 @@ function closeModal(){ $('#modal-root').innerHTML = ''; document.body.classList.
 let toastTimer;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200); }
 
+let inviteText = '';
 const actions = {
   go: d => { location.hash = '#/' + d.to; },
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
@@ -2805,6 +2827,32 @@ const actions = {
     Object.assign(l, { email, invited:true });
     upd('leaders', { id:l.id, email, invited:true }); save(); closeModal(); render();
     toast(CLOUD ? `${l.name} kan nu inloggen met ${email}` : `${l.name} is uitgenodigd`);
+  },
+  inviteLink: async (d, el) => {
+    const l = leaderById(d.id); if (!l) return;
+    el.disabled = true;
+    const { data:token, error } = await sb.rpc('make_invite_link', { leader:l.id });
+    el.disabled = false;
+    if (error){ console.error(error); return toast(/function|not find|schema/i.test(error.message) ? 'Uitnodigen via WhatsApp is nog niet ingesteld (stap 7 van installeren)' : 'Link maken lukt nu niet'); }
+    const url = location.origin + location.pathname + '#/uitnodiging/' + token;
+    const text = `Hoi ${firstName(l.name)}! Je bent uitgenodigd voor de kinderkerk-app van De Deur. Open deze link en vul je e-mailadres in, dan krijg je een inlogcode: ${url}`;
+    $('#ld-invite').innerHTML = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <b>Link voor ${esc(firstName(l.name))}</b> <span class="muted">(werkt één keer, 14 dagen geldig)</span>
+      <div class="btn-row" style="margin-top:8px"><a class="btn btn-primary sm" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${icon('share')} Stuur via WhatsApp</a>
+      <button class="btn btn-outline sm" data-action="copyInvite">Kopieer bericht</button></div></div>`;
+    inviteText = text;
+  },
+  copyInvite: async () => { try { await navigator.clipboard.writeText(inviteText); toast('Bericht gekopieerd'); } catch(e){ prompt('Kopieer dit bericht:', inviteText); } },
+  acceptInvite: async () => {
+    const t = inviteToken(), email = $('#lg-email').value.trim().toLowerCase();
+    if (!validEmail(email)){ state.auth = { step:'email', email, error:'Vul een geldig e-mailadres in.' }; return render(); }
+    state.auth = { step:'email', email, busy:true }; render();
+    const { error } = await sb.rpc('accept_invite', { t, mail:email });
+    if (error){ state.auth = { step:'email', email, error:/verlopen|gebruikt|iemand anders|geldig/.test(error.message) ? error.message : 'Er ging iets mis. Controleer je internet en probeer het opnieuw.' }; return render(); }
+    history.replaceState(null, '', location.pathname + '#/home');   // link is gebruikt
+    inviteLookup = { token:null, name:undefined };
+    state.auth = { step:'email', email }; render();
+    actions.sendLink();
   },
   uninviteLeader: d => {
     const l = leaderById(d.id); if (!l || l.id === db.session) return;
