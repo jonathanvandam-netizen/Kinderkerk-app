@@ -498,7 +498,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 52';
+const APP_VERSION = '2026-10-19 · 53';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1175,14 +1175,16 @@ const TOUR_ALL = [
   { nav:'home', route:'home', t:'Home', p:'Hier begin je. Je ziet het overzicht van vandaag. Met de knoppen in deze balk ga je naar de andere onderdelen.' },
   { route:'home', el:['.hello a.btn[href="#/checkin"]'], t:'Kinderen inchecken', p:'Met deze knop check je de kinderen in. Leiding die op de planning staat, is automatisch ingecheckt. Komt er iemand extra? Dat doe je met de knop "Leiding inchecken" eronder. Boven de knop staat wanneer jij weer leiding hebt.' },
   { route:'home', el:['#hometab .card.plan', '.card.stats1'], t:'Programma van deze zondag', p:'Het thema, het Bijbelgedeelte, wie er leiding heeft en wie de sheets doet. Daaronder zie je wie er jarig is en of er al voor is gezongen.' },
+  { only:() => canQuiz(), route:'home', el:['.quiz-btn'], t:'Quizvraag bedenken (bovenbouw)', p:'Alleen voor de bovenbouw: met deze knop zet je een vraag klaar voor de quiz in week 7, bijvoorbeeld tijdens de preek. Kies een open vraag, of meerkeuze A–D. Bij meerkeuze tik je de letter van het goede antwoord aan; zijn er meer goed, tik ze dan allemaal aan.' },
   { route:'home', el:['a.card[href="#/gebed"]'], t:'Gebedsverlangens', p:'Hier vind je de gebedsverlangens van vandaag. De app kiest eerlijk welke kinderen ervoor bidden, en een kind van de onderbouw voor de collecte. Ook kinderen die niet vaak komen, zijn zo even vaak aan de beurt.' },
-  { nav:'checkin', route:'checkin', el:['.toolbar'], t:'Check-in', p:'Zoek een kind, of voeg een nieuw kind toe met + Kind. Je ziet de kinderen die de laatste 60 dagen zijn geweest; met "Alle kinderen" onderaan zie je iedereen.' },
+  { nav:'checkin', route:'checkin', el:['.toolbar'], t:'Check-in', p:'Zoek een kind, of voeg een nieuw kind toe met + Kind. Wie het vaakst komt, staat bovenaan. Je ziet de kinderen van de laatste 60 dagen; met "Alle kinderen" onderaan zie je iedereen. Een nieuw kind krijgt meteen 50 punten.' },
   { route:'checkin', el:['#kidlist .row', '#kidlist'], t:'Een kind inchecken', p:'Tik op een kind en vink aan wat het heeft meegenomen: Bijbel, werkblad, geld. Vul eventueel gebedspunten in. De app rekent de punten uit. Is het kind jarig? Dan zie je de knop "Vandaag gezongen".' },
   { nav:'gedrag', route:'gedrag', el:['.sm-row', '#app .card.list'], t:'Gedrag', p:'Geef een smiley 😊 voor goed gedrag. Bij 7 smileys mag een kind iets uit de grabbelbak pakken. Een waarschuwing ⚠️: 1e = naam op het bord, 2e = streepje erachter, 3e = eruit en naar de ouders in de dienst. Per ongeluk getikt? Tik op de naam om het terug te draaien.' },
   { nav:'planning', route:'planning', el:['.seg'], t:'Planning', p:'Wie wanneer aan de beurt is. Kies "Tabel" voor het overzicht, of "Uitgebreid" voor ook het Bijbelgedeelte en de voorbereiding. Met "Alleen mijn beurten" zie je alleen jouw zondagen.' },
   { route:'planning', el:['.plan-table tr.click', '.stack .card.plan'], t:'Ruilen of aanpassen', p:'Tik op een zondag om het thema of de leiding aan te passen. Kun je een keer niet? Haal jezelf weg en zet iemand anders erin. Iedereen ziet het meteen, ook in de agenda op zijn telefoon.' },
-  { nav:'vergadering', route:'vergadering', el:['.meet-next', '#app .card'], t:'Vergadering', p:'De volgende vergadering staat in week 7 van elke periode. Zet hier alvast agendapunten klaar. Tijdens de vergadering maak je de notulen per agendapunt en de actiepunten. Met "Delen" stuur je het verslag via WhatsApp of mail.' },
-  { nav:'meer', route:'meer', el:['#app .card.list'], t:'Meer', p:'Hier vind je de Gebedsverlangens, Sheets, het Team, de Historie (wie er vaak komt), Kinderziektes (mag een ziek kind komen?) en de Punten.' },
+  { nav:'vergadering', route:'vergadering', el:['.meet-next', '#app .card'], t:'Vergadering', p:'De volgende vergadering staat in week 7 van elke periode. Zet hier alvast agendapunten klaar. Tijdens de vergadering maak je de notulen per agendapunt en de actiepunten. Een actiepunt over zijn datum wordt rood. Met "Delen" stuur je het verslag via WhatsApp of mail. In week 7 verschijnt hier ook een terugblik op de periode.' },
+  { nav:'meer', route:'meer', el:['#app .card.list'], t:'Meer', p:() => `Hier vind je het Team, en onder "Op zondag" de Gebedsverlangens, Sheets, Kinderziektes (mag een ziek kind komen?)${canQuiz() ? ', de Punten en de Quiz' : ' en de Punten'}. Onder "Kinderen" zie je wie er nog komt en de Historie.` },
+  { only:() => canQuiz() && !!quizPeriod(), route:'quiz', el:['.page .card.pad', '.page-head'], t:'De quiz in week 7 (bovenbouw)', p:'Hier staan alle quizvragen van de periode. Met "Quiz spelen in de app" tik je het antwoord aan dat de kinderen kiezen; de app laat zien of het goed of fout is. Of download de quiz als PowerPoint. Tik je op "Google Slides", dan komt de quiz ook in de Google Drive van het one80kids-account (map Kinderkerk quiz) en opent hij meteen.' },
   { route:'roosters', el:['.card.duty'], t:'Sheets', p:'Op zondag tik je op "Kies wie de sheets doet". De app kiest uit de kinderen van de bovenbouw die er zijn: wie het minst vaak is geweest, is eerst aan de beurt.' },
   { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar vind je je instellingen. Die laten we nu zien.' },
   { only:() => CLOUD, open:() => openProfile(), el:['#cal-box a.btn', '#cal-box'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
@@ -2555,7 +2557,7 @@ async function toSlides(blob, name){
         <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
       <div class="modal-body">
         <a class="btn btn-primary btn-block" href="${esc(res.url)}" target="_blank" rel="noopener">Openen in Google Slides ↗</a>
-        <p class="muted" style="font-size:14px;margin:12px 0 0">De quiz staat in Google Drive in de map <b>Kinderkerk quiz</b>. Iedereen met de link kan hem openen.</p>
+        <p class="muted" style="font-size:14px;margin:12px 0 0">De quiz staat ook in de Google Drive van het <b>one80kids</b>-account, in de map <b>Kinderkerk quiz</b>. Iedereen met de link kan hem openen.</p>
       </div>`);
   } catch(e){
     toast('Google Slides lukte niet: ' + (e.message || e));
