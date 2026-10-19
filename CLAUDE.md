@@ -57,8 +57,9 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 Home (compacte begroeting + leiding check-in; tabs Vandaag/Gebed/Notities; tellers in één kaart; "Programma" = thema,
 leiding, sheets en bidden van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen),
-leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), roosters (sheets en bidden
-bovenbouw, uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen), gebedslijst.
+leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"), Sheets indeling (alleen bovenbouw,
+uitbreiden, plek leegmaken, CSV), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
+verzoek van Jonathan); daarvoor is Gebed.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
 Jarig zingen: bij het inchecken knop "🎂 Vandaag gezongen" (+100 punten, instelbaar) van 6 dagen vóór tot 4 weken ná
@@ -96,6 +97,15 @@ iets uit de grabbelbak graaien; knop "Gegraaid" trekt er 7 af (rest telt door). 
 ingecheckte kinderen; onderin knop "Alle kinderen" (de rest van de groep), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";
 tik op de naam om terug te draaien. Opslag: tabel `marks` (kid_id, date, kind smiley/warn/grab, author), lokaal `db.marks`.
 Gouden Week komt later (Jonathan legt uit).
+Gebed (`#/gebed`, in Meer bovenaan + kaart op Home; bewust niet in de menubalk, die is vol): gebedspunten van vandaag (of
+de laatste zondag als het geen zondag is). Bij kinderkerk bidden kinderen voor de gebedspunten van het inchecken + 1 kind
+van de onderbouw voor de collecte. "Kies wie er bidden" kiest per gebedspunt een ingecheckt kind (alle groepen, liefst niet
+het kind zelf) en een onderbouwkind voor de collecte; "Ander kind" kiest opnieuw. Eerlijk (`fairPick`): minst vaak aan de
+beurt → langst geleden → toeval, zodat ook kinderen die weinig komen even vaak bidden. Beurten = marks 'pray' (ref = id van
+het gebedspunt) en 'collecte'; losse gebedspunten = marks 'prayer' (tekst in `note`). Tik op een kindnaam = alle
+gebedspunten van dat kind + nieuw punt. Op Home en Check-in staat op een dag zonder zondag/check-ins: "Hé, vandaag is het
+geen zondag. Zoek je de gebedslijst? Klik hier." Sheets "Planning uitbreiden" kiest ook eerlijk (bovenbouw die de laatste
+60 dagen kwam, minst vaak sheets eerst); is het kind van vandaag er niet, dan stelt de app een vervanger voor.
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)

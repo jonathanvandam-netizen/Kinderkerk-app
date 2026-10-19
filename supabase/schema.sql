@@ -122,12 +122,15 @@ create table public.settings (
   value jsonb not null
 );
 
--- Smileys en waarschuwingen: één regel per smiley, waarschuwing of keer graaien uit de grabbelbak
+-- Losse regels per kind: smiley, waarschuwing, graaien uit de grabbelbak (Gedrag),
+-- en bij Gebed: gebeden voor een gebedspunt (pray, ref = check-in of gebedspunt), collecte, los gebedspunt (prayer, tekst in note)
 create table public.marks (
   id         uuid primary key default gen_random_uuid(),
   kid_id     uuid not null references public.kids(id) on delete cascade,
   date       date not null,
-  kind       text not null check (kind in ('smiley','warn','grab')),
+  kind       text not null check (kind in ('smiley','warn','grab','pray','collecte','prayer')),
+  ref        text,
+  note       text not null default '',
   author     text not null default '',
   created_at timestamptz not null default now()
 );

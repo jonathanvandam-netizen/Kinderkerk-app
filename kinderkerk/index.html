@@ -330,6 +330,13 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .prayer{padding:14px 16px;border-top:1px solid var(--border)}
 .prayer:first-child{border-top:0}
 .prayer b{display:block;font-size:13px;color:var(--muted);margin-bottom:2px}
+.prayer .kidlink{background:none;border:0;padding:0;font:inherit;font-weight:700;font-size:13px;color:var(--brand);cursor:pointer;margin-bottom:2px;display:block}
+.who-prays{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);font-size:14.5px}
+.who-prays.set{background:var(--ok-soft)}
+.who-prays span{flex:1;min-width:0}
+.who-prays .btn{flex:none}
+.notsunday{display:flex;align-items:center;gap:10px;background:var(--brand-soft);color:var(--brand-text);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-weight:600;text-decoration:none}
+.notsunday b{color:var(--brand)}
 .note{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px}
 .note:first-child{border-top:0}
 .note p{margin:4px 0 0;white-space:pre-wrap}
@@ -431,7 +438,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 14';
+const APP_VERSION = '2026-10-19 · 15';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -871,7 +878,7 @@ const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.ond
 function rosterToday(key){ const T = todayISO(); return db.rosters[key].find(r => r.date === T) || db.rosters[key].find(r => r.date > T); }
 
 /* ---------- UI-state ---------- */
-const state = { smTab:null, smAll:false, planCount:8, planMine:false, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { prayDates:6, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
@@ -890,7 +897,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, gebed:renderGebedslijst };
+const routes = { gebed:renderGebed, gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -966,6 +973,7 @@ function renderHome(){
   app.innerHTML = `
   <div class="page wide"><div class="home-grid">
     <aside class="stack">
+      ${notSundayBanner()}
       <div class="card hello">
         <div class="hello-top"><span class="hello-logo">${logoImg()}</span>
           <div><div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div>
@@ -973,6 +981,10 @@ function renderHome(){
         ${(m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${m.date === T ? 'vandaag' : fmtDate(m.date, {weekday:'long', day:'numeric', month:'long'})}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday())}
         <button class="btn btn-primary btn-block" data-action="leaderCheckin">${icon('checkin')} Leiding check-in</button>
       </div>
+      <a class="card row" href="#/gebed" style="border-radius:var(--radius)">
+        <span class="row-icon" style="background:var(--bday-bg);color:var(--bday-text)">${icon('heart')}</span>
+        <span class="row-main"><b>Gebed</b><span class="muted">${(n => isSunday(T) || checkinsOn(T).length ? (n ? n + ' gebedspunt' + (n > 1 ? 'en' : '') + ' · wie bidt er?' : 'Wie bidt er vandaag?') : 'Gebedslijst en gebedspunten')(prayerPoints(T).length)}</span></span>${icon('chev','chev')}
+      </a>
       <a class="card row" href="#/ziektes" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('thermo')}</span>
         <span class="row-main"><b>Kind ziek?</b><span class="muted">Check of een ziek kind welkom is</span></span>${icon('chev','chev')}
@@ -1026,7 +1038,7 @@ function homeGebed(){
   return `
     <div class="card list">${list.length ? list.map(c => `<div class="prayer"><b>${esc(kidById(c.kidId).name)}</b>${esc(c.prayer)}</div>`).join('')
       : `<div class="empty">Nog geen gebedsverlangens vandaag.<br>Die vul je in bij het inchecken van een kind.</div>`}</div>
-    <a class="btn btn-outline btn-block" style="margin-top:12px" href="#/gebed">${icon('arrow')} Naar de gebedslijst</a>`;
+    <a class="btn btn-outline btn-block" style="margin-top:12px" href="#/gebed">${icon('arrow')} Naar Gebed: wie bidt er?</a>`;
 }
 /* =====================================================================
    VERGADERING
@@ -1231,6 +1243,7 @@ function renderCheckin(){
   app.innerHTML = `
   <div class="page">
     <div class="tabs">${tabs.map(([id,l]) => `<button class="tab ${state.ciTab === id ? 'active' : ''}" data-action="ciTab" data-id="${id}">${l} <span class="count">${countIn(id)}</span></button>`).join('')}</div>
+    ${notSundayBanner()}
     <div class="page-head"><h1>Check-in${state.ciTab !== 'alles' ? ' ' + GROUPS[state.ciTab].toLowerCase() : ''}</h1>
       <span class="muted">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
     <div class="toolbar">
@@ -1274,10 +1287,12 @@ const WARN_TEXT = ['', 'Naam op het bord', 'Streepje achter de naam', 'Eruit: na
 const marksOf = (kidId, kind, date) => db.marks.filter(m => m.kidId === kidId && m.kind === kind && (!date || m.date === date));
 const smileyCount = kidId => Math.max(0, marksOf(kidId, 'smiley').length - SMILEY_GOAL * marksOf(kidId, 'grab').length);
 const warnCount = (kidId, d = todayISO()) => Math.min(3, marksOf(kidId, 'warn', d).length);
-function addMark(kidId, kind){
-  const m = { id:newId(), kidId, date:todayISO(), kind, author:me().name, created_at:new Date().toISOString() };
+function addMark(kidId, kind, extra = {}){
+  const m = { id:newId(), kidId, date:todayISO(), kind, author:me().name, created_at:new Date().toISOString(), ...extra };
   db.marks.push(m); put('marks', m); save();
+  return m;
 }
+function dropMark(m){ db.marks = db.marks.filter(x => x.id !== m.id); drop('marks', { id:m.id }); save(); }
 function undoMark(kidId, kind){
   const m = marksOf(kidId, kind, todayISO()).sort((a,b) => (a.created_at || '').localeCompare(b.created_at || '')).pop();
   if (!m) return false;
@@ -1524,10 +1539,10 @@ function openProfile(){
    ===================================================================== */
 function renderMeer(){
   const items = [
+    ['gebed','Gebed','Wie bidt er, en de gebedslijst','heart'],
     ['team','Team','Alle leiding per groep','users'],
     ['historie','Historie','Aantallen en wie er regelmatig komt','chart'],
-    ['roosters','Roosters','Sheets en bidden bovenbouw','calendar'],
-    ['gebed','Gebedslijst','Alle gebedsverlangens','heart'],
+    ['roosters','Sheets indeling','Wie doet de sheets (bovenbouw)','monitor'],
     ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
     ['punten','Punten','Hoeveel punten een kind krijgt','check'],
     ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','users'],
@@ -1692,8 +1707,7 @@ function planCard(date, compact){
     ${weekTags(date)}
     ${topicBlock(date)}
     <div class="lead"><span>Onderbouw</span><span>${leaderNames(s.onder)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven)}</span>
-      ${['sheets','bidden'].map(key => { const r = db.rosters[key].find(x => x.date === date), k = r && kidById(r.kidId);
-        return `<span>${key === 'sheets' ? 'Sheets' : 'Bidden'}</span><span>${k ? esc(k.name) : '<span class="muted">niemand</span>'}</span>`; }).join('')}</div>
+      ${(r => { const k = r && kidById(r.kidId); return `<span>Sheets</span><span>${k ? esc(k.name) : '<span class="muted">niemand</span>'}</span>`; })(db.rosters.sheets.find(x => x.date === date))}</div>
     ${s.prep ? `<div class="prep">📝 ${esc(s.prep)}</div>` : ''}
   </a>`;
 }
@@ -1922,13 +1936,16 @@ function renderHistorie(){
 /* ---------- Roosters ---------- */
 function renderRoosters(){
   const T = todayISO();
-  const key = state.rosterTab;
+  const key = state.rosterTab = 'sheets';
   const list = db.rosters[key].filter(r => r.date >= T).sort((a,b) => a.date.localeCompare(b.date));
   const cur = rosterToday(key), curKid = cur && kidById(cur.kidId);
   const label = key === 'sheets' ? 'Sheets' : 'Bidden';
   app.innerHTML = `
   <div class="page">
-    <div class="tabs">${[['sheets','Sheets indeling'],['bidden','Bidden bovenbouw']].map(([id,l]) => `<button class="tab ${key === id ? 'active' : ''}" data-action="rosterTab" data-id="${id}">${l}</button>`).join('')}</div>
+    <div class="page-head"><h1>Sheets indeling</h1><span class="muted">Bovenbouw</span></div>
+    ${(() => { if (!cur || cur.date !== T || !curKid || checkinFor(curKid.id, T)) return '';
+      const sub = fairPick(checkinsOn(T).map(c => kidById(c.kidId)).filter(k => k.group === 'boven'), sheetTurns, [curKid.id]);
+      return sub ? `<div class="hint" style="display:flex">${icon('alert')}<span style="flex:1">${esc(firstName(curKid.name))} is er vandaag niet.</span><button class="btn btn-soft sm" data-action="setRoster" data-date="${T}" data-id="${sub.id}">${esc(firstName(sub.name))} doet het</button></div>` : ''; })()}
     <div class="card duty" style="margin-bottom:16px"><span class="row-icon">${icon(key === 'sheets' ? 'monitor' : 'pray')}</span>
       <span><small>${cur && cur.date === T ? 'Vandaag' : 'Volgende keer'} · ${label}</small><b>${curKid ? esc(curKid.name) : 'Niemand ingepland'}</b></span></div>
     <div class="card list"><table class="t"><thead><tr><th>Datum</th><th>Naam</th><th></th></tr></thead><tbody>
@@ -1947,7 +1964,7 @@ function openEditRoster(date){
   const r = db.rosters[key].find(x => x.date === date);
   const opts = db.kids.filter(k => k.group === 'boven' && isActive(k)).sort(byName);
   openModal(`
-    <div class="modal-head"><div><h2>${fmtDate(date)}</h2><span class="muted">${key === 'sheets' ? 'Sheets indeling' : 'Bidden bovenbouw'}</span></div>
+    <div class="modal-head"><div><h2>${fmtDate(date)}</h2><span class="muted">Sheets indeling</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="list">
       <button class="row" data-action="setRoster" data-date="${date}" data-id=""><span class="row-icon" style="background:var(--surface-3);color:var(--muted)">${icon('x')}</span>
@@ -2006,6 +2023,106 @@ function openEditZiekte(id){
 }
 
 /* ---------- Gebedslijst ---------- */
+/* =====================================================================
+   GEBED
+   Op zondag: wie bidt voor welk gebedspunt (alle ingecheckte kinderen) en 1 kind van de onderbouw voor de collecte.
+   Eerlijk: wie het minst vaak aan de beurt was, gaat voor (ook kinderen die niet vaak komen); bij gelijk aantal
+   wie het langst geleden was, daarna toeval. Beurten staan in db.marks (kind 'pray' met ref = gebedspunt, 'collecte').
+   Losse gebedspunten (niet bij het inchecken) zijn marks met kind 'prayer' en de tekst in note.
+   ===================================================================== */
+const isSunday = d => weekday(d) === 0;
+const prayDay = () => { const T = todayISO(); return isSunday(T) || checkinsOn(T).length ? T : demoAnchor(T); };   // vandaag, of de laatste zondag
+function prayerPoints(d){
+  return [...checkinsOn(d).filter(c => c.prayer).map(c => ({ id:c.id, kidId:c.kidId, text:c.prayer })),
+          ...db.marks.filter(m => m.kind === 'prayer' && m.date === d && kidById(m.kidId)).map(m => ({ id:m.id, kidId:m.kidId, text:m.note || '', loose:m }))];
+}
+function allPrayers(kidId){   // alle gebedspunten (van één kind), nieuwste eerst
+  return [...db.checkins.filter(c => c.prayer && (!kidId || c.kidId === kidId) && kidById(c.kidId)).map(c => ({ id:c.id, kidId:c.kidId, date:c.date, text:c.prayer })),
+          ...db.marks.filter(m => m.kind === 'prayer' && (!kidId || m.kidId === kidId) && kidById(m.kidId)).map(m => ({ id:m.id, kidId:m.kidId, date:m.date, text:m.note || '', loose:m }))]
+    .sort((a,b) => b.date.localeCompare(a.date));
+}
+/* Eerlijk kiezen: minst vaak aan de beurt → langst geleden → toeval */
+function fairPick(cands, turns, avoid = []){
+  const pool = cands.filter(k => !avoid.includes(k.id)); if (!pool.length) return null;
+  return pool.map(k => { const t = turns(k.id); return { k, n:t.length, last:t.reduce((m,x) => x > m ? x : m, ''), r:Math.random() }; })
+    .sort((a,b) => a.n - b.n || a.last.localeCompare(b.last) || a.r - b.r)[0].k;
+}
+const prayTurns = kind => kidId => db.marks.filter(m => m.kidId === kidId && m.kind === kind).map(m => m.date);
+const sheetTurns = kidId => db.rosters.sheets.filter(r => r.kidId === kidId).map(r => r.date);
+const prayMarks = d => db.marks.filter(m => m.date === d && (m.kind === 'pray' || m.kind === 'collecte'));
+function pickPrayer(d, point){
+  const busy = prayMarks(d).map(m => m.kidId), kids = checkinsOn(d).map(c => kidById(c.kidId));
+  const k = fairPick(kids, prayTurns('pray'), [...busy, point.kidId]) || fairPick(kids, prayTurns('pray'), busy);
+  return k && addMark(k.id, 'pray', { date:d, ref:point.id });
+}
+function pickCollecte(d){
+  const busy = prayMarks(d).map(m => m.kidId), kids = checkinsOn(d).map(c => kidById(c.kidId)).filter(k => k.group === 'onder');
+  const k = fairPick(kids, prayTurns('collecte'), busy) || fairPick(kids, prayTurns('collecte'));
+  return k && addMark(k.id, 'collecte', { date:d });
+}
+function notSundayBanner(){
+  const T = todayISO(); if (isSunday(T) || checkinsOn(T).length) return '';
+  return `<a class="notsunday" href="#/gebed">${icon('heart')}<span>Hé, vandaag is het geen zondag. Zoek je de gebedslijst? <b>Klik hier.</b></span></a>`;
+}
+function renderGebed(){
+  const T = todayISO(), D = prayDay(), points = prayerPoints(D), marks = prayMarks(D);
+  const here = checkinsOn(D).length, onder = checkinsOn(D).some(c => kidById(c.kidId).group === 'onder');
+  const coll = marks.find(m => m.kind === 'collecte'), open = points.filter(p => !marks.some(m => m.kind === 'pray' && m.ref === p.id));
+  const whoRow = (m, label, ref) => m && kidById(m.kidId)
+    ? `<div class="who-prays set">🙏 <span><b>${esc(kidById(m.kidId).name)}</b> ${label}</span><button class="btn btn-outline sm" data-action="rePick" data-ref="${ref}" data-day="${D}">${icon('refresh')} Ander kind</button></div>`
+    : `<div class="who-prays"><span class="muted">Nog niemand gekozen</span><button class="btn btn-soft sm" data-action="rePick" data-ref="${ref}" data-day="${D}">Kies</button></div>`;
+  const older = allPrayers().filter(p => p.date !== D), byDate = {};
+  older.forEach(p => (byDate[p.date] ||= []).push(p));
+  app.innerHTML = `
+  <div class="page">
+    <div class="page-head"><h1>Gebed</h1><span class="muted">${D === T ? 'Vandaag' : cap(fmtDate(D, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+    ${D !== T ? `<div class="banner" style="margin:0 0 16px">${icon('info')}<span>Vandaag is het geen zondag. Je ziet de gebedspunten van ${fmtDate(D, {weekday:'long', day:'numeric', month:'long'})}.</span></div>` : ''}
+    <h3 class="section-title">Wie bidt er?</h3>
+    <div class="card list">
+      ${points.map(p => `<div class="prayer"><button class="kidlink" data-action="openKidPrayer" data-id="${p.kidId}">${esc(kidById(p.kidId).name)}</button>${esc(p.text)}
+        ${whoRow(marks.find(m => m.kind === 'pray' && m.ref === p.id), 'bidt hiervoor', p.id)}</div>`).join('')
+        || `<div class="empty">${here ? 'Nog geen gebedspunten. Die vul je in bij het inchecken, of hieronder.' : 'Nog niemand ingecheckt.'}</div>`}
+      ${onder || coll ? `<div class="prayer"><b>💰 Collecte (onderbouw)</b>${whoRow(coll, 'bidt voor de collecte', 'collecte')}</div>` : ''}
+    </div>
+    ${here && (open.length || (onder && !coll)) ? `<button class="btn btn-primary btn-block" style="margin-top:12px" data-action="pickAll" data-day="${D}">🎲 Kies wie er bidden</button>` : ''}
+    <button class="btn btn-outline btn-block" style="margin-top:10px" data-action="addPrayer" data-day="${D}">${icon('plus')} Gebedspunt toevoegen</button>
+    <p class="muted" style="font-size:13.5px;margin:10px 4px 0">De app kiest eerlijk uit de kinderen die er zijn: wie het minst vaak heeft gebeden, is eerst aan de beurt. Zo komen ook kinderen die niet vaak komen aan de beurt.</p>
+    <h3 class="section-title">Gebedslijst</h3>
+    ${Object.keys(byDate).length ? Object.keys(byDate).sort().reverse().slice(0, state.prayDates).map(d => `
+      <h4 class="muted" style="margin:14px 4px 6px;font-size:13.5px">${cap(fmtDate(d, {weekday:'long', day:'numeric', month:'long'}))}</h4>
+      <div class="card list">${byDate[d].map(p => `<div class="prayer"><button class="kidlink" data-action="openKidPrayer" data-id="${p.kidId}">${esc(kidById(p.kidId).name)}</button>${esc(p.text)}</div>`).join('')}</div>`).join('')
+      : '<div class="card empty">Nog geen eerdere gebedspunten.</div>'}
+    ${Object.keys(byDate).length > state.prayDates ? `<button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePray">${icon('plus')} Ouder tonen</button>` : ''}
+  </div>`;
+}
+function openKidPrayer(id){
+  const k = kidById(id); if (!k) return;
+  const list = allPrayers(id), n = db.marks.filter(m => m.kidId === id && (m.kind === 'pray' || m.kind === 'collecte')).length;
+  openModal(`
+    <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
+      <div><h2>${esc(k.name)}</h2><span class="muted">${n ? `Heeft ${n}× gebeden` : 'Heeft nog niet gebeden'}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div class="field"><span>Gebedspunten</span>
+        <div class="card list" style="box-shadow:none;border:1px solid var(--border)">${list.map(p => `<div class="prayer"><b>${cap(fmtDate(p.date, {weekday:'long', day:'numeric', month:'long'}))}</b>${esc(p.text)}
+          ${p.loose ? `<button class="textlink" style="font-size:13px;color:var(--bad);margin-top:4px" data-action="delPrayer" data-id="${p.id}" data-kid="${id}">Verwijderen</button>` : ''}</div>`).join('')
+          || '<div class="empty">Nog geen gebedspunten.</div>'}</div></div>
+      <label class="field"><span>Nieuw gebedspunt</span><textarea id="kp-text" rows="3" placeholder="Waarvoor mogen we bidden?"></textarea></label>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" data-action="saveKidPrayer" data-id="${id}">Toevoegen</button></div>`);
+}
+function openAddPrayer(day){
+  const here = new Set(checkinsOn(day).map(c => c.kidId));
+  const kids = db.kids.filter(isActive).sort((a,b) => (here.has(b.id) - here.has(a.id)) || byName(a,b));
+  openModal(`
+    <div class="modal-head"><div><h2>Gebedspunt toevoegen</h2><span class="muted">${cap(fmtDate(day, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="field"><span>Kind</span><select id="ap-kid">${kids.map(k => `<option value="${k.id}">${esc(k.name)}${here.has(k.id) ? '' : ' (niet ingecheckt)'}</option>`).join('')}</select></label>
+      <label class="field"><span>Gebedspunt</span><textarea id="ap-text" rows="3" placeholder="Waarvoor mogen we bidden?"></textarea></label>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" data-action="saveAddPrayer" data-day="${day}">Toevoegen</button></div>`);
+}
 function renderGebedslijst(){
   const byDate = {};
   db.checkins.filter(c => c.prayer && kidById(c.kidId)).forEach(c => (byDate[c.date] ||= []).push(c));
@@ -2062,6 +2179,40 @@ const actions = {
     render(); if (d.modal) openSmiley(k.id);
   },
   rosterTab: d => { state.rosterTab = d.id; render(); },
+  pickAll: d => {
+    let n = 0;
+    prayerPoints(d.day).forEach(p => { if (!prayMarks(d.day).some(m => m.kind === 'pray' && m.ref === p.id) && pickPrayer(d.day, p)) n++; });
+    if (!prayMarks(d.day).some(m => m.kind === 'collecte') && pickCollecte(d.day)) n++;
+    render(); toast(n ? `🎲 ${n} kind${n > 1 ? 'eren' : ''} gekozen` : 'Geen kinderen om te kiezen');
+  },
+  rePick: d => {
+    const old = d.ref === 'collecte' ? prayMarks(d.day).find(m => m.kind === 'collecte') : prayMarks(d.day).find(m => m.kind === 'pray' && m.ref === d.ref);
+    if (old) dropMark(old);
+    const point = prayerPoints(d.day).find(p => p.id === d.ref);
+    const busy = prayMarks(d.day).map(m => m.kidId).concat(old ? [old.kidId] : []);
+    const kids = checkinsOn(d.day).map(c => kidById(c.kidId)).filter(k => d.ref !== 'collecte' || k.group === 'onder');
+    const kind = d.ref === 'collecte' ? 'collecte' : 'pray';
+    const k = fairPick(kids, prayTurns(kind), point ? [...busy, point.kidId] : busy) || fairPick(kids, prayTurns(kind), busy);
+    if (k) addMark(k.id, kind, { date:d.day, ...(point ? { ref:point.id } : {}) });
+    else { if (old) addMark(old.kidId, kind, { date:d.day, ...(point ? { ref:point.id } : {}) }); toast('Er is geen ander kind om te kiezen'); }
+    render();
+  },
+  openKidPrayer: d => openKidPrayer(d.id),
+  morePray: () => { state.prayDates += 10; render(); },
+  saveKidPrayer: d => {
+    const text = $('#kp-text').value.trim(); if (!text){ $('#kp-text').focus(); return; }
+    addMark(d.id, 'prayer', { date:prayDay(), note:text }); render(); openKidPrayer(d.id); toast('Gebedspunt toegevoegd');
+  },
+  delPrayer: d => {
+    const m = db.marks.find(x => x.id === d.id); if (!m || !confirm('Dit gebedspunt verwijderen?')) return;
+    db.marks.filter(x => x.kind === 'pray' && x.ref === m.id).forEach(dropMark);
+    dropMark(m); render(); openKidPrayer(d.kid);
+  },
+  addPrayer: d => openAddPrayer(d.day),
+  saveAddPrayer: d => {
+    const text = $('#ap-text').value.trim(); if (!text){ $('#ap-text').focus(); return; }
+    addMark($('#ap-kid').value, 'prayer', { date:d.day, note:text }); closeModal(); render(); toast('Gebedspunt toegevoegd');
+  },
   toggleAll: () => { state.showAll = !state.showAll; renderKidList(); },
   leaderCheckin: () => openLeaderCheckin(),
   whoIsIn: () => openWhoIsIn(),
@@ -2385,13 +2536,20 @@ const actions = {
     save(); closeModal(); render();
   },
   extendRoster: () => {
-    const list = db.rosters[state.rosterTab];
-    const boven = db.kids.filter(k => k.group === 'boven' && isActive(k)).sort(byName);
+    // eerlijk: bovenbouwkinderen die de laatste 60 dagen zijn geweest, wie het minst vaak sheets deed eerst
+    const list = db.rosters.sheets;
+    let boven = db.kids.filter(k => k.group === 'boven' && cameRecently(k));
+    if (!boven.length) boven = db.kids.filter(k => k.group === 'boven' && isActive(k));
     if (!boven.length) return;
-    let last = list.reduce((m,r) => r.date > m ? r.date : m, addDays(todayISO(), -7));
-    let idx = Math.max(0, boven.findIndex(k => k.id === list.find(r => r.date === last)?.kidId));
+    let last = list.reduce((m,r) => r.date > m ? r.date : m, addDays(nextSunday(todayISO()), -7));
     const added = [];
-    for (let i = 0; i < 4; i++){ last = addDays(last, 7); idx = (idx + 1) % boven.length; added.push({ date:last, kidId:boven[idx].id }); }
+    for (let i = 0; i < 4; i++){
+      const prev = list.find(r => r.date === last)?.kidId || added[added.length - 1]?.kidId;
+      last = addDays(last, 7);
+      const k = fairPick(boven, sheetTurns, prev ? [prev] : []) || fairPick(boven, sheetTurns);
+      const r = { date:last, kidId:k.id }; list.push(r); added.push(r);
+    }
+    list.splice(list.length - added.length, added.length);
     list.push(...added); put('rosters', added.map(r => ({ kind:state.rosterTab, ...r })));
     save(); render(); toast('4 weken toegevoegd');
   },
