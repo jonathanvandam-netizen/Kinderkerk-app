@@ -438,7 +438,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 15';
+const APP_VERSION = '2026-10-19 · 16';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -969,7 +969,6 @@ function openInstallHelp(){
 function greeting(){ const h = new Date().getHours(); return h < 12 ? 'Goedemorgen' : h < 18 ? 'Goedemiddag' : 'Goedenavond'; }
 function renderHome(){
   const T = todayISO();
-  const prayers = checkinsOn(T).filter(c => c.prayer).length;
   app.innerHTML = `
   <div class="page wide"><div class="home-grid">
     <aside class="stack">
@@ -993,11 +992,11 @@ function renderHome(){
     </aside>
     <section>
       <div class="tabs home-tabs">
-        ${[['vandaag','Vandaag','calendar'],['gebed','Gebed','heart'],['notities','Notities','note']].map(([id,l,ic]) => {
-          const n = id === 'gebed' ? prayers : 0;
+        ${[['vandaag','Vandaag','calendar'],['notities','Notities','note']].map(([id,l,ic]) => {
+          const n = 0;
           return `<button class="tab ${state.homeTab === id ? 'active' : ''}" data-action="homeTab" data-id="${id}">${icon(ic)} ${l}${n ? ` <span class="count">${n}</span>` : ''}</button>`; }).join('')}
       </div>
-      <div id="hometab">${ { vandaag:homeVandaag, gebed:homeGebed, notities:homeNotities }[state.homeTab]() }</div>
+      <div id="hometab">${ ({ vandaag:homeVandaag, notities:homeNotities }[state.homeTab] || homeVandaag)() }</div>
     </section>
   </div></div>`;
 }
@@ -1031,14 +1030,6 @@ function homeBirthdays(){
     <button class="row" data-action="openKid" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${d === T ? 'Wordt vandaag' : d > T ? 'Wordt' : 'Werd'} ${age(k.birthdate, d)} jaar${d === T ? '' : ' op ' + fmtDate(d, {weekday:'long', day:'numeric', month:'short'})}</span></span>
       ${sung ? `<span class="badge ok">${icon('check')} Gezongen</span>` : d <= T ? '<span class="badge grey">🎵 Nog zingen</span>' : ''}${icon('chev','chev')}</button>`).join('')}</div>`;
-}
-function homeGebed(){
-  const T = todayISO();
-  const list = checkinsOn(T).filter(c => c.prayer);
-  return `
-    <div class="card list">${list.length ? list.map(c => `<div class="prayer"><b>${esc(kidById(c.kidId).name)}</b>${esc(c.prayer)}</div>`).join('')
-      : `<div class="empty">Nog geen gebedsverlangens vandaag.<br>Die vul je in bij het inchecken van een kind.</div>`}</div>
-    <a class="btn btn-outline btn-block" style="margin-top:12px" href="#/gebed">${icon('arrow')} Naar Gebed: wie bidt er?</a>`;
 }
 /* =====================================================================
    VERGADERING
