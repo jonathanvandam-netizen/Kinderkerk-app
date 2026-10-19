@@ -87,6 +87,11 @@ Jarig zingen: bij het inchecken knop "🎂 Vandaag gezongen" (+100 punten, inste
 de verjaardag zolang er nog niet gezongen is (kind trakteert vaak later). Opgeslagen als item 'jarig' in de check-in.
 Home toont bij Jarig "Gezongen" of "🎵 Nog zingen".
 Jarig op Home alleen voor kinderen die de laatste 60 dagen echt zijn ingecheckt (niet alleen geïmporteerd).
+Nieuw kind: item 'nieuw' (🌟, standaard 50 punten per groep, instelbaar bij Punten). Bij de eerste check-in ooit zie je
+"🌟 … is hier voor het eerst!" met de knop; aangevinkt alleen als het kind net met "+ Kind" is toegevoegd (`state.newKidId`),
+niet vanzelf voor geïmporteerde kinderen uit Zap!. Naam lijkt op een bestaand kind (`similarKids`: zelfde naam zonder
+hoofdletters/accenten, alleen voornaam, of kleine typfout bij (bijna) gelijke voornaam; broertjes/zusjes met dezelfde
+achternaam níet): waarschuwing tijdens typen en bevestigen bij opslaan.
 Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**

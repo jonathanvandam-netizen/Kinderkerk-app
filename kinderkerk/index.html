@@ -457,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 33';
+const APP_VERSION = '2026-10-19 · 34';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -538,14 +538,15 @@ const ITEMS = [
   { id:'geld', emoji:'💰', label:'Geld' },
   { id:'bijbeltekst', emoji:'💬', label:'Bijbeltekst', boven:true },
   { id:'jarig', emoji:'🎂', label:'Jarig: gezongen', special:true },   // alleen bij een (net) jarig kind, eigen knop
+  { id:'nieuw', emoji:'🌟', label:'Nieuw kind', special:true },       // eerste keer op de kinderkerk, eigen knop
 ];
 const itemEmoji = id => ITEMS.find(i => i.id === id)?.emoji || '';
 /* Punten: alleen om te weten hoeveel (fysieke) punten een kind krijgt. Een beheerder past de waarden aan onder Meer → Punten.
    Startwaarden opgegeven door Jonathan (punten per meegenomen ding, opgeteld; bezoekers als onderbouw). */
 const DEFAULT_POINTS = {
-  onder:{ aanwezig:0, bijbel:10, werkblad:15, geld:10, jarig:100 },
-  boven:{ aanwezig:0, bijbel:10, werkblad:10, geld:5, bijbeltekst:10, jarig:100 },
-  bezoeker:{ aanwezig:0, bijbel:10, werkblad:15, geld:10, jarig:100 },
+  onder:{ aanwezig:0, bijbel:10, werkblad:15, geld:10, jarig:100, nieuw:50 },
+  boven:{ aanwezig:0, bijbel:10, werkblad:10, geld:5, bijbeltekst:10, jarig:100, nieuw:50 },
+  bezoeker:{ aanwezig:0, bijbel:10, werkblad:15, geld:10, jarig:100, nieuw:50 },
 };
 /* Opgeslagen waarden per groep over de startwaarden heen (zo krijgen nieuwe soorten punten ook een waarde) */
 const pointsCfg = () => { const saved = db.settings?.points || {};
@@ -1655,6 +1656,9 @@ function openCheckin(kidId, date = kkDay()){
   const k = kidById(kidId); if (!k) return;
   const ex = checkinFor(kidId, date);
   const items = new Set(ex?.items || []);
+  // Eerste keer? Net toegevoegd met + Kind: punten voor nieuw kind staan al aan. Geïmporteerde kinderen (al bekend uit Zap!) niet vanzelf.
+  const first = !db.checkins.some(c => c.kidId === kidId && c.id !== ex?.id);
+  if (!ex && first && state.newKidId === kidId) items.add('nieuw');
   openModal(`
     <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
       <div><h2>${esc(k.name)}</h2><span class="muted">${GROUPS[k.group]}${ex ? ' · al ingecheckt' : ''}</span></div>
@@ -1667,6 +1671,8 @@ function openCheckin(kidId, date = kkDay()){
         return `<div class="hint bday" style="display:block">🎂 ${esc(firstName(k.name))} ${bd === date ? 'is vandaag jarig en wordt' : bd > date ? 'wordt ' + fmtDate(bd, {weekday:'long'}) : 'werd ' + fmtDate(bd, past ? {day:'numeric', month:'long'} : {weekday:'long'})} ${age(k.birthdate, bd)} jaar!
           ${sung ? `<div style="margin-top:8px;font-weight:600">🎉 Al gezongen op ${fmtDate(sung, {day:'numeric', month:'long'})}</div>`
             : `<div style="margin-top:10px"><button type="button" class="chip ${items.has('jarig') ? 'on' : ''}" data-action="toggleChip" data-id="jarig">🎂 Vandaag gezongen <span class="pts">+${pointsCfg()[k.group]?.jarig ?? 0} punten</span><span class="tick">✓</span></button></div>`}</div>`; })(birthdayCycle(k, date))}
+      ${first || items.has('nieuw') ? `<div class="hint soft" style="display:block;background:var(--ok-soft);color:var(--text)">🌟 ${esc(firstName(k.name))} is hier ${first ? 'voor het eerst' : 'nieuw'}!
+        <div style="margin-top:10px"><button type="button" class="chip ${items.has('nieuw') ? 'on' : ''}" data-action="toggleChip" data-id="nieuw">🌟 Nieuw kind <span class="pts">+${pointsCfg()[k.group]?.nieuw ?? 0} punten</span><span class="tick">✓</span></button></div></div>` : ''}
       <div class="datebar"><span>${icon('calendar')} ${date === todayISO() ? 'Vandaag, ' + fmtDate(date, {day:'numeric', month:'long'}) : cap(dayLabel(date))}</span>
         <button type="button" class="textlink" style="font-size:14px;color:var(--brand)" data-action="pickDate">Andere datum</button></div>
       <label class="field" id="ci-date-field" ${date === kkDay() ? 'hidden' : ''}><span>Datum</span><input type="date" id="ci-date" data-change="ciDate" data-id="${k.id}" value="${date}"></label>
@@ -1711,13 +1717,34 @@ function openKid(id){
     </div>`);
 }
 
+/* Lijkt een naam op een kind dat er al is? (hoofdletters, accenten en kleine typfouten tellen niet) */
+const normName = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+function editDistance(a, b){
+  const d = Array.from({ length:a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function similarKids(name, exceptId){
+  const n = normName(name); if (n.length < 2) return [];
+  const nf = n.split(' ')[0];
+  return db.kids.filter(k => k.id !== exceptId).filter(k => {
+    const m = normName(k.name), mf = m.split(' ')[0];
+    if (m === n || m.startsWith(n + ' ') || n.startsWith(m + ' ')) return true;          // zelfde naam, of alleen de voornaam
+    if (editDistance(nf, mf) <= (Math.min(nf.length, mf.length) >= 5 ? 1 : 0) && editDistance(n, m) <= 2) return true;   // kleine typfout (voornaam bijna gelijk; broertjes/zusjes niet)
+    return nf.length >= 3 && nf === mf && (n === nf || m === mf);
+  }).slice(0, 4);
+}
+const similarHint = name => (l => l.length ? `<div class="hint" style="display:block;margin:-6px 0 14px">⚠️ Lijkt op: ${l.map(k => `<b>${esc(k.name)}</b> (${GROUPS[k.group].toLowerCase()})`).join(', ')}. Bestaat dit kind al? Zoek het dan op in de lijst.</div>` : '')(similarKids(name));
 function openAddKid(){
   const preset = ['onder','boven','bezoeker'].includes(state.ciTab) ? state.ciTab : 'onder';
   openModal(`
     <div class="modal-head"><div><h2>Nieuw kind</h2><span class="muted">Wordt meteen ingecheckt</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
-      <label class="field"><span>Naam</span><input id="kid-name" placeholder="Voornaam (en achternaam)" autocomplete="off" value="${esc(state.search)}"></label>
+      <label class="field"><span>Naam</span><input id="kid-name" data-input="kidName" placeholder="Voornaam (en achternaam)" autocomplete="off" value="${esc(state.search)}"></label>
+      <div id="kid-similar">${similarHint(state.search)}</div>
       <label class="field"><span>Groep</span><select id="kid-group">${Object.entries(GROUPS).map(([v,l]) => `<option value="${v}" ${v === preset ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="field"><span>Geboortedatum <span class="muted" style="font-weight:400">(mag leeg)</span></span><input type="date" id="kid-birth" max="${todayISO()}"></label>
     </div>
@@ -2726,8 +2753,10 @@ const actions = {
     const name = $('#kid-name').value.trim();
     if (!name){ $('#kid-name').focus(); return; }
     const kid = { id:newId(), name, group:$('#kid-group').value, created:todayISO(), birthdate:$('#kid-birth').value || null };
+    const like = similarKids(name);
+    if (like.length && !confirm(`Er staat al een kind met een naam die erop lijkt:\n\n${like.map(k => `• ${k.name} (${GROUPS[k.group].toLowerCase()})`).join('\n')}\n\nIs dit echt een ander kind? Dan voeg ik het toe.`)) return;
     db.kids.push(kid); put('kids', kid); save();
-    state.search = ''; render(); openCheckin(kid.id);
+    state.search = ''; state.newKidId = kid.id; render(); openCheckin(kid.id);
   },
   openKid: d => openKid(d.id),
   install: async () => {
@@ -2977,6 +3006,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const k = e.target.dataset?.input;
   if (k === 'search'){ state.search = e.target.value; renderKidList(); }
+  if (k === 'kidName'){ const el = $('#kid-similar'); if (el) el.innerHTML = similarHint(e.target.value); }
   if (k === 'zsearch'){ state.zSearch = e.target.value; renderZList(); }
   if (k === 'importText') renderImportPreview();
   if (k === 'agTitle' || k === 'agNotes'){
