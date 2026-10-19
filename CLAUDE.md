@@ -122,15 +122,17 @@ knop "🎉 Terugblik". Bewust simpel (wens van Jonathan): zondagen, kinderen gem
 elke zondag geweest en een bedankje aan de leiding. Telt per week (zondag t/m zaterdag). Delen = tekst (WhatsApp). Alleen zichtbaar als er check-ins zijn.
 Quiz (`#/quiz`, Meer → Op zondag, alleen bovenbouw-leiding en beheerders; onderbouw ziet hem niet): op Home onder het programma
 een knop "❓ Quizvraag bedenken" (voor die zondag; in week 7 "Quiz van vandaag: spelen of downloaden"). Vraag = open (antwoord mag
-leeg) of meerkeuze A–D (min. 2 antwoorden; tik de letter(s) van het goede aan, meer goede antwoorden mag: `ok` = lijst, oude vragen hebben één getal → `okList`). Quizpagina en het venster op Home: vragen van die week, tikken = aanpassen/weghalen,
-"Quiz spelen in de app" (groot scherm, gekleurde A–D-vakken, Antwoord tonen), downloaden als PowerPoint (PptxGenJS 3.12.0 in
-`vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia; daarna haalt de app uit [Content_Types].xml de Overrides naar niet-bestaande slideMasterN weg, anders weigert PowerPoint het bestand) of
-spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel, met sharedStrings + docProps zodat Excel, Google Sheets, Numbers en iPhone-voorvertoning hem openen). Eerst maken, dan venster "… is klaar" met knop "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster
-alleen direct na een tik, niet na het trage maken; downloaden werkt niet in de app op het beginscherm) en een downloadlink.
-Extra knop "Kopiëren en plakken in Google Sheets" (tabs naar het klembord, werkt altijd).
-In het venster ook "Liever in Google Presentaties/Sheets?": bewaren → link naar docs.google.com → zelf uploaden (Google laat geen
-andere site een bestand neerzetten; automatisch openen in een app kan niet vanuit een web-app). PowerPoint openen werkt (getest door Jonathan).
-Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q","a"}` of `quiz:{"q","opts":[…],"ok":i}` (`QUIZ_PREFIX`, `quizOf`).
+leeg) of meerkeuze A–D (min. 2 antwoorden; tik de letter(s) van het goede aan, meer goede antwoorden mag: `ok` = lijst, oude vragen
+hebben één getal → `okList`). Quizpagina en het venster op Home: vragen van die week, tikken = aanpassen/weghalen.
+"Quiz spelen in de app": groot scherm, gekleurde vakken (A rood, B blauw, C oranje, D paars; groen = alleen voor goed). Tik op een
+antwoord → goed (groen, "Goed zo! 🎉") of fout (rood, schudt, goede antwoorden groen); open vraag: "Antwoord tonen".
+Downloaden: alleen PowerPoint en Google Slides (Jonathan wil geen spreadsheet/Excel). PowerPoint via PptxGenJS 3.12.0
+(`vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia; daarna haalt
+de app uit [Content_Types].xml de Overrides naar niet-bestaande slideMasterN weg, anders weigert PowerPoint het bestand). Eerst maken,
+dan venster met "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster alleen direct na een tik) en Downloaden.
+Google Slides = hetzelfde .pptx + stappen: bewaren → docs.google.com/presentation openen → mapje → Uploaden (Google laat geen andere
+site een bestand neerzetten; automatisch openen in een app kan niet vanuit een web-app). PowerPoint werkt (getest door Jonathan).
+Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q","a"}` of `quiz:{"q","opts":[…],"ok":[…]}` (`QUIZ_PREFIX`, `quizOf`).
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
 Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,

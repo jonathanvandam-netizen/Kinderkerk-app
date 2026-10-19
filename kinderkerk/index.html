@@ -29,7 +29,7 @@ try { const t = localStorage.getItem('kk-theme'); if (t === 'light' || t === 'da
   --surface-2:#f7f8fa; --surface-3:#eef0f4; --surface-4:#e7e9ee; --input:#f8f9fb;
   --ok:#1f9d55; --ok-soft:#e4f5eb; --warn:#d99100; --warn-soft:#fdf3dc; --warn-text:#6b4b00; --bad:#d64545; --bad-soft:#fbe7e7; --bad-text:#8f2a2a;
   --bday-bg:#fdeef6; --bday-text:#8a2a5a;
-  --qz-a:#e5484d; --qz-b:#1d7ae0; --qz-c:#d98e1f; --qz-d:#2fa36b;
+  --qz-a:#e5484d; --qz-b:#1d7ae0; --qz-c:#d98e1f; --qz-d:#8e4ec6;
   --onder:#f08a24; --boven:#2f80ed; --bezoeker:#9b51e0;
   --nav-text:#4a5265; --toast:#1c2433; --toast-text:#fff; --overlay:rgba(17,24,39,.45);
   --glass-1:rgba(255,255,255,.62); --glass-2:rgba(255,255,255,.38); --glass-border:rgba(255,255,255,.75);
@@ -44,7 +44,7 @@ html[data-theme="dark"]{color-scheme:dark;
   --surface-2:#1e2535; --surface-3:#252d40; --surface-4:#2e374d; --input:#121825;
   --ok:#3ccf7e; --ok-soft:#163626; --warn:#f0b43c; --warn-soft:#352b13; --warn-text:#f3d08a; --bad:#f07272; --bad-soft:#3a1d22; --bad-text:#ffb4b4;
   --bday-bg:#3a1e32; --bday-text:#ffb8dc;
-  --qz-a:#c9393e; --qz-b:#2468b8; --qz-c:#b5761a; --qz-d:#238a58;
+  --qz-a:#c9393e; --qz-b:#2468b8; --qz-c:#b5761a; --qz-d:#7a40b0;
   --nav-text:#b4bccc; --toast:#e6e9f0; --toast-text:#0e131d; --overlay:rgba(0,0,0,.6);
   --glass-1:rgba(36,43,61,.72); --glass-2:rgba(28,34,50,.55); --glass-border:rgba(255,255,255,.1);
   --glass-hi:rgba(255,255,255,.08); --glass-lo:rgba(255,255,255,.03); --glass-active:rgba(255,255,255,.12); --topbar:rgba(20,26,39,.82);
@@ -56,7 +56,7 @@ html[data-theme="dark"]{color-scheme:dark;
   --surface-2:#1e2535; --surface-3:#252d40; --surface-4:#2e374d; --input:#121825;
   --ok:#3ccf7e; --ok-soft:#163626; --warn:#f0b43c; --warn-soft:#352b13; --warn-text:#f3d08a; --bad:#f07272; --bad-soft:#3a1d22; --bad-text:#ffb4b4;
   --bday-bg:#3a1e32; --bday-text:#ffb8dc;
-  --qz-a:#c9393e; --qz-b:#2468b8; --qz-c:#b5761a; --qz-d:#238a58;
+  --qz-a:#c9393e; --qz-b:#2468b8; --qz-c:#b5761a; --qz-d:#7a40b0;
   --nav-text:#b4bccc; --toast:#e6e9f0; --toast-text:#0e131d; --overlay:rgba(0,0,0,.6);
   --glass-1:rgba(36,43,61,.72); --glass-2:rgba(28,34,50,.55); --glass-border:rgba(255,255,255,.1);
   --glass-hi:rgba(255,255,255,.08); --glass-lo:rgba(255,255,255,.03); --glass-active:rgba(255,255,255,.12); --topbar:rgba(20,26,39,.82);
@@ -201,15 +201,20 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .qp-a{font-size:24px;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:16px;padding:16px 18px}
 .qp-nav{justify-content:space-between}
 .qp-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.qp-opt{display:flex;align-items:center;gap:10px;border-radius:14px;padding:14px;color:#fff;font-weight:700;font-size:18px;line-height:1.25}
+.qp-opt{display:flex;align-items:center;gap:10px;border-radius:14px;padding:14px;color:#fff;font:inherit;font-weight:700;font-size:18px;line-height:1.25;border:0;text-align:left;cursor:pointer;min-height:64px;transition:transform .1s}
+.qp-opt:active{transform:scale(.97)}.qp-opt:disabled{cursor:default}
 .qp-opt b{font-size:22px}.qp-opt .i{margin-left:auto;width:26px;height:26px}
 .qp-opt.c0{background:var(--qz-a)}.qp-opt.c1{background:var(--qz-b)}.qp-opt.c2{background:var(--qz-c)}.qp-opt.c3{background:var(--qz-d)}
-.qp-opt.ok{background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft)}.qp-opt.dim{opacity:.3}
+.qp-opt.ok{background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft);animation:qpPop .35s ease-out}.qp-opt.dim{opacity:.3}
+.qp-opt.bad{background:var(--bad);box-shadow:0 0 0 4px var(--bad-soft);animation:qpShake .4s}
+.qp-res{border-radius:14px;padding:14px 16px;font-size:20px;font-weight:800;text-align:center;animation:qpPop .35s ease-out}
+.qp-res.good{background:var(--ok-soft);color:var(--ok)}.qp-res.bad{background:var(--bad-soft);color:var(--bad-text);font-size:17px;font-weight:600}
+.qp-hint{text-align:center;font-size:14px}
+@keyframes qpPop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes qpShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .qf-opt{display:flex;gap:8px;align-items:center;margin-bottom:8px}.qf-opt input{flex:1}
 .qf-letter{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-weight:800;font-size:17px;cursor:pointer}
 .qf-letter.on{background:var(--ok);border-color:var(--ok);color:#fff}
-.g-route{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:14px;line-height:1.5}
-.g-route .steps{margin:10px 0 6px}
 .qf-have{background:var(--surface-2);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:14px;line-height:1.5}
 .qf-have-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--border);padding:8px 0;margin-top:6px;font:inherit;font-size:15px;color:var(--text);cursor:pointer}
 .qf-have-row span{flex:1}.qf-have-row .i{width:18px;height:18px;color:var(--muted)}
@@ -493,7 +498,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 49';
+const APP_VERSION = '2026-10-19 · 50';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2457,9 +2462,7 @@ function renderQuiz(){
       <button class="btn btn-primary sm" data-action="quizNew">${icon('plus')} Vraag</button></div>
     ${list.length ? `<div class="card pad" style="margin-bottom:16px">
       <button class="btn ${w7 ? 'btn-primary' : 'btn-soft'} btn-block" data-action="quizPlay">▶️ Quiz spelen in de app (${quizCount(list.length)})</button>
-      <div class="btn-row" style="margin-top:10px"><button class="btn btn-outline" style="flex:1" data-action="quizPptx">${icon('download')} PowerPoint</button><button class="btn btn-outline" style="flex:1" data-action="quizXlsx">${icon('download')} Spreadsheet</button></div>
-      <button class="btn btn-soft btn-block" style="margin-top:10px" data-action="quizCopy">${icon('note')} Kopiëren en plakken in Google Sheets</button>
-      <div class="muted" style="font-size:13px;margin-top:8px">Kopiëren: open een leeg Google Sheet, tik op vakje A1 en kies Plakken.</div></div>` : ''}
+      <div class="btn-row" style="margin-top:10px"><button class="btn btn-outline" style="flex:1" data-action="quizPptx" data-id="pptx">${icon('download')} PowerPoint</button><button class="btn btn-outline" style="flex:1" data-action="quizPptx" data-id="slides">${icon('download')} Google Slides</button></div></div>` : ''}
     ${dates.map(d => `
       <h3 class="section-title">${esc(quizWeekLabel(d))}</h3>
       <div class="card list">${quizOnDate(d).map(n => { const x = quizOf(n); return `
@@ -2476,24 +2479,31 @@ function openQuizEdit(id){
     <div class="modal-body">${quizForm(x)}</div>
     <div class="modal-foot"><button class="btn btn-outline" data-action="quizDel" data-id="${n.id}">${icon('trash')} Weghalen</button><button class="btn btn-primary" data-action="quizSave" data-id="${n.id}">Opslaan</button></div>`);
 }
+/* Quiz spelen: tik op een antwoord, de app zegt goed of fout en laat de goede antwoorden zien.
+   Open vraag: "Antwoord tonen". state.quizPick = gekozen letter (null = nog niet), state.quizShow = antwoord zichtbaar. */
 function openQuizPlay(){
   const p = quizPeriod(), list = p ? quizList(p) : [];
   if (!list.length) return;
   const i = Math.min(state.quizIdx || 0, list.length - 1), x = quizOf(list[i]), show = state.quizShow;
+  const pick = state.quizPick, oks = isMc(x) ? okList(x) : [], good = pick != null && oks.includes(pick);
+  const optCls = j => !show ? '' : oks.includes(j) ? 'ok' : j === pick ? 'bad' : 'dim';
   openModal(`
     <div class="quiz-play">
       <div class="qp-top"><span class="muted">Vraag ${i + 1} van ${list.length}</span><button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
       <div class="qp-q">${esc(x.q)}</div>
-      ${isMc(x) ? `<div class="qp-opts">${x.opts.map((o, j) => `<div class="qp-opt c${j} ${show ? (okList(x).includes(j) ? 'ok' : 'dim') : ''}"><b>${LETTERS[j]}</b><span>${esc(o)}</span>${show && okList(x).includes(j) ? icon('check') : ''}</div>`).join('')}</div>`
-        : show ? `<div class="qp-a">${x.a ? esc(x.a) : '<span class="muted">Geen antwoord ingevuld</span>'}</div>` : ''}
-      ${show ? '' : `<button class="btn btn-soft btn-block" data-action="quizShow">Antwoord tonen</button>`}
+      ${isMc(x) ? `<div class="qp-opts">${x.opts.map((o, j) => `<button class="qp-opt c${j} ${optCls(j)}" ${show ? 'disabled' : `data-action="quizPick" data-id="${j}"`}>
+          <b>${LETTERS[j]}</b><span>${esc(o)}</span>${show && oks.includes(j) ? icon('check') : show && j === pick ? icon('x') : ''}</button>`).join('')}</div>
+        ${show && pick != null ? `<div class="qp-res ${good ? 'good' : 'bad'}">${good ? 'Goed zo! 🎉' : `Helaas, dat is fout. ${oks.length > 1 ? 'Goed waren' : 'Het goede antwoord is'}: <b>${oks.map(j => LETTERS[j]).join(' en ')}</b>`}</div>` : ''}
+        ${show ? '' : '<div class="muted qp-hint">Tik op het antwoord dat de kinderen kiezen</div>'}`
+      : show ? `<div class="qp-a">${x.a ? esc(x.a) : '<span class="muted">Geen antwoord ingevuld</span>'}</div>`
+      : `<button class="btn btn-soft btn-block" data-action="quizShow">Antwoord tonen</button>`}
       <div class="btn-row qp-nav">
         <button class="btn btn-outline" data-action="quizStep" data-id="-1" ${i ? '' : 'disabled'}>← Vorige</button>
         ${i < list.length - 1 ? `<button class="btn btn-primary" data-action="quizStep" data-id="1">Volgende →</button>` : `<button class="btn btn-primary" data-action="closeModal">Klaar 🎉</button>`}
       </div>
     </div>`);
 }
-/* Downloaden: PowerPoint (PptxGenJS, pas geladen als je erop tikt) en spreadsheet (.xlsx, gemaakt met JSZip uit dezelfde bundel) */
+/* Downloaden als PowerPoint (PptxGenJS, pas geladen als je erop tikt); hetzelfde bestand gaat ook naar Google Slides */
 function loadScript(src){
   return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = fail; document.head.appendChild(s); });
 }
@@ -2501,39 +2511,39 @@ async function loadPptx(){ if (!window.PptxGenJS) await loadScript('vendor/pptxg
 /* Een gemaakt bestand aanbieden. Eerst maken, dan zelf op "Delen / bewaren" tikken: de iPhone opent het deelvenster
    alleen direct na een tik, niet na het (soms trage) maken van het bestand. Downloaden werkt niet in de app op het beginscherm. */
 let readyFile = null, readyUrl = '';
-function offerFile(blob, name, type, what){
+function offerFile(blob, name, type, slides){
   readyFile = new File([blob], name, { type });
   if (readyUrl) URL.revokeObjectURL(readyUrl);
   const url = readyUrl = URL.createObjectURL(readyFile);
   const share = !!navigator.canShare?.({ files:[readyFile] }), ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const save = `${share ? `<button class="btn btn-primary btn-block" data-action="fileShare">${icon('share')} ${slides ? 'Bewaren' : 'Delen / bewaren'}</button>` : ''}
+      <a class="btn ${share ? 'btn-outline' : 'btn-primary'} btn-block" style="margin-top:10px" href="${url}" download="${esc(name)}">${icon('download')} Downloaden</a>`;
   openModal(`
-    <div class="modal-head"><div><h2>${what} is klaar ✓</h2><span class="muted">${esc(name)}</span></div>
+    <div class="modal-head"><div><h2>${slides ? 'Klaar voor Google Slides' : 'PowerPoint is klaar ✓'}</h2><span class="muted">${esc(name)}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
-    <div class="modal-body">
-      ${share ? `<button class="btn btn-primary btn-block" data-action="fileShare">${icon('share')} Delen / bewaren</button>` : ''}
-      <a class="btn ${share ? 'btn-outline' : 'btn-primary'} btn-block" style="margin-top:10px" href="${url}" download="${esc(name)}">${icon('download')} Downloaden</a>
-      <p class="muted" style="font-size:14px;margin:12px 0 0">${ios
-        ? `Tik op <b>Delen / bewaren</b> en kies <b>Bewaar in Bestanden</b> (of meteen ${what === 'PowerPoint' ? '<b>PowerPoint</b>' : '<b>Sheets</b> of <b>Excel</b>'}). Daarna open je het bestand vanuit de app Bestanden.`
-        : what === 'PowerPoint' ? 'Open het bestand daarna in PowerPoint of Keynote.' : 'Open het bestand daarna in Excel of Numbers.'}</p>
-      ${(g => `<div class="g-route"><b>Liever in ${g.name}?</b> Google laat geen andere website een bestand bij hen neerzetten, dus je uploadt het zelf:
-        <ol class="steps">
-          <li><span>Bewaar eerst het bestand (knop hierboven, ${ios ? 'kies <b>Bewaar in Bestanden</b>' : 'bijv. in Downloads'}).</span></li>
-          <li><span><a class="btn btn-soft sm" href="${g.url}" target="_blank" rel="noopener">${g.name} openen ↗</a></span></li>
-          <li><span>Tik daar op het mapje <b>Bestandskiezer openen</b> → <b>Uploaden</b> → kies <b>${esc(name)}</b>.</span></li>
-        </ol>
-        <span class="muted" style="font-size:13px">Werkt het best op een computer of iPad. Op de iPhone stuurt Google je soms naar de app.</span></div>`)(
-        what === 'PowerPoint' ? { name:'Google Presentaties', url:'https://docs.google.com/presentation/u/0/' } : { name:'Google Sheets', url:'https://docs.google.com/spreadsheets/u/0/' })}
+    <div class="modal-body">${slides ? `
+      <p style="margin:0 0 12px">Google laat geen andere website een bestand bij hen neerzetten. Daarom zet je het zelf in Google Slides, in 3 stappen:</p>
+      <ol class="steps">
+        <li><span><b>Bewaar het bestand</b>${ios ? ' (kies <b>Bewaar in Bestanden</b>)' : ''}:</span></li></ol>
+      ${save}
+      <ol class="steps" start="2" style="margin-top:14px">
+        <li><span><a class="btn btn-soft sm" href="https://docs.google.com/presentation/u/0/" target="_blank" rel="noopener">Google Slides openen ↗</a></span></li>
+        <li><span>Tik daar op het <b>mapje</b> (Bestandskiezer openen) → <b>Uploaden</b> → kies <b>${esc(name)}</b>. Google Slides opent de quiz dan.</span></li>
+      </ol>
+      <p class="muted" style="font-size:13px;margin:10px 0 0">Werkt het best op een computer of iPad. Op de iPhone stuurt Google je soms naar de app.</p>`
+    : `${save}
+      <p class="muted" style="font-size:14px;margin:12px 0 0">${ios ? 'Tik op <b>Delen / bewaren</b> en kies <b>PowerPoint</b> (of <b>Bewaar in Bestanden</b>).' : 'Open het bestand daarna in PowerPoint.'}</p>`}
     </div>`);
 }
 const quizFileName = (p, ext) => `Quiz ${p.theme.replace(/[\\/:*?"<>|]/g, '')}.${ext}`;
 async function logoData(){
   try { const b = await (await fetch('logo-512.png')).blob(); return await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); }); } catch(e){ return null; }
 }
-async function makeQuizPptx(){
+async function makeQuizPptx(slides){
   const p = quizPeriod(), list = p ? quizList(p) : []; if (!list.length) return;
   toast('PowerPoint maken…');
   try { await loadPptx(); } catch(e){ return toast('Laden lukte niet. Heb je internet?'); }
-  const BLUE = '1D3C9C', FONT = 'Arial', COLORS = ['E5484D','1D7AE0','E9A23B','2FA36B'];
+  const BLUE = '1D3C9C', FONT = 'Arial', COLORS = ['E5484D','1D7AE0','E9A23B','8E4EC6'];
   const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.title = 'Quiz ' + p.theme;   // 13,33 × 7,5 inch
   const logo = await logoData();
   const s0 = pptx.addSlide(); s0.background = { color:BLUE };
@@ -2566,48 +2576,7 @@ async function makeQuizPptx(){
   const ct = await zip.file('[Content_Types].xml').async('string');
   zip.file('[Content_Types].xml', ct.replace(/<Override PartName="\/([^"]+)"[^>]*\/>/g, (m, part) => zip.file(part) ? m : ''));
   const blob = await zip.generateAsync({ type:'blob', compression:'DEFLATE', mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-  offerFile(blob, quizFileName(p, 'pptx'), 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'PowerPoint');
-}
-async function makeQuizXlsx(){
-  const p = quizPeriod(), list = p ? quizList(p) : []; if (!list.length) return;
-  try { await loadPptx(); } catch(e){ return toast('Laden lukte niet. Heb je internet?'); }
-  const xe = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const rows = [['Nr', 'Week', 'Vraag', 'Soort', 'A', 'B', 'C', 'D', 'Goede antwoord(en)'],
-    ...list.map((n, i) => { const x = quizOf(n), o = isMc(x) ? x.opts : []; return [i + 1, weekInfo(n.date)?.week || '', x.q, isMc(x) ? 'Meerkeuze' : 'Open', o[0] || '', o[1] || '', o[2] || '', o[3] || '', quizAnswer(x)]; })];
-  // Gedeelde teksten (sharedStrings): dat openen Excel, Google Sheets, Numbers en de iPhone-voorvertoning allemaal goed
-  const strs = [], sIdx = new Map(), si = t => { t = String(t); if (!sIdx.has(t)){ sIdx.set(t, strs.length); strs.push(t); } return sIdx.get(t); };
-  const col = i => String.fromCharCode(65 + i), last = `I${rows.length}`;
-  const cells = rows.map((r, ri) => `<row r="${ri + 1}">${r.map((v, ci) => { const ref = col(ci) + (ri + 1), st = ri ? (typeof v === 'number' ? '' : ' s="2"') : ' s="1"';
-    return typeof v === 'number' ? `<c r="${ref}"${st}><v>${v}</v></c>` : v === '' ? '' : `<c r="${ref}" t="s"${st}><v>${si(v)}</v></c>`; }).join('')}</row>`).join('');
-  const X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', NS = 'http://schemas.openxmlformats.org';
-  const sheet = `${X}<worksheet xmlns="${NS}/spreadsheetml/2006/main" xmlns:r="${NS}/officeDocument/2006/relationships"><dimension ref="A1:${last}"/>`
-    + `<sheetViews><sheetView tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>`
-    + `<sheetFormatPr defaultRowHeight="15"/><cols><col min="1" max="2" width="7" customWidth="1"/><col min="3" max="3" width="55" customWidth="1"/><col min="4" max="4" width="12" customWidth="1"/><col min="5" max="8" width="22" customWidth="1"/><col min="9" max="9" width="30" customWidth="1"/></cols>`
-    + `<sheetData>${cells}</sheetData><pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/></worksheet>`;
-  const shared = `${X}<sst xmlns="${NS}/spreadsheetml/2006/main" count="${strs.length}" uniqueCount="${strs.length}">${strs.map(t => `<si><t xml:space="preserve">${xe(t)}</t></si>`).join('')}</sst>`;
-  const CT = 'application/vnd.openxmlformats-officedocument';
-  const zip = new JSZip();
-  zip.file('[Content_Types].xml', `${X}<Types xmlns="${NS}/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>`
-    + `<Override PartName="/xl/workbook.xml" ContentType="${CT}.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="${CT}.spreadsheetml.worksheet+xml"/>`
-    + `<Override PartName="/xl/styles.xml" ContentType="${CT}.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="${CT}.spreadsheetml.sharedStrings+xml"/>`
-    + `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="${CT}.extended-properties+xml"/></Types>`);
-  zip.file('_rels/.rels', `${X}<Relationships xmlns="${NS}/package/2006/relationships"><Relationship Id="rId1" Type="${NS}/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>`
-    + `<Relationship Id="rId2" Type="${NS}/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="${NS}/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`);
-  zip.file('docProps/core.xml', `${X}<cp:coreProperties xmlns:cp="${NS}/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">`
-    + `<dc:title>${xe('Quiz ' + p.theme)}</dc:title><dc:creator>Kinderkerk</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0, 19)}Z</dcterms:created></cp:coreProperties>`);
-  zip.file('docProps/app.xml', `${X}<Properties xmlns="${NS}/officeDocument/2006/extended-properties"><Application>Microsoft Excel</Application></Properties>`);
-  zip.file('xl/workbook.xml', `${X}<workbook xmlns="${NS}/spreadsheetml/2006/main" xmlns:r="${NS}/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="Quiz" sheetId="1" r:id="rId1"/></sheets></workbook>`);
-  zip.file('xl/_rels/workbook.xml.rels', `${X}<Relationships xmlns="${NS}/package/2006/relationships"><Relationship Id="rId1" Type="${NS}/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>`
-    + `<Relationship Id="rId2" Type="${NS}/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId3" Type="${NS}/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>`);
-  zip.file('xl/styles.xml', `${X}<styleSheet xmlns="${NS}/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Arial"/><family val="2"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/><family val="2"/></font></fonts>`
-    + `<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1D3C9C"/><bgColor indexed="64"/></patternFill></fill></fills>`
-    + `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
-    + `<cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs>`
-    + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`);
-  zip.file('xl/sharedStrings.xml', shared);
-  zip.file('xl/worksheets/sheet1.xml', sheet);
-  const blob = await zip.generateAsync({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  offerFile(blob, quizFileName(p, 'xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Spreadsheet');
+  offerFile(blob, quizFileName(p, 'pptx'), 'application/vnd.openxmlformats-officedocument.presentationml.presentation', slides);
 }
 /* ---------- Roosters ---------- */
 /* Sheets (alleen bovenbouw): op zondag kiest de app eerlijk een kind uit de bovenbouw die er is
@@ -2865,24 +2834,17 @@ const actions = {
     if (!confirm('Deze vraag weghalen?')) return;
     db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save(); closeModal(); render();
   },
-  quizPlay: () => { state.quizIdx = 0; state.quizShow = false; openQuizPlay(); },
+  quizPlay: () => { state.quizIdx = 0; state.quizShow = false; state.quizPick = null; openQuizPlay(); },
+  quizPick: d => { state.quizPick = +d.id; state.quizShow = true; openQuizPlay(); },
   quizShow: () => { state.quizShow = true; openQuizPlay(); },
-  quizPptx: () => makeQuizPptx(),
-  quizXlsx: () => makeQuizXlsx(),
+  quizPptx: d => makeQuizPptx(d.id === 'slides'),
   fileShare: async () => {
     if (!readyFile) return;
     try { await navigator.share({ files:[readyFile], title:readyFile.name }); closeModal(); }
     catch(e){ if (e.name !== 'AbortError') toast('Delen lukte niet. Probeer Downloaden.'); }
   },
-  quizCopy: async () => {
-    const p = quizPeriod(), list = p ? quizList(p) : [];
-    const clean = t => String(t).replace(/[\t\n]+/g, ' ');
-    const lines = [['Nr','Week','Vraag','Soort','A','B','C','D','Goede antwoord(en)'],
-      ...list.map((n, i) => { const x = quizOf(n), o = isMc(x) ? x.opts : []; return [i + 1, weekInfo(n.date)?.week || '', x.q, isMc(x) ? 'Meerkeuze' : 'Open', o[0] || '', o[1] || '', o[2] || '', o[3] || '', quizAnswer(x)]; })];
-    try { await navigator.clipboard.writeText(lines.map(r => r.map(clean).join('\t')).join('\n')); toast('Gekopieerd! Plak het in Google Sheets'); }
-    catch(e){ toast('Kopiëren lukte niet'); }
-  },
-  quizStep: d => { state.quizIdx = (state.quizIdx || 0) + Number(d.id); state.quizShow = false; openQuizPlay(); },
+
+  quizStep: d => { state.quizIdx = (state.quizIdx || 0) + Number(d.id); state.quizShow = false; state.quizPick = null; openQuizPlay(); },
   hideTerugblik: d => { try { localStorage.setItem(TERUGBLIK_KEY, JSON.stringify([...terugblikHidden(), d.id])); } catch(e){} render(); },
   shareTerugblik: async d => {
     const p = db.periods.find(x => x.id === d.id); if (!p) return;
