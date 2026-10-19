@@ -457,7 +457,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 37';
+const APP_VERSION = '2026-10-19 · 38';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1076,7 +1076,7 @@ const sundayOf = date => db.sundays.find(s => s.date === date) || { date, theme:
 const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.onder.includes(db.session) || s.boven.includes(db.session))).sort((a,b) => a.date.localeCompare(b.date))[0];
 
 /* ---------- UI-state ---------- */
-const state = { prayDates:6, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', homeTab:'vandaag', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { prayDates:6, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
@@ -1275,12 +1275,7 @@ function renderHome(){
       ${installCard(true)}
     </aside>
     <section>
-      <div class="tabs home-tabs">
-        ${[['vandaag',isSunday(T) ? 'Vandaag' : 'Overzicht','calendar'],['notities','Notities','note']].map(([id,l,ic]) => {
-          const n = 0;
-          return `<button class="tab ${state.homeTab === id ? 'active' : ''}" data-action="homeTab" data-id="${id}">${icon(ic)} ${l}${n ? ` <span class="count">${n}</span>` : ''}</button>`; }).join('')}
-      </div>
-      <div id="hometab">${ ({ vandaag:homeVandaag, notities:homeNotities }[state.homeTab] || homeVandaag)() }</div>
+      <div id="hometab">${homeVandaag()}</div>
     </section>
   </div></div>`;
 }
@@ -1463,20 +1458,6 @@ function nextMeetingAfter(date){
   const list = db.meetings.filter(x => x.date > date).map(x => ({ date:x.date, kind:x.kind }));
   periodsSorted().forEach(p => { const d = periodEnd(p); if (d > date && !list.some(x => x.date === d)) list.push({ date:d, kind:p.meeting }); });
   return list.sort((a,b) => a.date.localeCompare(b.date))[0] || null;
-}
-
-function homeNotities(){
-  const notes = [...db.notes].reverse().sort((a,b) => b.date.localeCompare(a.date));
-  return `
-    <div class="card pad">
-      <label class="field" style="margin-bottom:10px"><span>Nieuwe notitie</span><textarea id="note-text" rows="3" placeholder="Bijv. iets voor de leiding van volgende week…"></textarea></label>
-      <button class="btn btn-primary" data-action="addNote">Opslaan</button>
-    </div>
-    <div class="card list" style="margin-top:12px">${notes.length ? notes.map(n => `
-      <div class="note"><span class="av av-leiding" style="width:34px;height:34px;font-size:12px">${initials(n.author)}</span>
-        <div style="flex:1"><div class="meta"><b style="color:var(--text)">${esc(n.author)}</b> · ${fmtDate(n.date, {day:'numeric', month:'long'})}</div><p>${esc(n.text)}</p></div>
-        <button class="icon-btn" title="Verwijderen" data-action="delNote" data-id="${n.id}">${icon('trash')}</button></div>`).join('')
-      : '<div class="empty">Nog geen notities.</div>'}</div>`;
 }
 
 /* ---------- Leiding check-in ---------- */
@@ -2532,7 +2513,6 @@ const actions = {
   go: d => { location.hash = '#/' + d.to; },
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
   closeModal: () => closeModal(),
-  homeTab: d => { state.homeTab = d.id; render(); },
   ciTab: d => { state.ciTab = d.id; render(); },
   smTab: d => { state.smTab = d.id; render(); },
   smAll: () => { state.smAll = !state.smAll; render(); },
@@ -2823,12 +2803,6 @@ const actions = {
     drop('kids', { id:k.id });
     save(); closeModal(); render(); toast(`${k.name} verwijderd`);
   },
-  addNote: () => {
-    const text = $('#note-text').value.trim(); if (!text) return;
-    const n = { id:newId(), date:todayISO(), author:me().name, text };
-    db.notes.push(n); put('notes', n); save(); render(); toast('Notitie opgeslagen');
-  },
-  delNote: d => { if (!confirm('Notitie verwijderen?')) return; db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save(); render(); },
   editLeader: d => { if (isAdmin()) openEditLeader(d.id); },
   /* E-mailadres uit het formulier: leeg mag, anders geldig en uniek */
   saveLeader: d => {
