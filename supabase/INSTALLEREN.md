@@ -39,17 +39,58 @@ namelijk niet goed in een geïnstalleerde app. Pas daarom twee mails aan:
 Deze twee mogen gewoon in de app staan. De regels in de database bepalen wie wat mag zien.
 De **service_role** of **secret key** deel je nooit.
 
-## 5. Proberen
-1. Open de app, vul je e-mailadres in en vul de code uit de mail in.
-2. Vul je naam in.
-3. Je gegevens van je telefoon (kinderen, planning, vergaderingen) zet Claude dan voor je over vanuit een
-   back-up (**Meer → Gegevens → Back-up maken**).
-4. Zet de leiding in het team via **Meer → Team → + Leiding**. Dat kan zonder e-mailadres; ze staan dan in de
-   planning maar kunnen nog niet inloggen. Wil je iemand toegang geven, tik dan op de naam en kies **Uitnodigen**.
-   Diegene kan daarna inloggen met dat e-mailadres.
+## 5. Je gegevens overzetten
+Zodra de sleutel in de app staat, werkt de app met de database. Wat je tot nu toe op je telefoon hebt ingevoerd,
+staat nog in Safari op je telefoon. Zo zet je het over:
 
+1. Maak voor de zekerheid eerst een back-up (**Meer → Gegevens → Back-up maken**) zolang de app nog niet gekoppeld is.
+2. Open na de koppeling de app op **dezelfde telefoon** en log in met je e-mailadres en de code uit de mail.
+3. Ga naar **Meer → Gegevens → Gegevens van dit toestel overzetten** en bevestig.
+   Lukt dat niet (bijv. op een ander toestel), kies dan **Back-up in de database zetten** en kies je back-upbestand.
+
+Alleen echte gegevens gaan mee: kinderen, check-ins, planning, periodes, vergaderingen, Gedrag en Gebed.
+Demokinderen, voorbeeldnotities en de voorbeeldperiode Jozef/Mozes blijven achter. De leiding komt in het team,
+maar nog zonder uitnodiging. Twee keer overzetten kan geen kwaad: er komt niets dubbel in.
+
+## 6. Leiding uitnodigen
+Ga naar **Meer → Team**, tik op een naam en kies **Uitnodigen** met het e-mailadres van die persoon.
+Diegene opent de app, vult dat e-mailadres in en daarna de code uit de mail. Leiding die je nog niet uitnodigt,
+staat wel in de planning maar kan niet inloggen.
+
+## 7. Eigen mailservice (doe dit vóór je iedereen uitnodigt)
+Supabase stuurt zelf maar een paar mails per uur. Als meerdere mensen tegelijk willen inloggen, krijgen ze dan geen code.
+Daarom koppel je een gratis mailservice. Hieronder met **Brevo** (300 mails per dag gratis, Europees bedrijf).
+
+**In Brevo**
+1. Maak een gratis account op [brevo.com](https://www.brevo.com).
+2. Ga naar **Senders, domains & dedicated IPs → Senders → Add a sender**. Vul in:
+   naam `Kinderkerk De Deur` en het e-mailadres waarvan de mails moeten komen. Bevestig dat adres via de mail die je krijgt.
+   Tip: heeft De Deur een eigen domein (bijv. `@dedeur.nl`), gebruik dan liever een adres daarop en voeg in Brevo
+   het domein toe (**Domains → Add a domain**). Dan komen de mails minder snel in de spam. Een Gmail-adres werkt ook,
+   maar komt vaker in de spam terecht.
+3. Ga naar **SMTP & API → SMTP** en klik op **Generate a new SMTP key**. Bewaar die sleutel goed;
+   die is geheim, deel hem met niemand (ook niet met Claude).
+   Op dezelfde pagina staan ook de **SMTP server**, **Port** en **Login** die je hieronder nodig hebt.
+
+**In Supabase**
+1. Ga naar **Authentication → Emails → SMTP Settings** en zet **Enable Custom SMTP** aan.
+2. Vul in:
+   - Sender email: het adres uit stap 2 van Brevo
+   - Sender name: `Kinderkerk De Deur`
+   - Host: `smtp-relay.brevo.com`
+   - Port: `587`
+   - Username: de **Login** van de Brevo SMTP-pagina
+   - Password: de SMTP-sleutel uit stap 3
+3. Klik op **Save**.
+4. Ga naar **Authentication → Rate Limits** en zet het aantal mails per uur op bijvoorbeeld `30`. Klik op **Save**.
+5. Probeer het: log uit in de app en log opnieuw in. Krijg je de code? Dan werkt het. Kijk ook even in je spam.
+
+## 8. Proberen
+1. Open de app, vul je e-mailadres in en vul de code uit de mail in.
+2. Kijk of je kinderen, de planning en de vergaderingen er staan.
+3. Laat één andere leiding inloggen en check samen een kind in: jullie zien het allebei meteen verschijnen.
 ## Goed om te weten
-- Supabase verstuurt zelf maar een paar mails per uur. Voor testen is dat genoeg. Voordat de app live
-  gaat, stellen we een eigen mailservice in (bijvoorbeeld Brevo of Resend) onder **Authentication → SMTP**.
 - Bij een gratis Supabase-project dat een week niet gebruikt wordt, wordt de database gepauzeerd.
   Met één klik zet je hem weer aan.
+- Bij een gratis project kun je zelf geen back-ups van Supabase downloaden. Maak daarom af en toe (bijv. elke maand)
+  een back-up in de app: **Meer → Gegevens → Back-up maken**.

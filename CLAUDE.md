@@ -32,8 +32,11 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
     nooit iets van de gebruiker overschrijven; aanpassingen aan startdata alleen via een veilige samenvoeg-migratie
     (`demoRev`). Geen "DEMODATA"-label meer en geen knop "Demodata opnieuw laden".
     Meer → Gegevens (beheerder): Back-up maken (JSON via deelvenster of download) en Back-up terugzetten (alleen lokaal,
-    ook om naar de iPad over te zetten). Bij het koppelen van Supabase moeten de lokale gegevens vanuit zo'n back-up
-    naar de database (nog te bouwen; de oude knop "Demodata in de database zetten" is weg).
+    ook om naar de iPad over te zetten). In databasemodus (beheerder): "Gegevens van dit toestel overzetten" (leest de
+    oude localStorage, daarna `kk-moved`) of "Back-up in de database zetten" (`cloudImport`/`cloudPlan`): alleen echte
+    gegevens (geen demokinderen + hun check-ins, geen voorbeeldnotities, niet de periode Jozef/Mozes, leiding check-ins pas
+    vanaf de eerste echte check-in); leiding op naam gekoppeld (niets dubbel), nieuwe leiding zonder uitnodiging; kolommen
+    per tabel in `TABLE_COLS`; upsert, dus opnieuw doen kan. Getest met een nagebootste Supabase die kolommen en uuid's controleert.
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
@@ -107,6 +110,9 @@ geen zondag. Zoek je de gebedslijst? Klik hier." Sheets (Meer → Sheets, `#/roo
 eerlijk (`fairPick` + `sheetTurns`) uit de ingecheckte bovenbouw; "Ander kind" en "Zelf een kind kiezen" kunnen ook.
 Overzicht "Hoe vaak al?" en "Eerdere keren". Opslag blijft `rosters` (kind 'sheets'). In de planning staat voor
 toekomstige zondagen "kiest de app op zondag". Migratie demoRev 4 haalde oude vooruit-planning weg.
+Rondleiding (`TOUR`): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via Mijn account →
+"Rondleiding starten" (daar staat ook de donkere modus). Licht per stap een knop van de menubalk uit (onder of boven).
+Tests moeten `kk-tour` op '1' zetten, anders zit de rondleiding in de weg.
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)
@@ -122,5 +128,5 @@ De demodata volgt dit (`dienst()` in index.html).
   invullen), inlogmails met `{{ .Token }}`, en de anon/publishable key in `config.js`. Plakken in de SQL Editor lukte
   niet op de iPhone; dit doet Jonathan later op een laptop. Zolang de key leeg is, draait de app in demomodus.
   Vanuit de cloudomgeving is Supabase niet bereikbaar, dus Claude kan het schema niet zelf uitvoeren.
-- Daarna: eigen SMTP voor de inlogmails,
+- Daarna: eigen SMTP voor de inlogmails (stappenplan met Brevo staat in INSTALLEREN.md stap 7),
   en pas aan het eind samen met de beheerder van Zap! de echte data overzetten.
