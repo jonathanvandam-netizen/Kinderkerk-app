@@ -112,9 +112,12 @@ geen zondag. Zoek je de gebedslijst? Klik hier." Sheets (Meer → Sheets, `#/roo
 eerlijk (`fairPick` + `sheetTurns`) uit de ingecheckte bovenbouw; "Ander kind" en "Zelf een kind kiezen" kunnen ook.
 Overzicht "Hoe vaak al?" en "Eerdere keren". Opslag blijft `rosters` (kind 'sheets'). In de planning staat voor
 toekomstige zondagen "kiest de app op zondag". Migratie demoRev 4 haalde oude vooruit-planning weg.
-Rondleiding (`TOUR`): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via Mijn account →
-"Rondleiding starten" (daar staat ook de donkere modus). Licht per stap een knop van de menubalk uit (onder of boven).
-Tests moeten `kk-tour` op '1' zetten, anders zit de rondleiding in de weg.
+Rondleiding (`TOUR_ALL`, ±17 stappen): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
+Mijn account → "Rondleiding starten". Gaat echt langs de pagina's (stap: `nav` = menuknop, `route` = pagina openen,
+`el` = wat oplichten, eerste die bestaat; `open` = venster openen, bijv. Mijn account; `only` = voorwaarde, bijv. de
+agenda-stap alleen in databasemodus). Legt ook de agenda-koppeling uit (past zich vanzelf aan). Voortgangsbalk "Stap x van y".
+Tests moeten `kk-tour` op '1' zetten, anders zit de rondleiding in de weg. Omdat config.js nu een sleutel heeft, moeten
+lokale tests `config.js` vervangen door `window.KK_CONFIG={}` (Playwright route), anders start de databasemodus.
 Agenda-koppeling (Mijn account → "Agenda op je telefoon", alleen databasemodus): keuze "Alleen mijn beurten" of "Alle
 zondagen" (localStorage `kk-cal`), knop webcal-link + link kopiëren (Google) + nieuwe link. Link = Edge Function
 `supabase/functions/agenda/index.ts` (`?t=<code>&wat=mijn|alles`, Verify JWT uit; in Supabase heet de functie `Agenda` met

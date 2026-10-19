@@ -424,7 +424,8 @@ table.t tr.click:hover td{background:var(--surface-2)}
 #tour .tour-foot{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
 #tour .tour-foot .btn-primary{margin-left:auto}
 #tour .tour-foot .step{font-size:13px;color:var(--muted);font-weight:700;margin-right:auto}
-#tour .tour-dots{display:flex;gap:5px;flex-basis:100%;margin-bottom:4px}#tour .tour-dots i{width:7px;height:7px;border-radius:50%;background:var(--surface-3)}#tour .tour-dots i.on{background:var(--brand)}
+#tour .tour-progress{height:4px;border-radius:4px;background:var(--surface-3);margin-bottom:10px;overflow:hidden}#tour .tour-progress i{display:block;height:100%;background:var(--brand);border-radius:4px;transition:width .25s}
+#tour .tour-step{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:2px}
 #toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toast);color:var(--toast-text);padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media(min-width:800px){#toast{bottom:28px}}
@@ -450,7 +451,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 23';
+const APP_VERSION = '2026-10-19 · 24';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1029,45 +1030,74 @@ window.addEventListener('appinstalled', () => { installPrompt = null; toast('De 
    Start vanzelf de eerste keer op een toestel (localStorage kk-tour) en altijd opnieuw via Mijn account.
    Elke stap licht een knop in de menubalk uit (onderin op telefoon, bovenin op een groot scherm).
    ===================================================================== */
-const TOUR = [
-  { t:'Welkom bij de Kinderkerk-app! 👋', p:'In een paar stappen zie je waar alles staat. Je kunt de rondleiding altijd weer starten via je account, rechtsboven.' },
-  { el:'home', t:'Home', p:'Het overzicht van vandaag: hoeveel kinderen er zijn, het programma van deze zondag en wie er jarig is. Bovenaan check je jezelf in als leiding.' },
-  { el:'checkin', t:'Check-in', p:'Tik op een kind om het in te checken. Vink aan wat het heeft meegenomen (Bijbel, werkblad, geld) en vul eventueel gebedspunten in. Je ziet meteen hoeveel punten het kind krijgt.' },
-  { el:'gedrag', t:'Gedrag', p:'Geef een smiley 😊 of een waarschuwing ⚠️. Bij 7 smileys mag een kind iets uit de grabbelbak pakken. Waarschuwingen tellen per zondag.' },
-  { el:'planning', t:'Planning', p:'Wie wanneer leiding heeft en wat het thema is. Kun je een keer niet? Tik op de zondag, haal jezelf weg en zet iemand anders erin.' },
-  { el:'vergadering', t:'Vergadering', p:'Zet agendapunten klaar voor de volgende vergadering. Tijdens de vergadering maak je hier de notulen en actiepunten.' },
-  { el:'meer', t:'Meer', p:'Hier vind je Gebed (de app kiest eerlijk wie er bidt), Sheets, het Team, Kinderziektes en meer.' },
-  { el:'#avatar', t:'Mijn account', p:'Hier zet je de donkere modus aan en start je deze rondleiding opnieuw. Ook uitloggen doe je hier.' },
-  { t:'Klaar! 🎉', p:'Veel plezier op de kinderkerk. Weet je iets niet? Start de rondleiding opnieuw via je account.' },
+/* Elke stap: nav = knop in de menubalk, route = pagina openen, el = wat oplichten (eerste die bestaat),
+   open = venster openen (bijv. Mijn account), only = alleen tonen als dit klopt. */
+const TOUR_ALL = [
+  { t:'Welkom bij de Kinderkerk-app! 👋', p:'Deze rondleiding laat stap voor stap zien wat je met de app kunt. Het duurt een paar minuten. Je kunt altijd stoppen en hem later opnieuw starten via je account (rechtsboven).' },
+  { nav:'home', route:'home', t:'Home', p:'Hier begin je. Je ziet het overzicht van vandaag. Met de knoppen in deze balk ga je naar de andere onderdelen.' },
+  { route:'home', el:['[data-action=leaderCheckin]'], t:'Leiding check-in', p:'Ben je er op zondag? Tik hierop, dan ziet iedereen wie er is. Boven de knop staat wanneer jij weer leiding hebt.' },
+  { route:'home', el:['#hometab .card.plan', '.card.stats1'], t:'Programma van deze zondag', p:'Het thema, het Bijbelgedeelte, wie er leiding heeft en wie de sheets doet. Daaronder zie je wie er jarig is en of er al voor is gezongen.' },
+  { route:'home', el:['a.card[href="#/gebed"]'], t:'Gebed', p:'Hier vind je de gebedspunten van vandaag. De app kiest eerlijk welke kinderen ervoor bidden, en een kind van de onderbouw voor de collecte. Ook kinderen die niet vaak komen, zijn zo even vaak aan de beurt.' },
+  { nav:'checkin', route:'checkin', el:['.toolbar'], t:'Check-in', p:'Zoek een kind, of voeg een nieuw kind toe met + Kind. Je ziet de kinderen die de laatste 60 dagen zijn geweest; met "Alle kinderen" onderaan zie je iedereen.' },
+  { route:'checkin', el:['#kidlist .row', '#kidlist'], t:'Een kind inchecken', p:'Tik op een kind en vink aan wat het heeft meegenomen: Bijbel, werkblad, geld. Vul eventueel gebedspunten in. De app rekent de punten uit. Is het kind jarig? Dan zie je de knop "Vandaag gezongen".' },
+  { nav:'gedrag', route:'gedrag', el:['.sm-row', '#app .card.list'], t:'Gedrag', p:'Geef een smiley 😊 voor goed gedrag. Bij 7 smileys mag een kind iets uit de grabbelbak pakken. Een waarschuwing ⚠️: 1e = naam op het bord, 2e = streepje erachter, 3e = eruit en naar de ouders in de dienst. Per ongeluk getikt? Tik op de naam om het terug te draaien.' },
+  { nav:'planning', route:'planning', el:['.seg'], t:'Planning', p:'Wie wanneer aan de beurt is. Kies "Tabel" voor het overzicht, of "Uitgebreid" voor ook het Bijbelgedeelte en de voorbereiding. Met "Alleen mijn beurten" zie je alleen jouw zondagen.' },
+  { route:'planning', el:['.plan-table tr.click', '.stack .card.plan'], t:'Ruilen of aanpassen', p:'Tik op een zondag om het thema of de leiding aan te passen. Kun je een keer niet? Haal jezelf weg en zet iemand anders erin. Iedereen ziet het meteen, ook in de agenda op zijn telefoon.' },
+  { nav:'vergadering', route:'vergadering', el:['.meet-next', '#app .card'], t:'Vergadering', p:'De volgende vergadering staat in week 7 van elke periode. Zet hier alvast agendapunten klaar. Tijdens de vergadering maak je de notulen per agendapunt en de actiepunten. Met "Delen" stuur je het verslag via WhatsApp of mail.' },
+  { nav:'meer', route:'meer', el:['#app .card.list'], t:'Meer', p:'Hier vind je Gebed, Sheets, het Team, de Historie (wie er vaak komt), Kinderziektes (mag een ziek kind komen?) en de Punten.' },
+  { route:'roosters', el:['.card.duty'], t:'Sheets', p:'Op zondag tik je op "Kies wie de sheets doet". De app kiest uit de kinderen van de bovenbouw die er zijn: wie het minst vaak is geweest, is eerst aan de beurt.' },
+  { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar vind je je instellingen. Die laten we nu zien.' },
+  { only:() => CLOUD, open:() => openProfile(), el:['#cal-box a.btn', '#cal-box'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
+  { open:() => openProfile(), el:['.modal .chips'], t:'Donkere modus', p:'Hier kies je licht of donker. "Automatisch" volgt je telefoon. Daaronder start je deze rondleiding opnieuw, en onderaan log je uit.' },
+  { route:'home', t:'Klaar! 🎉', p:'Tip: zet de app op je beginscherm (Safari → Deel → Zet op beginscherm). Dan opent hij als een echte app, met de knoppen onderin. Veel plezier op de kinderkerk!' },
 ];
-let tourStep = -1;
+let TOUR = TOUR_ALL, tourStep = -1;
 function tourTarget(st){
-  if (!st.el) return null;
-  const list = st.el.startsWith('#') ? [$(st.el)] : [...document.querySelectorAll(`#bottomnav a[href="#/${st.el}"], #mainnav a[href="#/${st.el}"]`)];
-  return list.find(e => e && e.offsetParent !== null && e.getBoundingClientRect().width) || null;
+  const sels = st.nav ? (st.nav.startsWith('#') ? [st.nav] : [`#bottomnav a[href="#/${st.nav}"]`, `#mainnav a[href="#/${st.nav}"]`]) : [].concat(st.el || []);
+  for (const sel of sels){ const e = [...document.querySelectorAll(sel)].find(x => x.offsetParent !== null && x.getBoundingClientRect().width); if (e) return e; }
+  return null;
 }
-function startTour(){ closeModal(); tourStep = 0; if (location.hash && location.hash !== '#/home') location.hash = '#/home'; setTimeout(drawTour, 60); }
-function endTour(){ tourStep = -1; $('#tour')?.remove(); try { localStorage.setItem('kk-tour', '1'); } catch(e){} }
+function startTour(){ closeModal(); TOUR = TOUR_ALL.filter(st => !st.only || st.only()); tourStep = 0; showTourStep(); }
+function endTour(){ const st = TOUR[tourStep]; tourStep = -1; $('#tour')?.remove(); if (st?.open) closeModal(); try { localStorage.setItem('kk-tour', '1'); } catch(e){} }
+function showTourStep(){
+  const st = TOUR[tourStep]; if (!st) return;
+  if (!st.open) closeModal();
+  if (st.route && state.route !== st.route){ location.hash = '#/' + st.route; return; }   // de router tekent de pagina en daarna de stap
+  if (st.open && !$('#modal-root').innerHTML){ st.open(); setTimeout(drawTour, 700); }
+  setTimeout(drawTour, 60);
+}
 function drawTour(){
   if (tourStep < 0) return;
-  const st = TOUR[tourStep], el = tourTarget(st), last = tourStep === TOUR.length - 1;
+  const st = TOUR[tourStep], last = tourStep === TOUR.length - 1;
+  let el = tourTarget(st);
+  if (el && !st.nav){ const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 110) el.scrollIntoView({ block:'center' }); }
   let box = $('#tour');
   if (!box){ box = document.createElement('div'); box.id = 'tour'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); document.body.appendChild(box); }
   box.innerHTML = `<div class="tour-block"></div><div class="tour-spot ${el ? '' : 'none'}"></div>
-    <div class="tour-card"><h3>${st.t}</h3><p>${st.p}</p>
-      <div class="tour-foot"><span class="tour-dots">${TOUR.map((_, i) => `<i class="${i === tourStep ? 'on' : ''}"></i>`).join('')}</span>
+    <div class="tour-card"><div class="tour-progress"><i style="width:${Math.round((tourStep + 1) / TOUR.length * 100)}%"></i></div>
+      <span class="tour-step">Stap ${tourStep + 1} van ${TOUR.length}</span><h3>${st.t}</h3><p>${st.p}</p>
+      <div class="tour-foot">
         ${tourStep > 0 && !last ? `<button class="btn btn-outline sm" data-action="tourPrev">Terug</button>` : ''}
-        ${!last ? `<button class="btn btn-soft sm" data-action="tourEnd">Overslaan</button>` : ''}
+        ${!last ? `<button class="btn btn-soft sm" data-action="tourEnd">Stoppen</button>` : ''}
         <button class="btn btn-primary sm" data-action="${last ? 'tourEnd' : 'tourNext'}">${last ? 'Aan de slag' : tourStep === 0 ? 'Start' : 'Volgende'}</button></div></div>`;
   const spot = box.querySelector('.tour-spot'), card = box.querySelector('.tour-card');
-  const H = innerHeight;
+  const H = innerHeight, w = Math.min(360, innerWidth - 32);
+  Object.assign(card.style, { right:'auto', margin:'0', width:w + 'px', left:(innerWidth - w) / 2 + 'px' });
+  const ch = card.offsetHeight;
+  if (el && !st.nav){   // past het kaartje niet boven of onder? Schuif het onderdeel dan naar boven
+    const r = el.getBoundingClientRect();
+    if (H - r.bottom - 20 < ch + 12 && r.top - 20 < ch + 12){
+      el.scrollIntoView({ block:'start' });
+      if (!el.closest('.modal')) scrollBy(0, -80);
+    }
+  }
   if (el){
-    const r = el.getBoundingClientRect(), pad = 6;
-    Object.assign(spot.style, { left:r.left - pad + 'px', top:r.top - pad + 'px', width:r.width + pad*2 + 'px', height:r.height + pad*2 + 'px' });
-    const ch = card.offsetHeight;
-    card.style.top = (r.top > H / 2 ? Math.max(12, r.top - pad - ch - 14) : Math.min(H - ch - 12, r.bottom + pad + 14)) + 'px';
-    const w = Math.min(360, innerWidth - 32); Object.assign(card.style, { right:'auto', margin:'0', width:w + 'px', left:Math.min(innerWidth - w - 16, Math.max(16, r.left + r.width / 2 - w / 2)) + 'px' });
-  } else card.style.top = Math.max(12, (H - card.offsetHeight) / 2) + 'px';
+    const r = el.getBoundingClientRect(), pad = 6, top = Math.max(4, r.top - pad), bottom = Math.min(H - 4, r.bottom + pad);
+    Object.assign(spot.style, { left:r.left - pad + 'px', top:top + 'px', width:r.width + pad*2 + 'px', height:bottom - top + 'px' });
+    const below = H - bottom - 14, above = top - 14;
+    card.style.top = (below >= ch + 12 ? bottom + 14 : above >= ch + 12 ? top - 14 - ch : Math.max(12, H - ch - 12)) + 'px';
+    card.style.left = Math.min(innerWidth - w - 16, Math.max(16, r.left + r.width / 2 - w / 2)) + 'px';
+  } else card.style.top = Math.max(12, (H - ch) / 2) + 'px';
 }
 addEventListener('resize', () => { if (tourStep >= 0) drawTour(); });
 function maybeStartTour(){
@@ -2673,8 +2703,8 @@ const actions = {
     if (!confirm('Een nieuwe link maken? De oude link werkt dan niet meer; zet de agenda daarna opnieuw op je telefoon.')) return;
     await sb.from('calendar_tokens').delete().eq('leader_id', db.session); calToken = null; loadCalendar(true); toast('Nieuwe link gemaakt');
   },
-  tourNext: () => { tourStep = Math.min(TOUR.length - 1, tourStep + 1); drawTour(); },
-  tourPrev: () => { tourStep = Math.max(0, tourStep - 1); drawTour(); },
+  tourNext: () => { tourStep = Math.min(TOUR.length - 1, tourStep + 1); showTourStep(); },
+  tourPrev: () => { tourStep = Math.max(0, tourStep - 1); showTourStep(); },
   tourEnd: () => endTour(),
   logout: async () => {
     if (CLOUD){ await sb.auth.signOut(); db = emptyDb(); }
