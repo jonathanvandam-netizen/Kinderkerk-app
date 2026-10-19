@@ -208,6 +208,8 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .qf-opt{display:flex;gap:8px;align-items:center;margin-bottom:8px}.qf-opt input{flex:1}
 .qf-letter{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-weight:800;font-size:17px;cursor:pointer}
 .qf-letter.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.g-route{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:14px;line-height:1.5}
+.g-route .steps{margin:10px 0 6px}
 .qf-have{background:var(--surface-2);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:14px;line-height:1.5}
 .qf-have-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--border);padding:8px 0;margin-top:6px;font:inherit;font-size:15px;color:var(--text);cursor:pointer}
 .qf-have-row span{flex:1}.qf-have-row .i{width:18px;height:18px;color:var(--muted)}
@@ -491,7 +493,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 47';
+const APP_VERSION = '2026-10-19 · 48';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2509,7 +2511,15 @@ function offerFile(blob, name, type, what){
       <a class="btn ${share ? 'btn-outline' : 'btn-primary'} btn-block" style="margin-top:10px" href="${url}" download="${esc(name)}">${icon('download')} Downloaden</a>
       <p class="muted" style="font-size:14px;margin:12px 0 0">${ios
         ? `Tik op <b>Delen / bewaren</b> en kies <b>Bewaar in Bestanden</b> (of meteen ${what === 'PowerPoint' ? '<b>PowerPoint</b>' : '<b>Sheets</b> of <b>Excel</b>'}). Daarna open je het bestand vanuit de app Bestanden.`
-        : what === 'PowerPoint' ? 'Open het bestand daarna in PowerPoint, Keynote of Google Presentaties.' : 'Open het bestand daarna in Google Sheets (Bestand → Importeren) of Excel.'}</p>
+        : what === 'PowerPoint' ? 'Open het bestand daarna in PowerPoint of Keynote.' : 'Open het bestand daarna in Excel of Numbers.'}</p>
+      ${(g => `<div class="g-route"><b>Liever in ${g.name}?</b> Google laat geen andere website een bestand bij hen neerzetten, dus je uploadt het zelf:
+        <ol class="steps">
+          <li><span>Bewaar eerst het bestand (knop hierboven, ${ios ? 'kies <b>Bewaar in Bestanden</b>' : 'bijv. in Downloads'}).</span></li>
+          <li><span><a class="btn btn-soft sm" href="${g.url}" target="_blank" rel="noopener">${g.name} openen ↗</a></span></li>
+          <li><span>Tik daar op het mapje <b>Bestandskiezer openen</b> → <b>Uploaden</b> → kies <b>${esc(name)}</b>.</span></li>
+        </ol>
+        <span class="muted" style="font-size:13px">Werkt het best op een computer of iPad. Op de iPhone stuurt Google je soms naar de app.</span></div>`)(
+        what === 'PowerPoint' ? { name:'Google Presentaties', url:'https://docs.google.com/presentation/u/0/' } : { name:'Google Sheets', url:'https://docs.google.com/spreadsheets/u/0/' })}
     </div>`);
 }
 const quizFileName = (p, ext) => `Quiz ${p.theme.replace(/[\\/:*?"<>|]/g, '')}.${ext}`;

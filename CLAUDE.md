@@ -128,6 +128,8 @@ leeg) of meerkeuze A–D (min. 2 antwoorden, tik op de letter van het goede). Qu
 spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel, met sharedStrings + docProps zodat Excel, Google Sheets, Numbers en iPhone-voorvertoning hem openen). Eerst maken, dan venster "… is klaar" met knop "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster
 alleen direct na een tik, niet na het trage maken; downloaden werkt niet in de app op het beginscherm) en een downloadlink.
 Extra knop "Kopiëren en plakken in Google Sheets" (tabs naar het klembord, werkt altijd).
+In het venster ook "Liever in Google Presentaties/Sheets?": bewaren → link naar docs.google.com → zelf uploaden (Google laat geen
+andere site een bestand neerzetten; automatisch openen in een app kan niet vanuit een web-app). PowerPoint openen werkt (getest door Jonathan).
 Opslag zonder extra database-stap in tabel `notes`: text = `quiz:{"q","a"}` of `quiz:{"q","opts":[…],"ok":i}` (`QUIZ_PREFIX`, `quizOf`).
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
