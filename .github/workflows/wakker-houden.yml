@@ -1,0 +1,26 @@
+# Een gratis Supabase-project gaat op pauze na een week zonder gebruik (bijv. in de zomervakantie).
+# Deze taak tikt de database elke 3 dagen even aan, zodat dat niet gebeurt. Er worden geen gegevens gelezen:
+# zonder inloggen geeft de database niets terug. De sleutel is de openbare publishable key uit config.js.
+name: Database wakker houden
+
+on:
+  schedule:
+    - cron: '23 7 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aantikken:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Database aantikken
+        run: |
+          URL=$(grep -o "https://[a-z0-9]*\.supabase\.co" kinderkerk/config.js | head -1)
+          KEY=$(grep -o "sb_publishable_[A-Za-z0-9_-]*" kinderkerk/config.js | head -1)
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "Geen database gekoppeld"; exit 0; fi
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/rest/v1/settings?select=key&limit=1" -H "apikey: $KEY")
+          echo "Database antwoordde met $code"
+          if [ "$code" = "000" ] || [ "$code" -ge 500 ]; then exit 1; fi

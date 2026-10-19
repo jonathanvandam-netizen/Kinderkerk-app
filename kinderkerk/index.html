@@ -83,6 +83,9 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .mainnav a.active{border-color:var(--brand)}
 .mainnav a.active svg{color:var(--brand)}
 .mainnav a:hover{background:var(--surface-2)}
+.sync{margin-left:auto;font-size:12.5px;font-weight:800;background:var(--warn-soft);color:var(--warn-text);padding:5px 10px;border-radius:999px;white-space:nowrap}
+.sync[hidden]{display:none}
+.sync:not([hidden]) + .avatar{margin-left:8px}
 .avatar{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;border:0;font:inherit;font-weight:800;cursor:pointer}
 /* Onderbalk in "liquid glass"-stijl (telefoon en geïnstalleerde app) */
 .bottomnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(480px,calc(100% - 24px));
@@ -197,6 +200,7 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .agenda textarea.ag-title{min-height:0;border:0;border-radius:6px;padding:4px 2px;background:transparent;line-height:1.3}
 .agenda textarea.ag-title:focus{box-shadow:none;background:var(--input)}
 .agenda textarea{width:100%;font:inherit;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--input);color:var(--text);resize:none;min-height:84px;outline:0;display:block}
+.agenda textarea[readonly]{background:var(--surface-2);border-style:dashed}
 .agenda textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 .agenda .acts{margin:10px -16px 0;border-top:1px solid var(--border)}
 .agenda .acts .row{padding-left:16px;padding-right:12px}
@@ -436,6 +440,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
   <div class="topbar-inner">
     <a class="brand" href="#/home"><span class="mini-logo" id="mini-logo"></span><span>Kinderkerk</span></a>
     <nav class="mainnav" id="mainnav"></nav>
+    <span class="sync" id="sync" hidden></span>
     <button class="avatar" id="avatar" data-action="profile" title="Mijn account"></button>
   </div>
 </header>
@@ -451,7 +456,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 25';
+const APP_VERSION = '2026-10-19 · 26';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -653,6 +658,33 @@ async function cloudImportFile(file){
   if (data?.app !== 'kinderkerk' || !Array.isArray(data.db?.kids)) return toast('Dit is geen back-up van de kinderkerk-app');
   cloudImport(data.db, 'De back-up van ' + (data.saved ? new Date(data.saved).toLocaleDateString('nl-NL', { day:'numeric', month:'long' }) : 'onbekende datum'));
 }
+/* Back-up als bestand bewaren (deelvenster op telefoon, anders downloaden) */
+async function saveBackupFile(data, day){
+  const name = `kinderkerk-backup-${day}.json`;
+  const text = JSON.stringify({ app:'kinderkerk', version:APP_VERSION, saved:new Date().toISOString(), db:data });
+  const file = new File([text], name, { type:'application/json' });
+  const done = () => { try { localStorage.setItem('kk-last-backup', String(Date.now())); } catch(e){} };
+  if (navigator.canShare?.({ files:[file] })){
+    try { await navigator.share({ files:[file], title:'Back-up Kinderkerk' }); done(); toast('Back-up bewaard'); render(); return; } catch(e){ if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  done(); toast('Back-up gedownload'); render();
+}
+const lastBackupDays = () => { try { const t = +localStorage.getItem('kk-last-backup'); return t ? Math.floor((Date.now() - t) / 864e5) : null; } catch(e){ return null; } };
+/* Automatische back-ups (databasemodus): elke zondagavond maakt de database er zelf een (supabase/backup.sql) */
+const autoBackupData = {};
+async function openAutoBackups(){
+  openModal(`<div class="modal-head"><div><h2>Automatische back-ups</h2><span class="muted">Elke zondagavond, de laatste 12 blijven bewaard</span></div>
+    <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div><div class="modal-body" id="ab-body"><span class="muted">Laden…</span></div>`);
+  const { data, error } = await sb.from('backups').select('id,taken_at').order('taken_at', { ascending:false });
+  const body = $('#ab-body'); if (!body) return;
+  if (error){ console.error(error); body.innerHTML = '<p class="muted">De automatische back-ups zijn nog niet ingesteld. Doe stap 6 van de hulppagina (installeren).</p>'; return; }
+  body.innerHTML = `<div class="card list" style="box-shadow:none;border:1px solid var(--border)">${data.map(b => `<div class="row static">
+      <span class="row-icon">${icon('download')}</span><span class="row-main"><b>${cap(new Date(b.taken_at).toLocaleString('nl-NL', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' }))}</b></span>
+      <button class="btn btn-soft sm" data-action="autoBackupGet" data-id="${b.id}">Ophalen</button></div>`).join('') || '<div class="empty">Nog geen back-ups.</div>'}</div>
+    <button class="btn btn-outline btn-block" style="margin-top:12px" data-action="autoBackupNow">Nu een back-up maken</button>
+    <p class="muted" style="font-size:13.5px;margin:12px 2px 0">Iets per ongeluk weggehaald? Haal een back-up op, bewaar hem en kies daarna bij Gegevens "Back-up in de database zetten". Wat weg was, komt dan terug.</p>`;
+}
 function removeDemoKids(){
   const demo = new Set(db.kids.filter(isDemoKid).map(k => k.id));
   db.kids = db.kids.filter(k => !demo.has(k.id));
@@ -810,7 +842,7 @@ const sb = CLOUD ? supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey) : nul
 const STORE_KEY = 'kinderkerk-demo-v8';
 const emptyDb = () => ({ session:null, kids:[], leaders:[], checkins:[], leaderCheckins:[], notes:[], rosters:{ sheets:[], bidden:[] }, sundays:[], periods:[], meetings:[], agenda:[], actions:[], illnesses:[], settings:{}, marks:[] });
 function load(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
-function save(){ if (CLOUD) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
+function save(){ if (CLOUD) return saveCache(); try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
 let db = CLOUD ? emptyDb() : load();
 if (!db){ db = seed(); save(); }
 if (!db.marks) db.marks = [];   // smileys en waarschuwingen (nieuw in versie 9)
@@ -870,15 +902,55 @@ const COLS = { kidId:'kid_id', leaderId:'leader_id', group:'groep', userId:'user
 const REV = Object.fromEntries(Object.entries(COLS).map(([a,b]) => [b,a]));
 const toRow = o => Object.fromEntries(Object.entries(o).map(([k,v]) => [COLS[k] || k, v]));
 const fromRow = o => Object.fromEntries(Object.entries(o).map(([k,v]) => [REV[k] || k, v]));
-/* Schrijfacties één voor één versturen, zodat bijv. een vergadering bestaat vóór het eerste agendapunt */
-let writeQueue = Promise.resolve();
-function remote(q){
-  if (!CLOUD) return;
-  writeQueue = writeQueue.then(() => q).then(({ error }) => { if (error){ console.error(error); toast('Opslaan mislukt, probeer het opnieuw'); refresh(); } }).catch(e => console.error(e));
+/* ---------- Opslaan, ook zonder internet ----------
+   Elke wijziging gaat eerst in een wachtrij (outbox) die op het toestel bewaard blijft, en wordt dan één voor één naar de
+   database gestuurd (volgorde blijft, zodat bijv. een vergadering bestaat vóór het eerste agendapunt). Lukt dat niet omdat
+   er geen internet is, dan blijft de wijziging wachten en gaat hij vanzelf zodra er weer verbinding is.
+   De laatst geladen gegevens staan ook op het toestel (kk-cache), zodat de app zonder internet opent. */
+const OUTBOX_KEY = 'kk-outbox', CACHE_KEY = 'kk-cache';
+let outbox = (() => { try { return JSON.parse(localStorage.getItem(OUTBOX_KEY)) || []; } catch(e){ return []; } })();
+let flushing = false, retryTimer = null, offline = false, sessionUser = null;
+const keepOutbox = () => { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(outbox)); } catch(e){} };
+function enqueue(op){ if (!CLOUD) return; outbox.push(op); keepOutbox(); syncBadge(); flush(); }
+const put = (table, rows) => enqueue({ t:'upsert', table, rows:[].concat(rows).map(toRow) });
+const upd = (table, o) => enqueue({ t:'update', table, row:toRow(o), id:o.id });
+const drop = (table, match) => enqueue({ t:'delete', table, match:toRow(match) });
+const isNetErr = r => r.status === 0 || !navigator.onLine || /fetch|network|load failed|timed? ?out/i.test(r.error?.message || '');
+async function flush(){
+  if (!CLOUD || flushing || !outbox.length) return;
+  flushing = true; clearTimeout(retryTimer);
+  let failed = false, sent = 0;
+  while (outbox.length){
+    const op = outbox[0];
+    const q = op.t === 'upsert' ? sb.from(op.table).upsert(op.rows) : op.t === 'update' ? sb.from(op.table).update(op.row).eq('id', op.id) : sb.from(op.table).delete().match(op.match);
+    let r; try { r = await q; } catch(e){ r = { error:{ message:String(e) }, status:0 }; }
+    if (r.error && (isNetErr(r) || r.status === 401) && (op.tries = (op.tries || 0) + 1) < 200){   // geen internet (of inlog wordt vernieuwd): straks opnieuw
+      offline = true; keepOutbox(); retryTimer = setTimeout(flush, 15000); break;
+    }
+    if (r.error){ console.error(op, r.error); failed = true; }
+    outbox.shift(); keepOutbox(); sent++;
+  }
+  flushing = false;
+  if (!outbox.length){
+    if (offline){ offline = false; toast('Weer verbinding: alles is opgeslagen ✓'); }
+    if (failed){ toast('Een wijziging kon niet worden opgeslagen'); refresh(); }
+    else if (sent) scheduleRefresh();
+  }
+  syncBadge();
 }
-const put = (table, rows) => remote(sb?.from(table).upsert([].concat(rows).map(toRow)));
-const upd = (table, o) => remote(sb?.from(table).update(toRow(o)).eq('id', o.id));
-const drop = (table, match) => remote(sb?.from(table).delete().match(toRow(match)));
+function syncBadge(){
+  const el = $('#sync'); if (!el) return;
+  const n = outbox.length;
+  el.hidden = !CLOUD || (!n && !offline);
+  el.textContent = offline ? `Geen internet${n ? ` · ${n} wacht${n === 1 ? '' : 'en'}` : ''}` : `Opslaan… ${n}`;
+}
+function saveCache(){
+  if (!CLOUD || !db.session || !sessionUser) return;
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ user:sessionUser, saved:Date.now(), db })); } catch(e){}
+}
+function readCache(){ try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch(e){ return null; } }
+addEventListener('online', () => { flush(); refresh(); });
+addEventListener('offline', () => { offline = true; syncBadge(); });
 
 async function fetchAll(table, order){
   let out = [];
@@ -896,39 +968,58 @@ async function loadCloud(){
     fetchAll('leaders', ['id']), fetchAll('kids', ['id']), fetchAll('checkins', ['id']),
     fetchAll('leader_checkins', ['date','leader_id']), fetchAll('notes', ['created_at','id']), fetchAll('rosters', ['kind','date']), fetchAll('illnesses', ['id']), fetchAll('sundays', ['date']), fetchAll('periods', ['start']),
     fetchAll('meetings', ['date','id']), fetchAll('agenda_items', ['sort','id']), fetchAll('actions', ['created_at','id']), fetchAll('settings', ['key']), fetchAll('marks', ['created_at','id'])]);
+  db = { session:db.session, ...dbFromRows({ leaders, kids, checkins, leaderCheckins, notes, rosters, illnesses, sundays, periods, meetings, agenda, actions, settingRows, marks }) };
+}
+/* Rijen uit de database (al omgezet met fromRow) → de vorm van db in de app */
+function dbFromRows({ leaders = [], kids = [], checkins = [], leaderCheckins = [], notes = [], rosters = [], illnesses = [], sundays = [], periods = [], meetings = [], agenda = [], actions = [], settingRows = [], marks = [] }){
   notes.forEach(n => delete n.created_at);
-  const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
-  db = { session:db.session, kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses, marks,
-    settings:Object.fromEntries(settingRows.map(r => [r.key, r.value])) };
   [...agenda, ...actions].forEach(x => delete x.created_at);
+  const ro = kind => rosters.filter(r => r.kind === kind).map(({ date, kidId }) => ({ date, kidId }));
+  return { kids, leaders, checkins, leaderCheckins, notes, rosters:{ sheets:ro('sheets'), bidden:ro('bidden') }, sundays, periods, meetings, agenda, actions, illnesses, marks,
+    settings:Object.fromEntries(settingRows.map(r => [r.key, r.value])) };
 }
 /* Opnieuw ophalen (na een wijziging van iemand anders); niet tekenen terwijl iemand typt of een venster open heeft */
 let refreshTimer;
+const scheduleRefresh = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(refresh, 700); };
 async function refresh(){
   if (!CLOUD || !db.session) return;
+  if (outbox.length){ flush(); return; }   // eerst eigen wijzigingen versturen, anders verdwijnen ze even uit beeld
   const before = db.session;
-  try { await loadCloud(); } catch(e){ console.error(e); return; }
+  try { await loadCloud(); } catch(e){ console.error(e); if (isNetErr({ error:e })){ offline = true; syncBadge(); } return; }
+  offline = false; syncBadge(); saveCache();
   if (!leaderById(before)){ db.session = null; state.auth = { step:'noaccess', email:'' }; return render(); }   // toegang ingetrokken
   const a = document.activeElement;
   if ($('#modal-root').innerHTML || (a && a.closest('#app') && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) return;
   render();
 }
 function listen(){
-  sb.channel('kinderkerk').on('postgres_changes', { event:'*', schema:'public' }, () => {
-    clearTimeout(refreshTimer); refreshTimer = setTimeout(refresh, 700);
-  }).subscribe();
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
+  sb.channel('kinderkerk').on('postgres_changes', { event:'*', schema:'public' }, scheduleRefresh).subscribe();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible'){ flush(); refresh(); } });
 }
 async function afterLogin(user){
-  db.session = null;
+  db.session = null; sessionUser = user.id;
   try {
     await sb.rpc('claim_invite');
     await loadCloud();
-  } catch(e){ console.error(e); state.auth = { step:'email', error:'Gegevens laden lukt niet. Controleer je internet en probeer het opnieuw.' }; db.session = null; return render(); }
+  } catch(e){
+    console.error(e);
+    if (openFromCache(user.id)) return;   // geen internet: verder met de gegevens op dit toestel
+    state.auth = { step:'email', error:'Gegevens laden lukt niet. Controleer je internet en probeer het opnieuw.' }; db.session = null; return render();
+  }
   const l = db.leaders.find(x => x.userId === user.id && x.invited);
   db.session = l ? l.id : null;
+  offline = false; saveCache(); flush();
   state.auth = !l ? { step:'noaccess', email:user.email } : !l.name ? { step:'profile', email:user.email, invite:{ group:l.group } } : { step:'email' };
   render();
+}
+
+/* Zonder internet openen met de gegevens die op dit toestel bewaard zijn */
+function openFromCache(userId){
+  const c = readCache();
+  if (!c || !c.db?.session || (userId && c.user !== userId)) return false;
+  db = c.db; sessionUser = c.user; offline = true; state.auth = { step:'email' };
+  render(); syncBadge();
+  return true;
 }
 
 /* ---------- Data-hulpjes ---------- */
@@ -1049,7 +1140,9 @@ const TOUR_ALL = [
   { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar vind je je instellingen. Die laten we nu zien.' },
   { only:() => CLOUD, open:() => openProfile(), el:['#cal-box a.btn', '#cal-box'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
   { open:() => openProfile(), el:['.modal .chips'], t:'Donkere modus', p:'Hier kies je licht of donker. "Automatisch" volgt je telefoon. Daaronder start je deze rondleiding opnieuw, en onderaan log je uit.' },
-  { route:'home', t:'Klaar! 🎉', p:'Tip: zet de app op je beginscherm (Safari → Deel → Zet op beginscherm). Dan opent hij als een echte app, met de knoppen onderin. Veel plezier op de kinderkerk!' },
+  { route:'home', t:'Klaar! 🎉', p:() => (isStandalone() ? '' : isIOS() ? 'Tip: zet de app op je beginscherm (Safari → Deel → Zet op beginscherm). Dan opent hij als een echte app, met de knoppen onderin. '
+      : 'Tip: installeer de app via het menu van Chrome (⋮) → "App installeren" of "Toevoegen aan startscherm". Dan opent hij als een echte app, met de knoppen onderin. ')
+      + 'Weet je iets niet? Start de rondleiding opnieuw via je account. Veel plezier op de kinderkerk!' },
 ];
 let TOUR = TOUR_ALL, tourStep = -1;
 function tourTarget(st){
@@ -1075,7 +1168,7 @@ function drawTour(){
   if (!box){ box = document.createElement('div'); box.id = 'tour'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); document.body.appendChild(box); }
   box.innerHTML = `<div class="tour-block"></div><div class="tour-spot ${el ? '' : 'none'}"></div>
     <div class="tour-card"><div class="tour-progress"><i style="width:${Math.round((tourStep + 1) / TOUR.length * 100)}%"></i></div>
-      <span class="tour-step">Stap ${tourStep + 1} van ${TOUR.length}</span><h3>${st.t}</h3><p>${st.p}</p>
+      <span class="tour-step">Stap ${tourStep + 1} van ${TOUR.length}</span><h3>${st.t}</h3><p>${typeof st.p === 'function' ? st.p() : st.p}</p>
       <div class="tour-foot">
         ${tourStep > 0 && !last ? `<button class="btn btn-outline sm" data-action="tourPrev">Terug</button>` : ''}
         ${!last ? `<button class="btn btn-soft sm" data-action="tourEnd">Stoppen</button>` : ''}
@@ -1169,6 +1262,9 @@ function renderHome(){
         <span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('thermo')}</span>
         <span class="row-main"><b>Kind ziek?</b><span class="muted">Check of een ziek kind welkom is</span></span>${icon('chev','chev')}
       </a>
+      ${isAdmin() && (lastBackupDays() ?? 99) > 35 ? `<a class="card row" href="#/meer" style="border-radius:var(--radius)">
+        <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('download')}</span>
+        <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">Bewaar af en toe een kopie op je toestel: Meer → Gegevens</span></span>${icon('chev','chev')}</a>` : ''}
       ${installCard(true)}
     </aside>
     <section>
@@ -1287,6 +1383,8 @@ function renderVergadering(){
   const back = `<a class="textlink" href="#/vergadering" style="margin-bottom:12px">← Terug</a>`;
   if (!m){ app.innerHTML = `<div class="page">${back}<div class="card empty">Deze vergadering bestaat niet (meer).</div></div>`; return; }
   const items = agendaOf(m.id), loose = db.actions.filter(a => a.meetingId === m.id && !a.agendaId);
+  // Notulen: alleen de notulist typt, zodat twee mensen elkaars tekst niet overschrijven. Anderen lezen live mee.
+  const nl = leaderById(m.notulist), locked = nl && nl.id !== db.session && !(state.notesOpen || {})[m.id];
   app.innerHTML = `
   <div class="page">
     ${back}
@@ -1294,12 +1392,14 @@ function renderVergadering(){
       <button class="btn btn-outline sm" data-action="shareMeeting" data-id="${m.id}">${icon('share')} Delen</button></div>
     <label class="field" style="margin-bottom:14px"><span>Notulist</span><select data-change="notulist" data-id="${m.id}"><option value="">Nog niemand</option>
       ${[...db.leaders].sort(byName).map(l => `<option value="${l.id}" ${l.id === m.notulist ? 'selected' : ''}>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</option>`).join('')}</select></label>
+    ${locked ? `<div class="banner" style="margin:0 0 14px">${icon('info')}<span><b>${esc(nl.name)}</b> typt de notulen. Je leest live mee; zo raakt er geen tekst kwijt.</span>
+      <button class="btn btn-outline sm" data-action="notesOpen" data-id="${m.id}">Toch typen</button></div>` : ''}
     <div class="stack">${items.map((a, i) => `
       <div class="card agenda">
         <div class="ag-head"><span class="num">${i + 1}</span>
           <textarea class="ag-title" rows="1" data-input="agTitle" data-id="${a.id}" aria-label="Agendapunt">${esc(a.title)}</textarea>
           <button class="icon-btn sm" title="Agendapunt verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>
-        <textarea data-input="agNotes" data-id="${a.id}" placeholder="Notulen bij dit punt…">${esc(a.notes || '')}</textarea>
+        <textarea data-input="agNotes" data-id="${a.id}" placeholder="${locked ? 'Nog geen notulen' : 'Notulen bij dit punt…'}" ${locked ? 'readonly' : ''}>${esc(a.notes || '')}</textarea>
         ${(acts => acts.length ? `<div class="acts">${acts.map(x => actionRow(x)).join('')}</div>` : '')(db.actions.filter(x => x.agendaId === a.id).sort(byDue))}
         <button class="textlink add-act" data-action="addAction" data-meeting="${m.id}" data-agenda="${a.id}">${icon('plus')} Actiepunt</button>
       </div>`).join('') || '<div class="card empty">Nog geen agendapunten. Voeg ze hieronder toe.</div>'}</div>
@@ -1762,7 +1862,9 @@ function renderMeer(){
     ${CLOUD ? '' : `<div class="banner" style="margin:0 0 12px;background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span><b>Alles staat nu alleen op dit toestel.</b> Andere leiding ziet het niet, en als je de websitegegevens van Safari wist, is het weg. Maak daarom regelmatig een back-up, tot de database gekoppeld is.</span></div>`}
     <div class="card list">
       <button class="row" data-action="backupSave"><span class="row-icon">${icon('download')}</span>
-        <span class="row-main"><b>Back-up maken</b><span class="muted">Bewaar alles als bestand (bijv. in Bestanden of iCloud)</span></span>${icon('chev','chev')}</button>
+        <span class="row-main"><b>Back-up maken</b><span class="muted">Bewaar alles als bestand (bijv. in Bestanden of iCloud)${(n => n === null ? '' : ` · laatst ${n === 0 ? 'vandaag' : n === 1 ? 'gisteren' : n + ' dagen geleden'}`)(lastBackupDays())}</span></span>${icon('chev','chev')}</button>
+      ${CLOUD ? `<button class="row" data-action="autoBackups"><span class="row-icon">${icon('calendar')}</span>
+        <span class="row-main"><b>Automatische back-ups</b><span class="muted">Elke zondagavond door de database gemaakt</span></span>${icon('chev','chev')}</button>` : ''}
       ${CLOUD ? `${(x => x ? `<button class="row" data-action="cloudImportLocal"><span class="row-icon" style="background:var(--ok-soft);color:var(--ok)">${icon('arrow')}</span>
         <span class="row-main"><b>Gegevens van dit toestel overzetten</b><span class="muted">${x.kids.filter(k => !isDemoKid(k)).length} kinderen en de rest van vóór de koppeling naar de database</span></span>${icon('chev','chev')}</button>` : '')(localData())}
       <button class="row" data-action="backupLoad"><span class="row-icon">${icon('refresh')}</span>
@@ -2435,6 +2537,7 @@ const actions = {
     addMark($('#ap-kid').value, 'prayer', { date:d.day, note:text }); closeModal(); render(); toast('Gebedspunt toegevoegd');
   },
   toggleAll: () => { state.showAll = !state.showAll; renderKidList(); },
+  notesOpen: d => { (state.notesOpen ||= {})[d.id] = true; render(); },
   leaderCheckin: () => openLeaderCheckin(),
   whoIsIn: () => openWhoIsIn(),
   toggleLeader: d => {
@@ -2477,16 +2580,24 @@ const actions = {
     if (!oud.length || !confirm(`${oud.length} kinderen van ${OLD_AGE} jaar of ouder op "Komt niet meer" zetten?`)) return;
     oud.forEach(k => { k.inactive = true; upd('kids', { id:k.id, inactive:true }); }); save(); render(); toast(`${oud.length} kinderen op "Komt niet meer" gezet`);
   },
-  backupSave: async () => {
-    const day = todayISO(), name = `kinderkerk-backup-${day}.json`;
-    const text = JSON.stringify({ app:'kinderkerk', version:APP_VERSION, saved:new Date().toISOString(), db:{ ...db, session:null } });
-    const file = new File([text], name, { type:'application/json' });
-    if (navigator.canShare?.({ files:[file] })){
-      try { await navigator.share({ files:[file], title:'Back-up Kinderkerk' }); toast('Back-up gemaakt'); return; } catch(e){ if (e.name === 'AbortError') return; }
-    }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('Back-up gedownload');
+  backupSave: () => saveBackupFile({ ...db, session:null }, todayISO()),
+  autoBackups: () => openAutoBackups(),
+  autoBackupNow: async () => {
+    const { error } = await sb.rpc('make_backup');
+    if (error){ console.error(error); return toast('Back-up maken lukt nu niet'); }
+    toast('Back-up gemaakt ✓'); openAutoBackups();
   },
+  autoBackupGet: async (d, el) => {
+    el.disabled = true; el.textContent = 'Laden…';
+    const { data, error } = await sb.from('backups').select('data,taken_at').eq('id', d.id).single();
+    if (error){ console.error(error); el.textContent = 'Mislukt'; return; }
+    const t = data.data, f = rows => (rows || []).map(fromRow);
+    autoBackupData[d.id] = { day:data.taken_at.slice(0, 10), db:{ session:null, ...dbFromRows({ leaders:f(t.leaders), kids:f(t.kids), checkins:f(t.checkins), leaderCheckins:f(t.leader_checkins),
+      notes:f(t.notes), rosters:f(t.rosters), illnesses:f(t.illnesses), sundays:f(t.sundays), periods:f(t.periods), meetings:f(t.meetings), agenda:f(t.agenda_items),
+      actions:f(t.actions), settingRows:t.settings || [], marks:f(t.marks) }) } };
+    el.outerHTML = `<button class="btn btn-primary sm" data-action="autoBackupSave" data-id="${d.id}">${icon('download')} Bewaar</button>`;   // nieuwe tik nodig voor het deelvenster
+  },
+  autoBackupSave: d => { const b = autoBackupData[d.id]; if (b) saveBackupFile(b.db, b.day); },
   backupLoad: () => $('#backup-file')?.click(),
   cloudImportLocal: () => { const x = localData(); if (x) cloudImport(x, 'De gegevens van dit toestel'); },
   cloudImportAgain: () => { try { localStorage.removeItem('kk-moved'); } catch(e){} render(); },
@@ -2717,7 +2828,12 @@ const actions = {
   tourPrev: () => { tourStep = Math.max(0, tourStep - 1); showTourStep(); },
   tourEnd: () => endTour(),
   logout: async () => {
-    if (CLOUD){ await sb.auth.signOut(); db = emptyDb(); }
+    if (CLOUD){
+      if (outbox.length && !confirm(`Er ${outbox.length === 1 ? 'is nog 1 wijziging' : `zijn nog ${outbox.length} wijzigingen`} niet opgeslagen omdat er geen internet is. Toch uitloggen? Dan gaan ze verloren.`)) return;
+      outbox = []; keepOutbox(); sessionUser = null;
+      try { localStorage.removeItem(CACHE_KEY); } catch(e){}
+      await sb.auth.signOut().catch(() => {}); db = emptyDb(); syncBadge();
+    }
     db.session = null; save(); closeModal(); state.auth = { step:'email' }; location.hash = '#/home'; render();
   },
   sendLink: async () => {
@@ -2846,8 +2962,10 @@ $('#mini-logo').innerHTML = logoImg();
 if (CLOUD){
   state.auth = { step:'loading' }; router();
   sb.auth.getSession().then(({ data }) => {
-    if (data.session) afterLogin(data.session.user); else { state.auth = { step:'email' }; render(); }
-  });
+    if (data.session) afterLogin(data.session.user);
+    else if (!navigator.onLine && openFromCache()) {}   // geen internet en inlog nog niet vernieuwd: toch openen
+    else { state.auth = { step:'email' }; render(); }
+  }).catch(() => { if (!openFromCache()){ state.auth = { step:'email' }; render(); } });
   listen();
 } else router();
 </script>

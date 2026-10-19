@@ -40,6 +40,17 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   - met Supabase-URL en anon/publishable key = **databasemodus**: Supabase (EU) met inlogcode per mail, alleen op
     uitnodiging, row level security, live bijwerken. De app houdt een kopie in `db` en stuurt elke wijziging via
     `put`/`upd`/`drop` naar de database. Kolomnamen wijken op een paar plekken af (`COLS` in index.html).
+    **Zonder internet**: put/upd/drop gaan in een wachtrij (`outbox`, localStorage `kk-outbox`) die `flush()` één voor één
+    verstuurt; bij netwerkfout blijft hij staan en wordt het om de 15 s, bij 'online' en bij terugkeer naar de app opnieuw
+    geprobeerd. `refresh()` wacht tot de wachtrij leeg is. De laatst geladen gegevens staan in `kk-cache` (per gebruiker),
+    zodat de app ook zonder internet opent (`openFromCache`). Bovenin het label `#sync` ("Geen internet · 2 wachten").
+    Uitloggen met wachtende wijzigingen vraagt eerst bevestiging en wist wachtrij + cache.
+    Automatische back-ups: `supabase/backup.sql` (tabel `backups`, functie `make_backup()`, pg_cron elke zondag 20:00 UTC,
+    laatste 12 bewaard, alleen beheerders). In de app: Meer → Gegevens → Automatische back-ups (ophalen → bewaren als
+    bestand; terugzetten via "Back-up in de database zetten"). Herinnering op Home voor beheerders als de laatste zelf
+    bewaarde back-up (localStorage `kk-last-backup`) ouder is dan 35 dagen.
+    Pauze voorkomen: `.github/workflows/wakker-houden.yml` tikt de database elke 3 dagen aan (GitHub zet zulke taken uit na
+    60 dagen zonder wijzigingen in de repository; dan stuurt GitHub een mail om hem weer aan te zetten).
 - `supabase/schema.sql` = tabellen, regels en triggers; `supabase/INSTALLEREN.md` = stappenplan voor Jonathan.
   Hulppagina `kinderkerk/installeren.html` (online /installeren.html): kopieerknoppen voor de database-code (met e-mail
   ingevuld) en de inlogmail; pages.yml zet `schema.sql` ernaast (`kinderkerk/schema.sql` staat in .gitignore).
@@ -85,7 +96,8 @@ Vergadering (eigen knop in de menubalk, `#/vergadering`; bewust niet op Home): v
 vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
 afvinken; open actiepunten op het overzicht), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
-Per vergadering een notulist; actiepunten met één of meer personen (`who` = lijst). Delen geeft een verslag zoals de
+Per vergadering een notulist; actiepunten met één of meer personen (`who` = lijst). Notulen typt alleen de notulist;
+anderen zien ze alleen-lezen en live ("Toch typen" kan, `state.notesOpen`), zodat niemand elkaars tekst overschrijft. Delen geeft een verslag zoals de
 notulen van De Deur: Algemeen (datum, notulist, volgende meeting), Agenda, Notulen, Actiepunten, Reeds uitgevoerd.
 Demo bevat de echte notulen van 4-10-2026 (Jonathan gaf toestemming dat dit openbaar in de code staat) en de echte
 themaplanning Scheppingsverhaal (week 1–5 scheppingsdagen, 6 bidden, 7 quiz + winkeltje). Demo-updates via `demoRev`
@@ -132,7 +144,7 @@ zondag. Teksten via `dayLabel(d)`: "vandaag" alleen voor vandaag, doordeweeks "a
 Keuzes van Jonathan: inchecken blijft altijd via het venster; per kind alleen geboortedatum (geen ouders/medisch/foto).
 
 ## Echte leiding (demo, alleen voornamen, nog niet uitgenodigd)
-Bovenbouw: Jonathan (beheerder), Nora, Julian, Jamilla, Sandy (zwangerschapsverlof; normaal met Julian).
+Bovenbouw: Jonathan (beheerder; Julian mag ook beheerder worden), Nora, Julian, Jamilla, Sandy (zwangerschapsverlof; normaal met Julian).
 Onderbouw: Melissa, Dina, Tim, Chanel (Tim en Chanel gaan later ook met zwangerschapsverlof).
 Rooster: bovenbouw wisselt elke week (Jonathan+Nora / Julian+Jamilla); onderbouw 2 weken dienst, 2 weken vrij
 (Melissa+Dina / Tim+Chanel). 18-10-2026: Jonathan+Nora en Melissa+Dina (hun 2e week); 25-10: Julian+Jamilla en Tim+Chanel.
