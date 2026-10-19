@@ -170,7 +170,7 @@ geen zondag. Zoek je de gebedslijst? Klik hier." Sheets (Meer → Sheets, `#/roo
 eerlijk (`fairPick` + `sheetTurns`) uit de ingecheckte bovenbouw; "Ander kind" en "Zelf een kind kiezen" kunnen ook.
 Overzicht "Hoe vaak al?" en "Eerdere keren". Opslag blijft `rosters` (kind 'sheets'). In de planning staat voor
 toekomstige zondagen "kiest de app op zondag". Migratie demoRev 4 haalde oude vooruit-planning weg.
-Rondleiding (`TOUR_ALL`, 16 stappen, bovenbouw/beheerder 18: extra "Quizvraag bedenken" op Home en "De quiz in week 7" met Google Slides → Drive van het one80kids-account; `only:() => canQuiz()`): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
+Rondleiding (`TOUR_ALL`, 17 stappen voor leiding, tot 20 voor bovenbouw/beheerder: "Quizvraag bedenken" en "De quiz in week 7" (Google Slides → Drive van het one80kids-account, `only:() => canQuiz()`), "Planning verder vullen" (`only:() => isAdmin()`); voor iedereen ook vervanger zoeken en "Wanneer kan ik niet?"): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
 Mijn account → "Rondleiding starten". Gaat echt langs de pagina's (stap: `nav` = menuknop, `route` = pagina openen,
 `el` = wat oplichten, eerste die bestaat; `open` = venster openen, bijv. Mijn account; `only` = voorwaarde, bijv. de
 agenda-stap alleen in databasemodus). Legt ook de agenda-koppeling uit (past zich vanzelf aan). Voortgangsbalk "Stap x van y".
