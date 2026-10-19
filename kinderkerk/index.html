@@ -456,7 +456,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 27';
+const APP_VERSION = '2026-10-19 · 28';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1142,7 +1142,7 @@ const TOUR_ALL = [
   { open:() => openProfile(), el:['.modal .chips'], t:'Donkere modus', p:'Hier kies je licht of donker. "Automatisch" volgt je telefoon. Daaronder start je deze rondleiding opnieuw, en onderaan log je uit.' },
   { route:'home', t:'Klaar! 🎉', p:() => {
       const ios = 'zet de app op je beginscherm via Safari → Deel → Zet op beginscherm.', android = 'installeer de app via het menu van Chrome (⋮) → "App installeren" of "Toevoegen aan startscherm".';
-      const tip = isStandalone() ? 'Je hebt de app al op je beginscherm 👍 '
+      const tip = isStandalone() ? ''   // staat al op het beginscherm: geen tip meer
         : isIOS() ? `Tip: ${ios} Dan opent hij als een echte app, met de knoppen onderin. `
         : /android/i.test(navigator.userAgent) ? `Tip: ${android} Dan opent hij als een echte app, met de knoppen onderin. `
         : `Tip voor je telefoon: op een iPhone of iPad ${ios} Op Android ${android} `;
