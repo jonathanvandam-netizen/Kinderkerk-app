@@ -124,7 +124,7 @@ Quiz (`#/quiz`, Meer → Op zondag, alleen bovenbouw-leiding en beheerders; onde
 een knop "❓ Quizvraag bedenken" (voor die zondag; in week 7 "Quiz van vandaag: spelen of downloaden"). Vraag = open (antwoord mag
 leeg) of meerkeuze A–D (min. 2 antwoorden, tik op de letter van het goede). Quizpagina en het venster op Home: vragen van die week, tikken = aanpassen/weghalen,
 "Quiz spelen in de app" (groot scherm, gekleurde A–D-vakken, Antwoord tonen), downloaden als PowerPoint (PptxGenJS 3.12.0 in
-`vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia) of
+`vendor/pptxgen.bundle.js`, pas geladen bij het downloaden; titeldia met logo, per vraag een vraag- en een antwoorddia; daarna haalt de app uit [Content_Types].xml de Overrides naar niet-bestaande slideMasterN weg, anders weigert PowerPoint het bestand) of
 spreadsheet (.xlsx zelf gemaakt met JSZip uit die bundel, met sharedStrings + docProps zodat Excel, Google Sheets, Numbers en iPhone-voorvertoning hem openen). Eerst maken, dan venster "… is klaar" met knop "Delen / bewaren" (`offerFile`/`fileShare`: de iPhone opent het deelvenster
 alleen direct na een tik, niet na het trage maken; downloaden werkt niet in de app op het beginscherm) en een downloadlink.
 Extra knop "Kopiëren en plakken in Google Sheets" (tabs naar het klembord, werkt altijd).
