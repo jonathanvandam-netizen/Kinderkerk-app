@@ -116,6 +116,11 @@ notulen van De Deur: Algemeen (datum, notulist, volgende meeting), Agenda, Notul
 Demo bevat de echte notulen van 4-10-2026 (Jonathan gaf toestemming dat dit openbaar in de code staat) en de echte
 themaplanning Scheppingsverhaal (week 1–5 scheppingsdagen, 6 bidden, 7 quiz + winkeltje). Demo-updates via `demoRev`
 vervangen alleen vergaderingen/planning, nooit kinderen.
+Terugblik (`terugblikData`/`openTerugblik`): vanaf de vergadering in week 7 (12:45) tot 3 weken later een kaart op Home en bovenaan
+Vergadering, wegdrukken per toestel (localStorage `kk-terugblik` = lijst periode-id's). Op de vergaderpagina van week 7 blijft een
+knop "🎉 Terugblik". Telt per week (zondag t/m zaterdag): zondagen, gemiddelde (per groep), verschillende kinderen, drukste zondag,
+nieuwe kinderen (eerste check-in ooit in de periode), elke zondag geweest, meegenomen dingen, gebed, smileys, jarigen, leiding.
+Delen = tekst (WhatsApp). Alleen zichtbaar als er check-ins zijn.
 Punten: kinderen krijgen fysieke punten (voor het puntenwinkeltje in week 7); de app houdt geen saldo bij, maar toont
 bij het inchecken "X krijgt N punten" (aanwezig + per meegenomen ding, per groep) en ⭐ in de lijsten.
 Waarden instelbaar door beheerder onder Meer → Punten (tabel `settings`, key 'points'). Startwaarden (van Jonathan,

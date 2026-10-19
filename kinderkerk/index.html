@@ -192,6 +192,16 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .action .row-main{cursor:pointer}
 .action .row-main b{white-space:normal}
 .late-count{color:var(--bad);font-size:14px;font-weight:700}
+.terugblik{position:relative;background:linear-gradient(135deg,var(--brand-soft),var(--card))}
+.terugblik .big{font-size:20px;font-weight:800;margin:4px 0 2px;padding-right:36px}
+.terugblik .tb-x{position:absolute;top:10px;right:10px}
+.tb-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.tb-stat{background:var(--brand-soft);border-radius:14px;padding:12px 6px;text-align:center}
+.tb-stat b{display:block;font-size:26px;font-weight:800;color:var(--brand)}
+.tb-stat span{font-size:12.5px;color:var(--muted);line-height:1.2;display:block}
+.tb-lines{display:flex;flex-direction:column;gap:10px}
+.tb-line{display:flex;gap:10px;line-height:1.45}
+.tb-line>span:first-child{font-size:20px;flex:none;width:26px;text-align:center}
 .row.action.late,.row.action.late:hover{background:var(--bad-soft)}
 .action.late .late-tag{color:var(--bad);font-weight:800}
 .action.done .row-main b{text-decoration:line-through;color:var(--muted)}
@@ -460,7 +470,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 40';
+const APP_VERSION = '2026-10-19 · 41';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1272,6 +1282,7 @@ function renderHome(){
         <span class="row-icon" style="background:var(--bday-bg);color:var(--bday-text)">${icon('heart')}</span>
         <span class="row-main"><b>Gebedsverlangens</b><span class="muted">${(n => isSunday(T) || checkinsOn(T).length ? (n ? n + ' gebedspunt' + (n > 1 ? 'en' : '') + ' · wie bidt er?' : 'Wie bidt er vandaag?') : 'Gebedslijst en gebedspunten')(prayerPoints(T).length)}</span></span>${icon('chev','chev')}
       </a>
+      ${terugblikCard()}
       ${isAdmin() && (lastBackupDays() ?? 99) > 35 ? `<a class="card row" href="#/meer" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('download')}</span>
         <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">Bewaar af en toe een kopie op je toestel: Meer → Gegevens</span></span>${icon('chev','chev')}</a>` : ''}
@@ -1323,6 +1334,88 @@ function nextMeetingInfo(){
   if (p && !list.some(x => x.date === periodEnd(p))) list.push({ date:periodEnd(p), kind:p.meeting, m:null });
   return list.sort((a,b) => a.date.localeCompare(b.date))[0] || null;
 }
+/* ---------- Terugblik op een periode ----------
+   Vanaf het begin van de vergadering in week 7 (12:45) tot 3 weken later staat er een kaart op Home en bij Vergadering.
+   Wegdrukken onthoudt dit toestel (localStorage kk-terugblik). Bij de vergadering van week 7 blijft hij altijd te openen. */
+const TERUGBLIK_KEY = 'kk-terugblik';
+const terugblikHidden = () => { try { return JSON.parse(localStorage.getItem(TERUGBLIK_KEY) || '[]'); } catch(e){ return []; } };
+const terugblikOpen = p => new Date() >= new Date(periodEnd(p) + 'T12:45:00');
+function currentTerugblik(){
+  const T = todayISO(), hidden = terugblikHidden();
+  return periodsSorted().filter(p => terugblikOpen(p) && T <= addDays(periodEnd(p), 21) && !hidden.includes(p.id) && terugblikData(p).days).pop() || null;
+}
+function terugblikData(p){
+  const T = todayISO();
+  const dates = Array.from({ length:PERIOD_WEEKS }, (_, i) => addDays(p.start, 7*i)).filter(d => d <= T);
+  // per week (zondag t/m zaterdag), zodat een check-in op een andere dag ook meetelt
+  const inWeek = (date, d) => date >= d && date <= addDays(d, 6);
+  const per = dates.map(d => ({ d, cs:db.checkins.filter(c => inWeek(c.date, d) && kidById(c.kidId)) })).filter(x => x.cs.length);
+  const cs = per.flatMap(x => x.cs), days = [...new Set(cs.map(c => c.date))];
+  const grp = g => cs.filter(c => kidById(c.kidId).group === g).length;
+  const avg = n => per.length ? Math.round(n / per.length) : 0;
+  const busiest = per.reduce((a, x) => !a || x.cs.length > a.cs.length ? x : a, null);
+  const firstSeen = {}; db.checkins.forEach(c => { if (!firstSeen[c.kidId] || c.date < firstSeen[c.kidId]) firstSeen[c.kidId] = c.date; });
+  const kids = [...new Set(cs.map(c => c.kidId))].map(kidById).filter(Boolean);
+  const nieuw = kids.filter(k => days.includes(firstSeen[k.id])).sort(byName);
+  const trouw = per.length > 1 ? kids.filter(k => per.every(x => x.cs.some(c => c.kidId === k.id))).sort(byName) : [];
+  const item = id => cs.filter(c => c.items.includes(id)).length;
+  const marks = kind => db.marks.filter(m => m.kind === kind && days.includes(m.date)).length;
+  const leiding = db.leaders.filter(l => [...days, ...per.map(x => x.d)].some(d => leaderIn(l.id, d))).length;
+  return { p, days:per.length, total:cs.length, kids:kids.length, avg:avg(cs.length), onder:avg(grp('onder')), boven:avg(grp('boven')), bezoeker:grp('bezoeker'),
+    busiest, nieuw, trouw, bijbel:item('bijbel'), werkblad:item('werkblad'), geld:item('geld'), tekst:item('bijbeltekst'), jarig:item('jarig'),
+    gebedspunten:days.reduce((n, d) => n + prayerPoints(d).length, 0), gebeden:marks('pray') + marks('collecte'),
+    smileys:marks('smiley'), graai:marks('grab'), leiding };
+}
+const kidNames = list => list.map(k => k.name).join(', ');
+function terugblikCard(where){
+  const p = currentTerugblik(); if (!p) return '';
+  const t = terugblikData(p);
+  return `<div class="card pad terugblik">
+    <button class="icon-btn sm tb-x" title="Wegdrukken" data-action="hideTerugblik" data-id="${p.id}">${icon('x')}</button>
+    <span class="eyebrow">🎉 Terugblik</span>
+    <div class="big">${esc(periodLabel(p))}</div>
+    <div class="muted">${t.days} zondag${t.days === 1 ? '' : 'en'} · gemiddeld ${t.avg} kinderen${t.nieuw.length ? ` · ${t.nieuw.length} nieuw` : ''}</div>
+    <button class="btn btn-primary btn-block" style="margin-top:12px" data-action="openTerugblik" data-id="${p.id}">Bekijk de terugblik</button>
+  </div>`;
+}
+function openTerugblik(id){
+  const p = db.periods.find(x => x.id === id); if (!p) return;
+  const t = terugblikData(p);
+  const stat = (n, l) => `<div class="tb-stat"><b>${n}</b><span>${l}</span></div>`;
+  const line = (e, txt) => `<div class="tb-line"><span>${e}</span><span>${txt}</span></div>`;
+  openModal(`
+    <div class="modal-head"><div><h2>Terugblik</h2><span class="muted">${esc(periodLabel(p))} · ${fmtDate(p.start, {day:'numeric', month:'short'})} t/m ${fmtDate(periodEnd(p), {day:'numeric', month:'short'})}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      ${t.days ? `<div class="tb-stats">${stat(t.days, 'zondagen')}${stat(t.avg, 'kinderen gemiddeld')}${stat(t.kids, 'verschillende kinderen')}</div>
+      <div class="tb-lines">
+        ${line('👧', `Gemiddeld <b>${t.onder}</b> onderbouw en <b>${t.boven}</b> bovenbouw${t.bezoeker ? `, en <b>${t.bezoeker}</b> keer een bezoeker` : ''}`)}
+        ${t.busiest ? line('📈', `Drukste zondag: <b>${fmtDate(t.busiest.d, {day:'numeric', month:'long'})}</b> met ${t.busiest.cs.length} kinderen`) : ''}
+        ${t.nieuw.length ? line('🌟', `<b>${t.nieuw.length} nieuw${t.nieuw.length === 1 ? ' kind' : 'e kinderen'}</b>: ${esc(kidNames(t.nieuw))}`) : ''}
+        ${t.trouw.length ? line('🏅', `<b>Elke zondag geweest</b>: ${esc(kidNames(t.trouw))}`) : ''}
+        ${line('📖', `<b>${t.bijbel}×</b> Bijbel, <b>${t.werkblad}×</b> werkblad, <b>${t.geld}×</b> geld${t.tekst ? `, <b>${t.tekst}×</b> bijbeltekst opgezegd` : ''}`)}
+        ${t.gebedspunten || t.gebeden ? line('🙏', `<b>${t.gebedspunten}</b> gebedsverlangens${t.gebeden ? `, <b>${t.gebeden}×</b> heeft een kind gebeden` : ''}`) : ''}
+        ${t.smileys ? line('😊', `<b>${t.smileys}</b> smileys gegeven${t.graai ? `, <b>${t.graai}×</b> uit de grabbelbak gegraaid` : ''}`) : ''}
+        ${t.jarig ? line('🎂', `<b>${t.jarig}×</b> gezongen voor een jarige`) : ''}
+        ${t.leiding ? line('🙌', `<b>${t.leiding}</b> ${t.leiding === 1 ? 'leider heeft' : 'leiders hebben'} meegeholpen. Dank jullie wel!`) : ''}
+      </div>` : '<div class="empty">In deze periode is nog niemand ingecheckt.</div>'}
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" data-action="shareTerugblik" data-id="${p.id}">${icon('share')} Delen</button><button class="btn btn-primary" data-action="closeModal">Sluiten</button></div>`);
+}
+function terugblikText(p){
+  const t = terugblikData(p);
+  const L = [`🎉 Terugblik kinderkerk: ${periodLabel(p)}`, `${fmtDate(p.start, {day:'numeric', month:'long'})} t/m ${fmtDate(periodEnd(p), {day:'numeric', month:'long'})}`, '',
+    `• ${t.days} zondagen, gemiddeld ${t.avg} kinderen (${t.onder} onderbouw, ${t.boven} bovenbouw)`, `• ${t.kids} verschillende kinderen`];
+  if (t.busiest) L.push(`• Drukste zondag: ${fmtDate(t.busiest.d, {day:'numeric', month:'long'})} met ${t.busiest.cs.length} kinderen`);
+  if (t.nieuw.length) L.push(`• Nieuw: ${kidNames(t.nieuw)}`);
+  if (t.trouw.length) L.push(`• Elke zondag geweest: ${kidNames(t.trouw)}`);
+  L.push(`• ${t.bijbel}× Bijbel, ${t.werkblad}× werkblad, ${t.geld}× geld${t.tekst ? `, ${t.tekst}× bijbeltekst` : ''}`);
+  if (t.gebedspunten || t.gebeden) L.push(`• ${t.gebedspunten} gebedsverlangens${t.gebeden ? `, ${t.gebeden}× heeft een kind gebeden` : ''}`);
+  if (t.smileys) L.push(`• ${t.smileys} smileys${t.graai ? `, ${t.graai}× gegraaid` : ''}`);
+  if (t.jarig) L.push(`• ${t.jarig}× gezongen voor een jarige`);
+  if (t.leiding) L.push('', `${t.leiding} ${t.leiding === 1 ? 'leider heeft' : 'leiders hebben'} meegeholpen. Dank jullie wel! 🙌`);
+  return L.join('\n');
+}
 function ensureMeeting(date, kind){
   let m = db.meetings.find(x => x.date === date);
   if (!m){ m = { id:newId(), date, kind:kind || 'klein' }; db.meetings.push(m); put('meetings', m); save(); }
@@ -1358,6 +1451,7 @@ function vergaderOverzicht(){
   const past = db.meetings.filter(x => x.date < T).sort((a,b) => b.date.localeCompare(a.date));
   const days = n ? Math.round((new Date(n.date + 'T12:00:00') - new Date(T + 'T12:00:00')) / 864e5) : 0;
   return `
+    ${(c => c ? `<div style="margin-bottom:16px">${c}</div>` : '')(terugblikCard())}
     ${n ? `<div class="card pad meet-next">
         <span class="eyebrow">Volgende vergadering</span>
         <div class="big">${meetingKindLabel(n.kind)}</div>
@@ -1392,6 +1486,7 @@ function renderVergadering(){
     ${back}
     <div class="page-head"><div><h1>${meetingKindLabel(m.kind)}</h1><span class="muted">${cap(fmtDate(m.date, {weekday:'long', day:'numeric', month:'long', year:'numeric'}))}</span></div>
       <button class="btn btn-outline sm" data-action="shareMeeting" data-id="${m.id}">${icon('share')} Delen</button></div>
+    ${(p => p ? `<button class="btn btn-soft btn-block" style="margin-bottom:14px" data-action="openTerugblik" data-id="${p.id}">🎉 Terugblik ${esc(periodLabel(p))}</button>` : '')(periodsSorted().find(p => periodEnd(p) === m.date && terugblikOpen(p)))}
     <label class="field" style="margin-bottom:14px"><span>Notulist</span><select data-change="notulist" data-id="${m.id}"><option value="">Nog niemand</option>
       ${[...db.leaders].sort(byName).map(l => `<option value="${l.id}" ${l.id === m.notulist ? 'selected' : ''}>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</option>`).join('')}</select></label>
     ${locked ? `<div class="banner" style="margin:0 0 14px">${icon('info')}<span><b>${esc(nl.name)}</b> typt de notulen. Je leest live mee; zo raakt er geen tekst kwijt.</span>
@@ -2518,6 +2613,14 @@ const actions = {
   go: d => { location.hash = '#/' + d.to; },
   overlay: (d, el, e) => { if (e.target === el) closeModal(); },
   closeModal: () => closeModal(),
+  openTerugblik: d => openTerugblik(d.id),
+  hideTerugblik: d => { try { localStorage.setItem(TERUGBLIK_KEY, JSON.stringify([...terugblikHidden(), d.id])); } catch(e){} render(); },
+  shareTerugblik: async d => {
+    const p = db.periods.find(x => x.id === d.id); if (!p) return;
+    const text = terugblikText(p);
+    if (navigator.share){ try { await navigator.share({ title:'Terugblik kinderkerk', text }); return; } catch(e){ if (e.name === 'AbortError') return; } }
+    try { await navigator.clipboard.writeText(text); toast('Terugblik gekopieerd'); } catch(e){ toast('Kopiëren lukte niet'); }
+  },
   ciTab: d => { state.ciTab = d.id; render(); },
   smTab: d => { state.smTab = d.id; render(); },
   smAll: () => { state.smAll = !state.smAll; render(); },
