@@ -159,7 +159,11 @@ iets uit de grabbelbak graaien; knop "Gegraaid" trekt er 7 af (rest telt door). 
 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders/verzorgers in de dienst (bevestigen). Lijst = alleen vandaag
 ingecheckte kinderen; onderin knop "Alle kinderen" (de rest van de groep), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";
 tik op de naam om terug te draaien. Opslag: tabel `marks` (kid_id, date, kind smiley/warn/grab, author), lokaal `db.marks`.
-Gouden Week komt later (Jonathan legt uit).
+Gouden week (versie 60): per periode één week met dubbele punten (`pointsFor(group, items, date)` ×2 als `isGolden(date)`).
+Opslag settings 'gouden' = { periode-id: weeknummer } (alleen beheerder). Periode bewerken → keuze "✨ Gouden week" (Geen/Week 1–7);
+bij een nieuwe periode kiest de app willekeurig uit week 1–5 (`GOLD_WEEKS`), aanpasbaar. In die week (`goldNow()` = zondag van deze
+week): gouden randje om de app (`html.golden`), badge op Home, tag "✨ Gouden week · dubbele punten" bij het programma, gouden regel
+in de planningtabel, en in het incheckvenster een gouden puntenkaart "×2". Het puntenwinkeltje zelf blijft fysiek.
 Gebed (`#/gebed`, in Meer bovenaan + kaart op Home; bewust niet in de menubalk, die is vol): gebedspunten van vandaag (of
 de laatste zondag als het geen zondag is). Bij kinderkerk bidden kinderen voor de gebedspunten van het inchecken + 1 kind
 van de onderbouw voor de collecte. "Kies wie er bidden" kiest per gebedspunt een ingecheckt kind (alle groepen, liefst niet

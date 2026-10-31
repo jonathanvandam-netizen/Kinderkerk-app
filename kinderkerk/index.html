@@ -29,6 +29,7 @@ try { const t = localStorage.getItem('kk-theme'); if (t === 'light' || t === 'da
   --surface-2:#f7f8fa; --surface-3:#eef0f4; --surface-4:#e7e9ee; --input:#f8f9fb;
   --ok:#1f9d55; --ok-soft:#e4f5eb; --warn:#d99100; --warn-soft:#fdf3dc; --warn-text:#6b4b00; --bad:#d64545; --bad-soft:#fbe7e7; --bad-text:#8f2a2a;
   --bday-bg:#fdeef6; --bday-text:#8a2a5a;
+  --gold:#d9a400; --gold-soft:#fff4cc; --gold-text:#6b4f00;
   --qz-a:#e5484d; --qz-b:#1d7ae0; --qz-c:#d98e1f; --qz-d:#8e4ec6;
   --onder:#f08a24; --boven:#2f80ed; --bezoeker:#9b51e0;
   --nav-text:#4a5265; --toast:#1c2433; --toast-text:#fff; --overlay:rgba(17,24,39,.45);
@@ -44,6 +45,7 @@ html[data-theme="dark"]{color-scheme:dark;
   --surface-2:#1e2535; --surface-3:#252d40; --surface-4:#2e374d; --input:#121825;
   --ok:#3ccf7e; --ok-soft:#163626; --warn:#f0b43c; --warn-soft:#352b13; --warn-text:#f3d08a; --bad:#f07272; --bad-soft:#3a1d22; --bad-text:#ffb4b4;
   --bday-bg:#3a1e32; --bday-text:#ffb8dc;
+  --gold:#f0c23c; --gold-soft:#3a3013; --gold-text:#f7dc8a;
   --qz-a:#c9393e; --qz-b:#2468b8; --qz-c:#b5761a; --qz-d:#7a40b0;
   --nav-text:#b4bccc; --toast:#e6e9f0; --toast-text:#0e131d; --overlay:rgba(0,0,0,.6);
   --glass-1:rgba(36,43,61,.72); --glass-2:rgba(28,34,50,.55); --glass-border:rgba(255,255,255,.1);
@@ -56,6 +58,7 @@ html[data-theme="dark"]{color-scheme:dark;
   --surface-2:#1e2535; --surface-3:#252d40; --surface-4:#2e374d; --input:#121825;
   --ok:#3ccf7e; --ok-soft:#163626; --warn:#f0b43c; --warn-soft:#352b13; --warn-text:#f3d08a; --bad:#f07272; --bad-soft:#3a1d22; --bad-text:#ffb4b4;
   --bday-bg:#3a1e32; --bday-text:#ffb8dc;
+  --gold:#f0c23c; --gold-soft:#3a3013; --gold-text:#f7dc8a;
   --qz-a:#c9393e; --qz-b:#2468b8; --qz-c:#b5761a; --qz-d:#7a40b0;
   --nav-text:#b4bccc; --toast:#e6e9f0; --toast-text:#0e131d; --overlay:rgba(0,0,0,.6);
   --glass-1:rgba(36,43,61,.72); --glass-2:rgba(28,34,50,.55); --glass-border:rgba(255,255,255,.1);
@@ -184,6 +187,13 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .away-presets .chip{padding:5px 10px;font-size:13.5px}
 .check-line{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin:-4px 0 14px;cursor:pointer}
 .check-line input{width:20px;height:20px;accent-color:var(--brand);flex:none}
+html.golden body::after{content:"";position:fixed;inset:0;border:4px solid var(--gold);border-radius:0;pointer-events:none;z-index:70;box-shadow:inset 0 0 18px rgba(217,164,0,.35)}
+.gold-banner{display:inline-block;background:var(--gold-soft);color:var(--gold-text);border:2px solid var(--gold);font-weight:800;font-size:13.5px;padding:3px 10px;border-radius:999px;margin-bottom:6px}
+.tag.gold{background:var(--gold-soft);color:var(--gold-text);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.plan-table .mt.gold{color:var(--gold-text);display:inline-block;padding:1px 9px;border-radius:999px;margin-top:4px;box-shadow:inset 0 0 0 1.5px var(--gold)}
+.plan-table tr.golden td{background:var(--gold-soft)}
+.points-card.gold{border:2px solid var(--gold);background:var(--gold-soft)}
+.points-card .gold-tag{display:block;color:var(--gold-text);font-size:13px;font-weight:800;margin-top:2px}
 .points-card{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:14px;background:var(--surface-2)}
 .points-card b{font-size:24px;font-weight:800}
 .pts{color:var(--warn-text);font-weight:700;white-space:nowrap}
@@ -507,7 +517,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-19 · 59';
+const APP_VERSION = '2026-10-31 · 60';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -602,9 +612,15 @@ const DEFAULT_POINTS = {
 /* Opgeslagen waarden per groep over de startwaarden heen (zo krijgen nieuwe soorten punten ook een waarde) */
 const pointsCfg = () => { const saved = db.settings?.points || {};
   return Object.fromEntries(Object.keys(DEFAULT_POINTS).map(g => [g, { ...DEFAULT_POINTS[g], ...(saved[g] || {}) }])); };
-function pointsFor(group, items){
+/* Gouden week: één week per periode met dubbele punten. Opslag: settings 'gouden' = { periode-id: weeknummer }.
+   Bij een nieuwe periode kiest de app er willekeurig een uit week 1–5 (6 = bidden, 7 = afsluiting); de beheerder kan hem aanpassen. */
+const GOLD_WEEKS = [1, 2, 3, 4, 5];
+const goldWeek = p => +(db.settings?.gouden?.[p.id]) || null;
+const isGolden = date => { const w = date && weekInfo(date); return !!w && goldWeek(w.p) === w.week; };
+const goldNow = () => isGolden(nextSunday(todayISO()));   // de zondag van deze week (op zondag: vandaag)
+function pointsFor(group, items, date){
   const c = pointsCfg()[group] || pointsCfg().onder;
-  return (c.aanwezig || 0) + items.reduce((sum, id) => sum + (c[id] || 0), 0);
+  return ((c.aanwezig || 0) + items.reduce((sum, id) => sum + (c[id] || 0), 0)) * (isGolden(date) ? 2 : 1);
 }
 
 /* ---------- Demodata (verzonnen namen) ---------- */
@@ -1120,7 +1136,8 @@ function weekTags(date){
   return `<div class="tags"><span class="tag brand">Week ${w.week} van ${PERIOD_WEEKS} · ${esc(periodLabel(w.p))}</span>
     ${w.week === 6 && own ? '<span class="tag">🙏 Bidden</span>' : ''}
     ${w.week === 7 && own ? '<span class="tag">🛍️ Puntenwinkeltje</span>' : ''}
-    ${w.week === 7 ? `<span class="tag warn">👥 ${meetingLabel(w.p.meeting)}</span>` : ''}</div>`;
+    ${w.week === 7 ? `<span class="tag warn">👥 ${meetingLabel(w.p.meeting)}</span>` : ''}
+    ${isGolden(date) ? '<span class="tag gold">✨ Gouden week · dubbele punten</span>' : ''}</div>`;
 }
 const sundayOf = date => db.sundays.find(s => s.date === date) || { date, theme:'', passage:'', themeBoven:'', passageBoven:'', prep:'', onder:[], boven:[] };
 /* Afwezig: elke leiding geeft in Mijn account zelf op wanneer hij niet kan. Opslag in de bestaande tabel notes,
@@ -1171,8 +1188,10 @@ function router(){
 function render(){
   const loggedIn = !!me().name && !!leaderById(db.session);
   document.body.classList.toggle('loggedout', !loggedIn);
+  if (!loggedIn) document.documentElement.classList.remove('golden');
   if (!loggedIn){ if (tourStep >= 0){ tourStep = -1; $('#tour')?.remove(); } renderLogin(); return; }
   $('#avatar').textContent = initials(me().name);
+  document.documentElement.classList.toggle('golden', goldNow());
   renderNav(); routes[state.route]();
   if (tourStep >= 0) drawTour(); else setTimeout(maybeStartTour, 400);
 }
@@ -1327,7 +1346,7 @@ function renderHome(){
       ${notSundayBanner()}
       <div class="card hello">
         <div class="hello-top"><span class="hello-logo">${logoImg()}</span>
-          <div><div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div>
+          <div>${goldNow() ? '<div class="gold-banner">✨ Gouden week: dubbele punten!</div>' : ''}<div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div>
           <h1>${greeting()}, ${esc(firstName(me().name))}!</h1></div></div>
         ${(c => c ? `<div class="hero-duty clash">⚠️ Je staat ingepland op <b>${fmtDate(c, {day:'numeric', month:'long'})}</b>, maar je kunt dan niet. <a href="${swapLink(c)}" target="_blank" rel="noopener">Vervanger zoeken</a></div>`
           : (m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${dayLabel(m.date)}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday()))(myClashes()[0])}
@@ -1626,7 +1645,7 @@ function openWhoIsIn(){
   const section = grp => { const l = cs.filter(x => x.k.group === grp); if (!l.length) return '';
     return `<div class="list-head">${GROUPS[grp]} · ${l.length}</div>` + l.map(({c,k}) => `
       <button class="row" data-action="openCheckin" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
-        <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${c.items.map(itemEmoji).join(' ') || '—'}${c.prayer ? ' · 🙏 gebed' : ''} · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span></span></span>${icon('chev','chev')}</button>`).join(''); };
+        <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${c.items.map(itemEmoji).join(' ') || '—'}${c.prayer ? ' · 🙏 gebed' : ''} · <span class="pts">⭐ ${pointsFor(k.group, c.items, c.date)}</span></span></span>${icon('chev','chev')}</button>`).join(''); };
   openModal(`
     <div class="modal-head"><div><h2>Wie is ingecheckt?</h2><span class="muted">${cs.length} kinderen ${dayLabel(kkDay())}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -1668,7 +1687,7 @@ function renderKidList(){
   kids.sort((a,b) => (freq[b.id] || 0) - (freq[a.id] || 0) || byName(a,b));
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
+    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items, c.date)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
@@ -1808,7 +1827,7 @@ function openCheckin(kidId, date = kkDay()){
           `<button type="button" class="chip ${items.has(i.id) ? 'on' : ''}" data-action="toggleChip" data-id="${i.id}">${i.emoji} ${i.label}<span class="tick">✓</span></button>`).join('')}</div></div>
       <label class="field"><span>Gebedsverlangens</span><textarea id="ci-prayer" rows="3" placeholder="Vul hier eventueel gebedsverlangens in">${esc(ex?.prayer || '')}</textarea></label>
       <div class="hint soft">${icon('help')} Vraag of ${esc(firstName(k.name))} naar de wc moet</div>
-      <div class="points-card" id="ci-points" data-group="${k.group}"><span class="muted">${esc(firstName(k.name))} krijgt</span><b><span id="ci-points-n">${pointsFor(k.group, [...items])}</span> punten</b></div>
+      <div class="points-card ${isGolden(date) ? 'gold' : ''}" id="ci-points" data-group="${k.group}" data-date="${date}"><span class="muted">${esc(firstName(k.name))} krijgt${isGolden(date) ? ' <b class="gold-tag">✨ Gouden week ×2</b>' : ''}</span><b><span id="ci-points-n">${pointsFor(k.group, [...items], date)}</span> punten</b></div>
       <div style="text-align:center"><a class="textlink" href="#/ziektes">${icon('thermo')} Kind ziek? Klik hier.</a></div>
     </div>
     <div class="modal-foot">
@@ -2263,12 +2282,13 @@ function planTable(dates){
     const theme = (special && !own ? `<span class="sp">${special}</span>`
       : (o.theme === b.theme ? (o.theme ? esc(o.theme) : '<span class="muted">–</span>')
         : `<span class="gb">Onder</span>${esc(o.theme || '–')}<br><span class="gb">Boven</span>${esc(b.theme || '–')}`) + (special && !hasWord(o.theme) ? ` · <span class="sp">${special}</span>` : ''))
-      + (w?.week === 7 ? `<span class="mt">👥 ${meetingLabel(w.p.meeting)}</span>` : '');
-    const cls = `click ${d === cur ? 'today' : ''}`;
+      + (w?.week === 7 ? `<span class="mt">👥 ${meetingLabel(w.p.meeting)}</span>` : '')
+      + (isGolden(d) ? '<span class="mt gold">✨ Gouden week</span>' : '');
+    const cls = `click ${d === cur ? 'today' : ''} ${isGolden(d) ? 'golden' : ''}`;
     return head + `<tr class="${cls}" data-action="editPlan" data-date="${d}">
       <td><span class="d">${fmtDate(d, {day:'numeric', month:'short'}).replace('.', '')}</span>${w ? `<span class="wk">week ${w.week}</span>` : ''}</td>
       <td>${nameList(s.boven, d)}</td><td>${nameList(s.onder, d)}</td><td class="tc">${theme}</td></tr>
-      ${special || o.theme || b.theme ? `<tr class="trow ${cls}" data-action="editPlan" data-date="${d}"><td></td><td colspan="2">${theme}</td></tr>` : ''}`;
+      ${special || o.theme || b.theme || isGolden(d) ? `<tr class="trow ${cls}" data-action="editPlan" data-date="${d}"><td></td><td colspan="2">${theme}</td></tr>` : ''}`;
   }).join('');
   return `<div class="card" style="padding:0;overflow:hidden"><table class="t plan-table">
     <thead><tr><th>Datum</th><th>Bovenbouw</th><th>Onderbouw</th><th class="tc">Thema</th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -2353,6 +2373,7 @@ function openEditPeriod(id){
   const p = db.periods.find(x => x.id === id) || { id:'', theme:'', themeBoven:'',
     start:last ? addDays(last.start, 7*PERIOD_WEEKS) : nextSunday(todayISO()),
     meeting:last ? (last.meeting === 'groot' ? 'klein' : 'groot') : 'klein' };
+  const gw = id ? goldWeek(p) : GOLD_WEEKS[Math.floor(Math.random() * GOLD_WEEKS.length)];   // nieuwe periode: de app kiest willekeurig
   openModal(`
     <div class="modal-head"><div><h2>${id ? 'Periode bewerken' : 'Nieuwe periode'}</h2><span class="muted">${PERIOD_WEEKS} weken met één thema per groep</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
@@ -2363,6 +2384,10 @@ function openEditPeriod(id){
       <label class="field"><span>Vergadering in week ${PERIOD_WEEKS}</span><select id="pd-meeting">
         <option value="klein" ${p.meeting === 'klein' ? 'selected' : ''}>Kleine vergadering</option>
         <option value="groot" ${p.meeting === 'groot' ? 'selected' : ''}>Grote vergadering</option></select></label>
+      <label class="field"><span>✨ Gouden week <span class="muted" style="font-weight:400">(dubbele punten)</span></span><select id="pd-gold">
+        <option value="">Geen gouden week</option>
+        ${Array.from({ length:PERIOD_WEEKS }, (_, i) => i + 1).map(n => `<option value="${n}" ${gw === n ? 'selected' : ''}>Week ${n}${n === 6 ? ' (bidden)' : n === 7 ? ' (afsluiting)' : ''}</option>`).join('')}</select>
+        ${id ? '' : '<span class="muted" style="font-weight:400;font-size:13px">De app heeft willekeurig een week gekozen. Je mag hem aanpassen.</span>'}</label>
       <div class="banner" style="margin-top:0">${icon('info')}<span>Week 6 is altijd <b>bidden</b>, week 7 is <b>puntenwinkeltje</b> en vergadering. Per zondag kun je onder Planning nog een eigen onderwerp invullen.</span></div>
       <div id="pd-err"></div>
     </div>
@@ -3102,7 +3127,7 @@ const actions = {
   toggleChip: (d, el) => {
     el.classList.toggle('on');
     const pc = $('#ci-points');   // inchecken: punten meteen bijwerken
-    if (pc) $('#ci-points-n').textContent = pointsFor(pc.dataset.group, [...document.querySelectorAll('.modal .chip.on')].map(c => c.dataset.id));
+    if (pc) $('#ci-points-n').textContent = pointsFor(pc.dataset.group, [...document.querySelectorAll('.modal .chip.on')].map(c => c.dataset.id), pc.dataset.date);
   },
   savePoints: () => {
     if (!isAdmin()) return;
@@ -3279,7 +3304,11 @@ const actions = {
     if (db.periods.some(x => x.id !== d.id && x.start === start)) return err('Er begint al een periode op die zondag.');
     const p = { id:d.id || newId(), start, theme, themeBoven, meeting:$('#pd-meeting').value };
     db.periods = db.periods.filter(x => x.id !== p.id).concat(p);
-    put('periods', p); save(); closeModal(); render();
+    put('periods', p);
+    const gouden = { ...(db.settings?.gouden || {}) }, g = +$('#pd-gold').value;
+    if (g) gouden[p.id] = g; else delete gouden[p.id];
+    db.settings = { ...db.settings, gouden }; put('settings', { key:'gouden', value:gouden });
+    save(); closeModal(); render();
     toast(start !== raw ? `Opgeslagen (begint op zondag ${fmtDate(start, {day:'numeric', month:'long'})})` : 'Periode opgeslagen');
   },
   delPeriod: d => {
