@@ -256,6 +256,7 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .icon-btn.sm svg.i{width:17px;height:17px}
 .agenda{padding:14px 16px}
 .agenda .ag-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ag-move{display:flex;gap:2px;flex:none}.ag-move .icon-btn:disabled{opacity:.25}
 .agenda .num{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:800;display:grid;place-items:center;flex:none;font-size:14px}
 .agenda .ag-title{flex:1;font:inherit;font-weight:800;border:0;background:transparent;color:var(--text);padding:4px 0;min-width:0;outline:0}
 .agenda textarea.ag-title{min-height:0;border:0;border-radius:6px;padding:4px 2px;background:transparent;line-height:1.3}
@@ -517,7 +518,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-10-31 · 60';
+const APP_VERSION = '2026-11-01 · 61';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -569,6 +570,8 @@ const ICONS = {
   plus:'<path d="M12 5v14M5 12h14"/>',
   x:'<path d="M6 6l12 12M18 6 6 18"/>',
   chev:'<path d="M9 6l6 6-6 6"/>',
+  up:'<path d="M6 15l6-6 6 6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
   check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
   monitor:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   pray:'<path d="M12 4v6M9 21l-1.5-5.5L11 9M15 21l1.5-5.5L13 9"/><path d="M6 21h12"/>',
@@ -1483,6 +1486,9 @@ function ensureMeeting(date, kind){
   if (!m){ m = { id:newId(), date, kind:kind || 'klein' }; db.meetings.push(m); put('meetings', m); save(); }
   return m;
 }
+/* Agendapunten op volgorde zetten: pijltje omhoog/omlaag ruilt met de buur; daarna krijgen alle punten een nieuwe 'sort' */
+const moveBtns = (a, i, n) => `<span class="ag-move"><button class="icon-btn sm" title="Omhoog" data-action="moveAgenda" data-id="${a.id}" data-dir="-1" ${i ? '' : 'disabled'}>${icon('up')}</button>
+  <button class="icon-btn sm" title="Omlaag" data-action="moveAgenda" data-id="${a.id}" data-dir="1" ${i < n - 1 ? '' : 'disabled'}>${icon('down')}</button></span>`;
 const agendaOf = id => db.agenda.filter(a => a.meetingId === id).sort((a,b) => a.sort - b.sort);
 const isLate = a => !a.done && !!a.due && a.due < todayISO();
 const byDue = (a,b) => (a.due || '9999').localeCompare(b.due || '9999');
@@ -1523,7 +1529,7 @@ function vergaderOverzicht(){
     ${n ? `<h3 class="section-title">Agendapunten</h3>
     <div class="card list">${items.map(a => `<div class="row static"><span class="row-icon" style="width:32px;height:32px;border-radius:50%;font-weight:800;font-size:14px">${items.indexOf(a) + 1}</span>
         <span class="row-main"><b style="white-space:normal">${esc(a.title)}</b><span class="muted">door ${esc(a.author || '—')}</span></span>
-        <button class="icon-btn sm" title="Verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>`).join('')}
+        ${moveBtns(a, items.indexOf(a), items.length)}<button class="icon-btn sm" title="Verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>`).join('')}
       ${agendaAddForm(n.date, n.kind)}</div>` : ''}
     <h3 class="section-title">Open actiepunten${(n => n ? ` <span class="late-count">· ${n} te laat</span>` : '')(open.filter(isLate).length)}</h3>
     <div class="card list">${open.map(a => actionRow(a, true)).join('') || '<div class="empty">Geen open actiepunten. 🎉</div>'}</div>
@@ -1557,7 +1563,7 @@ function renderVergadering(){
       <div class="card agenda">
         <div class="ag-head"><span class="num">${i + 1}</span>
           <textarea class="ag-title" rows="1" data-input="agTitle" data-id="${a.id}" aria-label="Agendapunt">${esc(a.title)}</textarea>
-          <button class="icon-btn sm" title="Agendapunt verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>
+          ${moveBtns(a, i, items.length)}<button class="icon-btn sm" title="Agendapunt verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>
         <textarea data-input="agNotes" data-id="${a.id}" placeholder="${locked ? 'Nog geen notulen' : 'Notulen bij dit punt…'}" ${locked ? 'readonly' : ''}>${esc(a.notes || '')}</textarea>
         ${(acts => acts.length ? `<div class="acts">${acts.map(x => actionRow(x)).join('')}</div>` : '')(db.actions.filter(x => x.agendaId === a.id).sort(byDue))}
         <button class="textlink add-act" data-action="addAction" data-meeting="${m.id}" data-agenda="${a.id}">${icon('plus')} Actiepunt</button>
@@ -1737,6 +1743,9 @@ function renderSmileys(){
   <div class="page">
     <div class="tabs">${tabs.map(([id,l]) => `<button class="tab ${state.smTab === id ? 'active' : ''}" data-action="smTab" data-id="${id}">${l}</button>`).join('')}</div>
     <div class="page-head"><h1>Gedrag</h1><span class="muted">${cap(dayLabel(T))}</span></div>
+    <label class="search" style="margin-bottom:14px">${icon('search')}<input id="sm-search" data-input="smSearch" placeholder="Zoek een kind" value="${esc(state.smSearch || '')}" autocomplete="off"></label>
+    <div id="sm-results">${smResults()}</div>
+    <div id="sm-main" ${state.smSearch ? 'hidden' : ''}>
     <div class="banner" style="margin:0 0 16px">${icon('info')}<span><b>${SMILEY_GOAL} smileys</b> = iets uit de grabbelbak graaien.
       Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders of verzorgers in de dienst zitten.</span></div>
     ${grab.length ? `<h3 class="section-title">🎁 Mag graaien uit de grabbelbak</h3>
@@ -1755,7 +1764,14 @@ function renderSmileys(){
     <button class="btn btn-outline btn-block" style="margin-top:20px" data-action="smAll">${icon(state.smAll ? 'x' : 'users')} ${state.smAll ? 'Alle kinderen verbergen' : 'Alle kinderen'}${others.length ? ` (${others.length})` : ''}</button>
     ${state.smAll ? `<h3 class="section-title">Alle kinderen (niet ingecheckt)</h3>
     <div class="card list">${others.length ? others.map(smRow).join('') : `<div class="empty">Geen andere kinderen in deze groep.</div>`}</div>` : ''}
+    </div>
   </div>`;
+}
+/* Zoeken bij Gedrag: alle kinderen die nog komen, uit elke groep */
+function smResults(){
+  const q = (state.smSearch || '').trim().toLowerCase(); if (!q) return '';
+  const list = db.kids.filter(k => isActive(k) && k.name.toLowerCase().includes(q)).sort(byName);
+  return `<div class="card list">${list.map(smRow).join('') || `<div class="empty">Geen kind gevonden met “${esc(state.smSearch)}”.</div>`}</div>`;
 }
 function smRow(k){
   const n = smileyCount(k.id), w = warnCount(k.id); return `
@@ -3055,8 +3071,17 @@ const actions = {
   smTab: d => { state.smTab = d.id; render(); },
   smAll: () => { state.smAll = !state.smAll; render(); },
   openSmiley: d => openSmiley(d.id),
+  moveAgenda: d => {
+    const a = db.agenda.find(x => x.id === d.id); if (!a) return;
+    const list = agendaOf(a.meetingId), i = list.indexOf(a), j = i + Number(d.dir);
+    if (j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    list.forEach((x, k) => { const sort = (k + 1) * 10; if (x.sort !== sort){ x.sort = sort; upd('agenda_items', { id:x.id, sort }); } });
+    save(); render();
+  },
   addSmiley: d => {
     const k = kidById(d.id); if (!k) return;
+    if (!confirm(`😊 Smiley geven aan ${k.name}?`)) return;   // voorkomt per ongeluk tikken
     addMark(k.id, 'smiley'); const n = smileyCount(k.id);
     toast(n >= SMILEY_GOAL ? `🎁 ${firstName(k.name)} mag graaien uit de grabbelbak!` : `😊 ${firstName(k.name)}: ${n} van de ${SMILEY_GOAL} smileys`);
     render(); if (d.modal) openSmiley(k.id);
@@ -3530,6 +3555,7 @@ document.addEventListener('input', e => {
   if (k === 'search'){ state.search = e.target.value; renderKidList(); }
   if (k === 'kidName'){ const el = $('#kid-similar'); if (el) el.innerHTML = similarHint(e.target.value); }
   if (k === 'zsearch'){ state.zSearch = e.target.value; renderZList(); }
+  if (k === 'smSearch'){ state.smSearch = e.target.value; $('#sm-results').innerHTML = smResults(); $('#sm-main').hidden = !!state.smSearch.trim(); }
   if (k === 'importText') renderImportPreview();
   if (k === 'agTitle' || k === 'agNotes'){
     const a = db.agenda.find(x => x.id === e.target.dataset.id); if (!a) return;

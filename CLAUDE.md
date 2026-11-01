@@ -121,6 +121,7 @@ periode voor bovenbouw een eigen thema heeft). Echte stand: periode "Scheppingsv
 Vergadering (eigen knop in de menubalk, `#/vergadering`; bewust niet op Home): volgende vergadering = week 7 van de periode (of zelf gepland), agendapunten
 vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
 afvinken; open actiepunten op het overzicht; over de vóór-datum = `isLate`: rood vlak + "⚠️ Te laat", kop "· N te laat", bovenaan door `byDue`), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
+Agendapunten verplaatsen met pijltjes omhoog/omlaag (overzicht én vergaderpagina, `moveAgenda` nummert `sort` opnieuw).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Per vergadering een notulist; actiepunten met één of meer personen (`who` = lijst). Notulen typt alleen de notulist;
 anderen zien ze alleen-lezen en live ("Toch typen" kan, `state.notesOpen`), zodat niemand elkaars tekst overschrijft. Delen geeft een verslag zoals de
@@ -158,7 +159,8 @@ Gedrag (eigen knop in de menubalk, `#/gedrag`; `#/smileys` werkt ook): per kind 
 iets uit de grabbelbak graaien; knop "Gegraaid" trekt er 7 af (rest telt door). Waarschuwingen tellen per zondag:
 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders/verzorgers in de dienst (bevestigen). Lijst = alleen vandaag
 ingecheckte kinderen; onderin knop "Alle kinderen" (de rest van de groep), tabs per groep (standaard je eigen groep), secties "Mag graaien" en "Op het bord";
-tik op de naam om terug te draaien. Opslag: tabel `marks` (kid_id, date, kind smiley/warn/grab, author), lokaal `db.marks`.
+tik op de naam om terug te draaien. Smiley geven vraagt eerst bevestiging (tegen per ongeluk tikken). Zoekveld bovenaan (`state.smSearch`,
+`smResults`: alle kinderen die nog komen, uit elke groep; de rest van de pagina verdwijnt zolang er gezocht wordt). Opslag: tabel `marks` (kid_id, date, kind smiley/warn/grab, author), lokaal `db.marks`.
 Gouden week (versie 60): per periode één week met dubbele punten (`pointsFor(group, items, date)` ×2 als `isGolden(date)`).
 Opslag settings 'gouden' = { periode-id: weeknummer } (alleen beheerder). Periode bewerken → keuze "✨ Gouden week" (Geen/Week 1–7);
 bij een nieuwe periode kiest de app willekeurig uit week 1–5 (`GOLD_WEEKS`), aanpasbaar. In die week (`goldNow()` = zondag van deze
