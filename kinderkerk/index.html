@@ -255,6 +255,7 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .icon-btn.sm{width:32px;height:32px}
 .icon-btn.sm svg.i{width:17px;height:17px}
 .agenda{padding:14px 16px}
+#ap-list .row.picked{background:var(--brand-soft)}#ap-list .row.picked .i{color:var(--brand)}
 .agenda .ag-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .ag-move{display:flex;gap:2px;flex:none}.ag-move .icon-btn:disabled{opacity:.25}
 .agenda .num{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:800;display:grid;place-items:center;flex:none;font-size:14px}
@@ -401,6 +402,7 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .who-prays.set{background:var(--ok-soft)}
 .who-prays span{flex:1;min-width:0}
 .who-prays .btn{flex:none}
+.who-prays{flex-wrap:wrap}.who-prays > span:not(.who-btns){flex:1 1 150px}.who-prays .who-btns{display:flex;align-items:center;gap:12px;flex:none;margin-left:auto}.self-pick{font-size:13.5px;color:var(--brand);white-space:nowrap}
 .notsunday{display:flex;align-items:center;gap:10px;background:var(--brand-soft);color:var(--brand-text);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-weight:600;text-decoration:none}
 .notsunday b{color:var(--brand)}
 .note{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px}
@@ -518,7 +520,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-01 · 61';
+const APP_VERSION = '2026-11-01 · 62';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2902,9 +2904,10 @@ function renderGebed(){
   const T = todayISO(), D = prayDay(), points = prayerPoints(D), marks = prayMarks(D);
   const here = checkinsOn(D).length, onder = checkinsOn(D).some(c => kidById(c.kidId).group === 'onder');
   const coll = marks.find(m => m.kind === 'collecte'), open = points.filter(p => !marks.some(m => m.kind === 'pray' && m.ref === p.id));
+  const self = ref => `<button class="textlink self-pick" data-action="prayPick" data-ref="${ref}" data-day="${D}">Zelf kiezen</button>`;
   const whoRow = (m, label, ref) => m && kidById(m.kidId)
-    ? `<div class="who-prays set">🙏 <span><b>${esc(kidById(m.kidId).name)}</b> ${label}</span><button class="btn btn-outline sm" data-action="rePick" data-ref="${ref}" data-day="${D}">${icon('refresh')} Ander kind</button></div>`
-    : `<div class="who-prays"><span class="muted">Nog niemand gekozen</span><button class="btn btn-soft sm" data-action="rePick" data-ref="${ref}" data-day="${D}">Kies</button></div>`;
+    ? `<div class="who-prays set">🙏 <span><b>${esc(kidById(m.kidId).name)}</b> ${label}</span><span class="who-btns">${self(ref)}<button class="btn btn-outline sm" data-action="rePick" data-ref="${ref}" data-day="${D}">${icon('refresh')} Ander kind</button></span></div>`
+    : `<div class="who-prays"><span class="muted">Nog niemand gekozen</span><span class="who-btns">${self(ref)}<button class="btn btn-soft sm" data-action="rePick" data-ref="${ref}" data-day="${D}">Kies</button></span></div>`;
   const older = allPrayers().filter(p => p.date !== D), byDate = {};
   older.forEach(p => (byDate[p.date] ||= []).push(p));
   app.innerHTML = `
@@ -2945,14 +2948,48 @@ function openKidPrayer(id){
     </div>
     <div class="modal-foot"><button class="btn btn-primary" data-action="saveKidPrayer" data-id="${id}">Toevoegen</button></div>`);
 }
+/* Zelf een kind kiezen dat bidt: typ een naam. Eerst de ingecheckte kinderen; voor de collecte alleen de onderbouw. */
+let pickCtx = null;
+function pickList(q){
+  const { day, ref } = pickCtx, here = new Set(checkinsOn(day).map(c => c.kidId));
+  const ok = k => isActive(k) && (ref !== 'collecte' || k.group === 'onder');
+  const query = (q || '').trim().toLowerCase();
+  const list = db.kids.filter(k => ok(k) && (query ? k.name.toLowerCase().includes(query) : here.has(k.id)))
+    .sort((a,b) => (here.has(b.id) - here.has(a.id)) || byName(a,b)).slice(0, 30);
+  return list.map(k => `<button class="row" data-action="setPray" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
+      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${here.has(k.id) ? 'Ingecheckt' : 'Niet ingecheckt'} · ${GROUPS[k.group]}</span></span></button>`).join('')
+    || `<div class="empty">${query ? `Geen kind gevonden met “${esc(q)}”.` : 'Nog niemand ingecheckt. Typ een naam.'}</div>`;
+}
+function openPrayPick(day, ref){
+  pickCtx = { day, ref };
+  const point = ref !== 'collecte' && prayerPoints(day).find(p => p.id === ref);
+  openModal(`
+    <div class="modal-head"><div><h2>${ref === 'collecte' ? 'Wie bidt voor de collecte?' : 'Wie bidt hiervoor?'}</h2><span class="muted">${point ? esc(point.text) : 'Alleen kinderen van de onderbouw'}</span></div>
+      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body">
+      <label class="search" style="margin-bottom:12px">${icon('search')}<input id="pk-search" data-input="pkSearch" placeholder="Typ een naam" autocomplete="off"></label>
+      <div class="card list" id="pk-list" style="box-shadow:none;border:1px solid var(--border)">${pickList('')}</div>
+    </div>`);
+  setTimeout(() => $('#pk-search')?.focus(), 50);
+}
+function apList(day, q){
+  const here = new Set(checkinsOn(day).map(c => c.kidId)), query = (q || '').trim().toLowerCase(), sel = $('#ap-kid')?.value;
+  const list = db.kids.filter(k => isActive(k) && (query ? k.name.toLowerCase().includes(query) : here.has(k.id)))
+    .sort((a,b) => (here.has(b.id) - here.has(a.id)) || byName(a,b)).slice(0, 20);
+  return list.map(k => `<button type="button" class="row ${k.id === sel ? 'picked' : ''}" data-action="apPick" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
+      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${here.has(k.id) ? 'Ingecheckt' : 'Niet ingecheckt'}</span></span>${k.id === sel ? icon('check') : ''}</button>`).join('')
+    || `<div class="empty">${query ? `Geen kind gevonden met “${esc(q)}”.` : 'Typ een naam.'}</div>`;
+}
 function openAddPrayer(day){
-  const here = new Set(checkinsOn(day).map(c => c.kidId));
-  const kids = db.kids.filter(isActive).sort((a,b) => (here.has(b.id) - here.has(a.id)) || byName(a,b));
+  state.apDay = day;
   openModal(`
     <div class="modal-head"><div><h2>Gebedspunt toevoegen</h2><span class="muted">${cap(fmtDate(day, {weekday:'long', day:'numeric', month:'long'}))}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
-      <label class="field"><span>Kind</span><select id="ap-kid">${kids.map(k => `<option value="${k.id}">${esc(k.name)}${here.has(k.id) ? '' : ' (niet ingecheckt)'}</option>`).join('')}</select></label>
+      <div class="field"><span>Kind</span>
+        <label class="search">${icon('search')}<input id="ap-search" data-input="apSearch" placeholder="Typ een naam" autocomplete="off"></label>
+        <input type="hidden" id="ap-kid" value="">
+        <div class="card list" id="ap-list" style="box-shadow:none;border:1px solid var(--border);margin-top:8px">${apList(day, '')}</div></div>
       <label class="field"><span>Gebedspunt</span><textarea id="ap-text" rows="3" placeholder="Waarvoor mogen we bidden?"></textarea></label>
     </div>
     <div class="modal-foot"><button class="btn btn-primary" data-action="saveAddPrayer" data-day="${day}">Toevoegen</button></div>`);
@@ -3132,8 +3169,18 @@ const actions = {
     dropMark(m); render(); openKidPrayer(d.kid);
   },
   addPrayer: d => openAddPrayer(d.day),
+  apPick: d => { $('#ap-kid').value = d.id; const k = kidById(d.id); $('#ap-search').value = k.name; $('#ap-list').innerHTML = apList(state.apDay, k.name); $('#ap-text').focus(); },
+  prayPick: d => openPrayPick(d.day, d.ref),
+  setPray: d => {
+    const { day, ref } = pickCtx, kind = ref === 'collecte' ? 'collecte' : 'pray';
+    const old = kind === 'collecte' ? prayMarks(day).find(m => m.kind === 'collecte') : prayMarks(day).find(m => m.kind === 'pray' && m.ref === ref);
+    if (old) dropMark(old);
+    addMark(d.id, kind, { date:day, ...(kind === 'pray' ? { ref } : {}) });
+    closeModal(); render(); toast(`🙏 ${firstName(kidById(d.id).name)} bidt ${kind === 'collecte' ? 'voor de collecte' : 'hiervoor'}`);
+  },
   saveAddPrayer: d => {
     const text = $('#ap-text').value.trim(); if (!text){ $('#ap-text').focus(); return; }
+    if (!$('#ap-kid').value) return toast('Kies eerst een kind');
     addMark($('#ap-kid').value, 'prayer', { date:d.day, note:text }); closeModal(); render(); toast('Gebedspunt toegevoegd');
   },
   toggleAll: () => { state.showAll = !state.showAll; renderKidList(); },
@@ -3555,6 +3602,8 @@ document.addEventListener('input', e => {
   if (k === 'search'){ state.search = e.target.value; renderKidList(); }
   if (k === 'kidName'){ const el = $('#kid-similar'); if (el) el.innerHTML = similarHint(e.target.value); }
   if (k === 'zsearch'){ state.zSearch = e.target.value; renderZList(); }
+  if (k === 'pkSearch') $('#pk-list').innerHTML = pickList(e.target.value);
+  if (k === 'apSearch'){ $('#ap-kid').value = ''; $('#ap-list').innerHTML = apList(state.apDay, e.target.value); }
   if (k === 'smSearch'){ state.smSearch = e.target.value; $('#sm-results').innerHTML = smResults(); $('#sm-main').hidden = !!state.smSearch.trim(); }
   if (k === 'importText') renderImportPreview();
   if (k === 'agTitle' || k === 'agNotes'){

@@ -169,7 +169,8 @@ in de planningtabel, en in het incheckvenster een gouden puntenkaart "×2". Het 
 Gebed (`#/gebed`, in Meer bovenaan + kaart op Home; bewust niet in de menubalk, die is vol): gebedspunten van vandaag (of
 de laatste zondag als het geen zondag is). Bij kinderkerk bidden kinderen voor de gebedspunten van het inchecken + 1 kind
 van de onderbouw voor de collecte. "Kies wie er bidden" kiest per gebedspunt een ingecheckt kind (alle groepen, liefst niet
-het kind zelf) en een onderbouwkind voor de collecte; "Ander kind" kiest opnieuw. Eerlijk (`fairPick`): minst vaak aan de
+het kind zelf) en een onderbouwkind voor de collecte; "Ander kind" kiest opnieuw. "Zelf kiezen" = naam typen (`openPrayPick`/`pickList`: eerst ingecheckte kinderen, typen zoekt in
+alle kinderen die nog komen; collecte alleen onderbouw). Gebedspunt toevoegen: kind kiezen door de naam te typen (`apList`). Eerlijk (`fairPick`): minst vaak aan de
 beurt → langst geleden → toeval, zodat ook kinderen die weinig komen even vaak bidden. Beurten = marks 'pray' (ref = id van
 het gebedspunt) en 'collecte'; losse gebedspunten = marks 'prayer' (tekst in `note`). Tik op een kindnaam = alle
 gebedspunten van dat kind + nieuw punt. Op Home en Check-in staat op een dag zonder zondag/check-ins: "Hé, vandaag is het
