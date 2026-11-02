@@ -21,11 +21,10 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   een klein "ⓘ Uitleg" (`infoTip`, inklapbaar), niet als groot blauw blok. Back-upherinnering niet op Home maar rood stipje op
   Meer + bovenaan Meer → Gegevens (`backupDue`). Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller), geen "Jij hebt leiding" meer (alleen de
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
-  Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 67: Home past zonder scrollen en verschilt per dag.
-  Zondag (kkDay = vandaag): begroeting, knop "Kinderen inchecken", regels Gebedsverlangens + Quiz (bovenbouw, `homeQuizLink`), tellers
-  (zonder groepjesregel) en Jarig (eerst 2, "Nog N meer" = `state.bdayAll`). Doordeweeks: begroeting, regels Gebedsverlangens + Quiz
-  en het programma van komende zondag + Jarig als één regel (`homeBirthdays(true)`); geen inchecken-knop, geen tellers, geen
-  "geen zondag"-regel (die staat nog wel op Check-in). Versie 68: onder het aantal kinderen klein "12 onder · 2 boven".
+  Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 69: Home heeft altijd dezelfde indeling (herkenbaar, past zonder scrollen):
+  begroetingskaart (knop Kinderen inchecken + regels Gebedsverlangens en Quiz `homeQuizLink`), tellers (op zondag van vandaag,
+  doordeweeks van afgelopen zondag met dat als klein kopje; onder Kinderen "12 onder · 2 boven"), kort programma `planMini`
+  (thema + leiding; op zondag vandaag, anders komende zondag; tik = Planning) en Jarig als één regel (`homeBirthdays(true)`).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
