@@ -15,10 +15,12 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Layout en kleuren volgen de kerkapp van De Deur (Donkey Mobile): wit, donkerblauw `#1d3c9c`, lettertype Nunito Sans,
   kaarten op lichtgrijs. Besloten: de kleuren blijven zo (niet de mint/zachtblauw van het logo).
 - Navigatie: op de website (scherm vanaf 1000px) bovenin; op telefoon en als geïnstalleerde app een balk vast tegen de onderkant
-  (glazig, over de hele breedte; sinds versie 63, eerst zwevend) met Home, Check-in, Gedrag, Planning, Vergadering, Meer.
+  (glazig, over de hele breedte; sinds versie 63, eerst zwevend) met alleen Home, Check-in, Gedrag en Meer (sinds versie 64).
+  Planning en Vergadering staan bovenaan in Meer (Algemeen), met "← Meer" op die pagina's; Meer-knop is actief op die routes.
 - Rust (feedback versie 63): per scherm krijgt de hoofdactie de aandacht, de rest gaat achter een menu. Uitleg staat achter
   een klein "ⓘ Uitleg" (`infoTip`, inklapbaar), niet als groot blauw blok. Back-upherinnering niet op Home maar rood stipje op
-  Meer + bovenaan Meer → Gegevens (`backupDue`). Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller),
+  Meer + bovenaan Meer → Gegevens (`backupDue`). Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller), geen "Jij hebt leiding" meer (alleen de
+  gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact.
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
