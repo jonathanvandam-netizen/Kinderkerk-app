@@ -167,7 +167,7 @@ button.home-link{width:100%;background:none;border-left:0;border-right:0;border-
 .backup-due{border:2px solid var(--bad-soft);border-radius:var(--radius);margin-bottom:12px;width:100%}
 #hometab .section-title{margin:16px 0 8px}
 .page.wide{padding-bottom:2px}
-.stats1 .stats-cap{grid-column:1/-1;font-size:12.5px;font-weight:700;color:var(--muted);padding:0 16px 6px}
+.stats1 .stats-cap{grid-column:1/-1;font-size:12.5px;font-weight:700;color:var(--muted);padding:0 16px 2px;margin-top:-3px}
 .plan-mini{display:block;padding:12px 16px;margin-top:12px;color:var(--text);text-decoration:none}
 .pm-top{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--brand)}.pm-top .chev{margin-left:auto;width:16px;height:16px;color:var(--muted)}
 .pm-theme{font-size:17px;font-weight:800;margin:3px 0 4px;line-height:1.25}
@@ -543,7 +543,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-02 · 69';
+const APP_VERSION = '2026-11-02 · 70';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1243,8 +1243,8 @@ window.addEventListener('appinstalled', () => { installPrompt = null; toast('De 
 const TOUR_ALL = [
   { t:'Welkom bij de Kinderkerk-app! 👋', p:'Deze rondleiding laat stap voor stap zien wat je met de app kunt. Het duurt een paar minuten. Je kunt altijd stoppen en hem later opnieuw starten via je account (rechtsboven).' },
   { nav:'home', route:'home', t:'Home', p:'Hier begin je. Je ziet het overzicht van vandaag. In de balk onderin staan de dingen die je op zondag gebruikt: Home, Check-in en Gedrag. De rest vind je onder Meer.' },
-  { route:'home', el:['.hello a.btn[href="#/checkin"]', '#bottomnav a[href="#/checkin"]', '#mainnav a[href="#/checkin"]'], t:'Kinderen inchecken', p:'Op zondag staat hier een grote knop om de kinderen in te checken (doordeweeks via Check-in in de balk). Leiding die op de planning staat, is automatisch ingecheckt. Komt er iemand extra? Tik dan op de teller "Leiding".' },
-  { route:'home', el:['#hometab', '.card.stats1'], t:'Wie er is en het programma', p:'Hier zie je hoeveel kinderen en leiding er zijn (doordeweeks van afgelopen zondag); tik op een teller voor de namen. Daaronder het thema en wie er leiding heeft (doordeweeks van komende zondag), en wie er jarig is.' },
+  { route:'home', el:['.hello a.btn[href="#/checkin"]'], t:'Kinderen inchecken', p:'Met deze knop check je de kinderen in. Leiding die op de planning staat, is automatisch ingecheckt. Komt er iemand extra? Tik dan op de teller "Leiding".' },
+  { route:'home', el:['#hometab', '.card.stats1'], t:'Wie er is en het programma', p:'Hier zie je hoeveel kinderen en leiding er waren op de laatste zondag; tik op een teller voor de namen. Daaronder het thema en wie er leiding heeft op de volgende zondag, en wie er jarig is.' },
   { only:() => canQuiz(), route:'home', el:['.quiz-link'], t:'Quizvraag bedenken (bovenbouw)', p:'Alleen voor de bovenbouw: met deze regel zet je een vraag klaar voor de quiz in week 7, bijvoorbeeld tijdens de preek. Kies een open vraag, of meerkeuze A–D. Bij meerkeuze tik je de letter van het goede antwoord aan; zijn er meer goed, tik ze dan allemaal aan.' },
   { route:'home', el:['.home-link', 'a[href="#/gebed"]'], t:'Gebedsverlangens', p:'Hier vind je de gebedsverlangens van vandaag. De app kiest eerlijk welke kinderen ervoor bidden, en een kind van de onderbouw voor de collecte. Ook kinderen die niet vaak komen, zijn zo even vaak aan de beurt.' },
   { nav:'checkin', route:'checkin', el:['.toolbar'], t:'Check-in', p:'Zoek een kind, of voeg een nieuw kind toe met + Kind. Wie het vaakst komt, staat bovenaan. Je ziet de kinderen van de laatste 60 dagen; met "Alle kinderen" onderaan zie je iedereen. Een nieuw kind krijgt meteen 50 punten.' },
@@ -1407,7 +1407,7 @@ function homeVandaag(){
   const split = [['onder','onder'],['boven','boven'],['bezoeker','bezoek']].filter(([k]) => grp(k)).map(([k, l]) => `${grp(k)} ${l}`).join(' · ');
   return `
     <div class="card stats1">
-      ${D !== T ? `<div class="stats-cap">${cap(dayLabel(D))}</div>` : ''}
+      <div class="stats-cap">${cap(dayLabel(D))}</div>
       <button class="cell" data-action="whoIsIn" title="Welke kinderen zijn er?"><div class="lbl">Kinderen ${icon('chev')}</div><div class="num">${cs.length}</div>${split ? `<div class="sub">${split}</div>` : ''}</button>
       <button class="cell" data-action="leaderCheckin" title="Welke leiding is er?"><div class="lbl">Leiding ${icon('chev')}</div><div class="num">${leaders}</div></button>
       <button class="cell" data-action="whoIsIn" title="Wie is er?"><div class="lbl">Totaal ${icon('chev')}</div><div class="num">${cs.length + leaders}</div></button>
