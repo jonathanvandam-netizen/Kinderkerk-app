@@ -24,7 +24,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 67: Home past zonder scrollen en verschilt per dag.
   Zondag (kkDay = vandaag): begroeting, knop "Kinderen inchecken", regels Gebedsverlangens + Quiz (bovenbouw, `homeQuizLink`), tellers
   (zonder groepjesregel) en Jarig (eerst 2, "Nog N meer" = `state.bdayAll`). Doordeweeks: begroeting, regels Gebedsverlangens + Quiz
-  en het programma van komende zondag; geen inchecken-knop, geen tellers, geen "geen zondag"-regel (die staat nog wel op Check-in).
+  en het programma van komende zondag + Jarig als één regel (`homeBirthdays(true)`); geen inchecken-knop, geen tellers, geen
+  "geen zondag"-regel (die staat nog wel op Check-in). Versie 68: onder het aantal kinderen klein "12 onder · 2 boven".
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na

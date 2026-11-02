@@ -167,7 +167,8 @@ button.home-link{width:100%;background:none;border-left:0;border-right:0;border-
 .info-tip[open] summary{margin-bottom:6px}.info-tip > div{background:var(--brand-soft);color:var(--brand-text);border-radius:12px;padding:10px 12px;line-height:1.45}
 .backup-due{border:2px solid var(--bad-soft);border-radius:var(--radius);margin-bottom:12px;width:100%}
 #hometab .section-title{margin:16px 0 8px}
-.page.wide{padding-bottom:12px}
+.page.wide{padding-bottom:2px}
+.bday-line{padding:12px 16px;margin-top:12px;font-size:15px;line-height:1.5}.bday-line .textlink{font:inherit;color:var(--brand);font-weight:700}
 .row.more-row{justify-content:center;color:var(--brand);font-weight:700;font-size:14px;padding-top:8px;padding-bottom:8px}
 .row.compact{padding-top:9px;padding-bottom:9px}.row.compact .row-main{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
 .hello-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
@@ -176,12 +177,13 @@ button.home-link{width:100%;background:none;border-left:0;border-right:0;border-
 .hello-date{font-size:13px;color:var(--muted);font-weight:600;margin-top:2px}
 .hello .hero-duty{margin:0 0 12px}
 /* Tellers in één kaart */
-.stats1{display:grid;grid-template-columns:repeat(3,1fr);padding:14px 0 12px}
-.stats1 .cell{padding:0 16px;background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.stats1{display:grid;grid-template-columns:repeat(3,1fr);padding:11px 0 10px}
+.stats1 .cell{padding:0 16px;background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-start}
 .stats1 .cell .lbl svg.i{width:13px;height:13px;vertical-align:-1px;opacity:.6}
 .stats1 .cell + .cell{border-left:1px solid var(--border)}
 .stats1 .lbl{font-size:13px;color:var(--muted);font-weight:700}
-.stats1 .num{font-size:30px;font-weight:800;line-height:1.15}
+.stats1 .num{font-size:30px;font-weight:800;line-height:1.1}
+.stats1 .sub{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
 .stats1 .dots{grid-column:1/-1;border-top:1px solid var(--border);margin-top:10px;padding:10px 16px 0}
 .btn-row.two{display:grid;grid-template-columns:1fr 1fr}
 .btn-row.two .btn{padding-left:10px;padding-right:10px}
@@ -537,7 +539,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-02 · 67';
+const APP_VERSION = '2026-11-02 · 68';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1399,7 +1401,8 @@ function homeVandaag(){
   const S = nextSunday(T);
   const stats = `
     <div class="card stats1">
-      <button class="cell" data-action="whoIsIn" title="Welke kinderen zijn er?"><div class="lbl">Kinderen ${icon('chev')}</div><div class="num">${cs.length}</div></button>
+      <button class="cell" data-action="whoIsIn" title="Welke kinderen zijn er?"><div class="lbl">Kinderen ${icon('chev')}</div><div class="num">${cs.length}</div>
+        ${cs.length ? `<div class="sub">${(g => [['onder','onder'],['boven','boven'],['bezoeker','bezoek']].filter(([k]) => g(k)).map(([k, l]) => `${g(k)} ${l}`).join(' · '))(grp => cs.filter(c => kidById(c.kidId).group === grp).length)}</div>` : ''}</button>
       <button class="cell" data-action="leaderCheckin" title="Welke leiding is er?"><div class="lbl">Leiding ${icon('chev')}</div><div class="num">${leaders}</div></button>
       <button class="cell" data-action="whoIsIn" title="Wie is er?"><div class="lbl">Totaal ${icon('chev')}</div><div class="num">${cs.length + leaders}</div></button>
     </div>`;
@@ -1409,13 +1412,14 @@ function homeVandaag(){
   // Op zondag alleen wie er is (het programma is dan al voorbereid; wie leiding heeft zie je bij de teller Leiding);
   // doordeweeks alleen het programma van komende zondag
   return D === T ? stats + homeBirthdays()
-    : programma;   // doordeweeks: alleen vooruitkijken, zodat alles zonder scrollen past
+    : programma + homeBirthdays(true);   // doordeweeks: vooruitkijken naar zondag (programma en, in één regel, wie er jarig is)
 }
-function homeBirthdays(){
+function homeBirthdays(line){
   const T = todayISO();
   const list = db.kids.filter(cameRecently).map(k => { const d = birthdayCycle(k); return { k, d, sung:d && sungFor(k, d) }; })
     .filter(x => x.d && (x.d >= addDays(T, -6) || !x.sung)).sort((a,b) => a.d.localeCompare(b.d));
   if (!list.length) return '';
+  if (line) return `<div class="card bday-line">🎂 <b>Jarig:</b> ${list.slice(0, 3).map(({k,d}) => `<button class="textlink" data-action="openKid" data-id="${k.id}">${esc(firstName(k.name))} (${age(k.birthdate, d)})</button>`).join(', ')}${list.length > 3 ? ` <span class="muted">+ ${list.length - 3}</span>` : ''}</div>`;
   const shown = state.bdayAll ? list : list.slice(0, 2);
   return `<h3 class="section-title">🎂 Jarig</h3><div class="card list">${shown.map(({k,d,sung}) => `
     <button class="row compact" data-action="openKid" data-id="${k.id}">
