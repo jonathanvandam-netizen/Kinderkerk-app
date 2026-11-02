@@ -23,7 +23,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 65: begroeting zonder logo
   (staat al bovenin), datum klein eronder; doordeweeks eerst het programma van komende zondag en dan de tellers van afgelopen
-  zondag, op zondag eerst de tellers; "geen zondag" is één klein regeltje met een link naar de gebedslijst (`notSundayBanner`).
+  zondag, op zondag alleen de tellers (+ quizknop en Jarig, geen programma: dat is al voorbereid en wie leiding heeft zie je bij de teller Leiding, versie 66); "geen zondag" is één klein regeltje met een link naar de gebedslijst (`notSundayBanner`).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
