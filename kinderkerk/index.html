@@ -93,19 +93,20 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .sync[hidden]{display:none}
 .sync:not([hidden]) + .avatar{margin-left:8px}
 .avatar{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;border:0;font:inherit;font-weight:800;cursor:pointer}
-/* Onderbalk in "liquid glass"-stijl (telefoon en geïnstalleerde app) */
-.bottomnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(480px,calc(100% - 24px));
-  display:flex;gap:4px;padding:6px;border-radius:30px;z-index:20;
-  background:linear-gradient(135deg,var(--glass-1),var(--glass-2));
+/* Onderbalk (telefoon en geïnstalleerde app): vast tegen de onderkant, over de hele breedte, met een glazige achtergrond */
+.bottomnav{position:fixed;left:0;right:0;bottom:0;
+  display:flex;gap:2px;padding:5px max(8px, calc((100% - 560px) / 2)) calc(5px + env(safe-area-inset-bottom));z-index:20;
+  background:linear-gradient(180deg,var(--glass-1),var(--glass-2));
   -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
-  border:1px solid var(--glass-border);
-  box-shadow:0 10px 34px rgba(20,30,60,.18),0 2px 6px rgba(20,30,60,.08),inset 0 1px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-lo)}
-.bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 7px;border-radius:24px;font-size:11px;font-weight:700;color:var(--nav-text);min-width:0;white-space:nowrap;text-decoration:none;transition:background .2s,color .2s}
+  border-top:1px solid var(--glass-border)}
+.bottomnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;border-radius:14px;position:relative;font-size:11px;font-weight:700;color:var(--nav-text);min-width:0;white-space:nowrap;text-decoration:none;transition:background .2s,color .2s}
 @media(max-width:440px){.bottomnav a{font-size:10px;letter-spacing:-.2px}}
-@media(max-width:374px){.bottomnav{gap:1px;padding:5px}.bottomnav a{font-size:8.6px;letter-spacing:-.3px}}
-.bottomnav a.active{color:var(--brand);background:var(--glass-active);box-shadow:0 1px 4px rgba(20,30,60,.12),inset 0 1px 0 var(--glass-hi)}
+@media(max-width:374px){.bottomnav{gap:1px}.bottomnav a{font-size:8.6px;letter-spacing:-.3px}}
+.bottomnav a.active{color:var(--brand);background:var(--glass-active)}
+.nav-dot{position:absolute;top:5px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px var(--card)}
+.mainnav .nav-dot{top:4px;left:auto;right:6px}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
-body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 @media(min-width:1000px){
   body{padding-bottom:0}
   .mainnav{display:flex}
@@ -113,11 +114,11 @@ body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
 }
 /* Als geïnstalleerde app altijd de knoppen onderin, ook op een tablet */
 @media(display-mode:standalone){
-  body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
   .mainnav{display:none}
   .bottomnav{display:flex}
 }
-html.standalone body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+html.standalone body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 html.standalone .mainnav{display:none}
 html.standalone .bottomnav{display:flex}
 body.loggedout .topbar,body.loggedout .bottomnav{display:none}
@@ -153,6 +154,16 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 @media(min-width:760px){.home-grid{grid-template-columns:300px 1fr;align-items:start}.home-grid aside{position:sticky;top:84px}}
 /* Begroeting bovenaan Home */
 .hello{padding:16px}
+.btn-lg{padding:15px 18px;font-size:17px}
+.home-link{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 4px 0;border-top:1px solid var(--border);color:var(--text);text-decoration:none;font-size:15px}
+.home-link > .i:first-child{color:var(--bday-text);width:20px;height:20px}.home-link span{flex:1}.home-link b{font-weight:800}.home-link .chev{width:18px;height:18px;color:var(--muted)}
+.list-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 4px 0;font-size:14px;color:var(--muted)}.list-foot .btn{flex:none}
+.info-tip{margin:12px 0 14px;font-size:14px;color:var(--muted)}
+.info-tip summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;list-style:none;font-weight:700;color:var(--brand);font-size:13.5px}
+.info-tip summary::-webkit-details-marker{display:none}.info-tip summary .i{width:17px;height:17px}
+.info-tip[open] summary{margin-bottom:6px}.info-tip > div{background:var(--brand-soft);color:var(--brand-text);border-radius:12px;padding:10px 12px;line-height:1.45}
+.backup-due{border:2px solid var(--bad-soft);border-radius:var(--radius);margin-bottom:12px;width:100%}
+.row.compact{padding-top:9px;padding-bottom:9px}.row.compact .row-main{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
 .hello-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .hello-logo{width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid var(--brand-soft);flex:none}
 .hello h1{font-size:20px;font-weight:800}
@@ -494,7 +505,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
 #tour .tour-foot .step{font-size:13px;color:var(--muted);font-weight:700;margin-right:auto}
 #tour .tour-progress{height:4px;border-radius:4px;background:var(--surface-3);margin-bottom:10px;overflow:hidden}#tour .tour-progress i{display:block;height:100%;background:var(--brand);border-radius:4px;transition:width .25s}
 #tour .tour-step{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:2px}
-#toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toast);color:var(--toast-text);padding:10px 18px;border-radius:22px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toast);color:var(--toast-text);padding:10px 18px;border-radius:22px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:60;width:max-content;max-width:calc(100vw - 32px);text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media(min-width:800px){#toast{bottom:28px}}
 </style>
@@ -520,7 +531,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-01 · 62';
+const APP_VERSION = '2026-11-02 · 63';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -744,6 +755,7 @@ async function saveBackupFile(data, day){
   const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   done(); toast('Back-up gedownload'); render();
 }
+const backupDue = () => isAdmin() && (lastBackupDays() ?? 99) > 35;
 const lastBackupDays = () => { try { const t = +localStorage.getItem('kk-last-backup'); return t ? Math.floor((Date.now() - t) / 864e5) : null; } catch(e){ return null; } };
 /* Automatische back-ups (databasemodus): elke zondagavond maakt de database er zelf een (supabase/backup.sql) */
 const autoBackupData = {};
@@ -1176,7 +1188,8 @@ const NAV = [
 const MEER_ROUTES = ['meer','quiz','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'smileys' ? 'gedrag' : state.route;
-  const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span></a>`).join('');
+  const dot = n => n.id === 'meer' && backupDue() ? '<i class="nav-dot" title="Tijd voor een back-up"></i>' : '';
+  const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span>${dot(n)}</a>`).join('');
   $('#mainnav').innerHTML = html;
   $('#bottomnav').innerHTML = html;
 }
@@ -1220,10 +1233,10 @@ window.addEventListener('appinstalled', () => { installPrompt = null; toast('De 
 const TOUR_ALL = [
   { t:'Welkom bij de Kinderkerk-app! 👋', p:'Deze rondleiding laat stap voor stap zien wat je met de app kunt. Het duurt een paar minuten. Je kunt altijd stoppen en hem later opnieuw starten via je account (rechtsboven).' },
   { nav:'home', route:'home', t:'Home', p:'Hier begin je. Je ziet het overzicht van vandaag. Met de knoppen in deze balk ga je naar de andere onderdelen.' },
-  { route:'home', el:['.hello a.btn[href="#/checkin"]'], t:'Kinderen inchecken', p:'Met deze knop check je de kinderen in. Leiding die op de planning staat, is automatisch ingecheckt. Komt er iemand extra? Dat doe je met de knop "Leiding inchecken" eronder. Boven de knop staat wanneer jij weer leiding hebt.' },
+  { route:'home', el:['.hello a.btn[href="#/checkin"]'], t:'Kinderen inchecken', p:'Met deze knop check je de kinderen in. Leiding die op de planning staat, is automatisch ingecheckt. Komt er iemand extra? Tik dan op de teller "Leiding". Boven de knop staat wanneer jij weer leiding hebt.' },
   { route:'home', el:['#hometab .card.plan', '.card.stats1'], t:'Programma van deze zondag', p:'Het thema, het Bijbelgedeelte, wie er leiding heeft en wie de sheets doet. Daaronder zie je wie er jarig is en of er al voor is gezongen.' },
   { only:() => canQuiz(), route:'home', el:['.quiz-btn'], t:'Quizvraag bedenken (bovenbouw)', p:'Alleen voor de bovenbouw: met deze knop zet je een vraag klaar voor de quiz in week 7, bijvoorbeeld tijdens de preek. Kies een open vraag, of meerkeuze A–D. Bij meerkeuze tik je de letter van het goede antwoord aan; zijn er meer goed, tik ze dan allemaal aan.' },
-  { route:'home', el:['a.card[href="#/gebed"]'], t:'Gebedsverlangens', p:'Hier vind je de gebedsverlangens van vandaag. De app kiest eerlijk welke kinderen ervoor bidden, en een kind van de onderbouw voor de collecte. Ook kinderen die niet vaak komen, zijn zo even vaak aan de beurt.' },
+  { route:'home', el:['.home-link', 'a[href="#/gebed"]'], t:'Gebedsverlangens', p:'Hier vind je de gebedsverlangens van vandaag. De app kiest eerlijk welke kinderen ervoor bidden, en een kind van de onderbouw voor de collecte. Ook kinderen die niet vaak komen, zijn zo even vaak aan de beurt.' },
   { nav:'checkin', route:'checkin', el:['.toolbar'], t:'Check-in', p:'Zoek een kind, of voeg een nieuw kind toe met + Kind. Wie het vaakst komt, staat bovenaan. Je ziet de kinderen van de laatste 60 dagen; met "Alle kinderen" onderaan zie je iedereen. Een nieuw kind krijgt meteen 50 punten.' },
   { route:'checkin', el:['#kidlist .row', '#kidlist'], t:'Een kind inchecken', p:'Tik op een kind en vink aan wat het heeft meegenomen: Bijbel, werkblad, geld. Vul eventueel gebedspunten in. De app rekent de punten uit. Is het kind jarig? Dan zie je de knop "Vandaag gezongen".' },
   { nav:'gedrag', route:'gedrag', el:['.sm-row', '#app .card.list'], t:'Gedrag', p:'Geef een smiley 😊 voor goed gedrag. Bij 7 smileys mag een kind iets uit de grabbelbak pakken. Een waarschuwing ⚠️: 1e = naam op het bord, 2e = streepje erachter, 3e = eruit en naar de ouders in de dienst. Per ongeluk getikt? Tik op de naam om het terug te draaien.' },
@@ -1355,21 +1368,13 @@ function renderHome(){
           <h1>${greeting()}, ${esc(firstName(me().name))}!</h1></div></div>
         ${(c => c ? `<div class="hero-duty clash">⚠️ Je staat ingepland op <b>${fmtDate(c, {day:'numeric', month:'long'})}</b>, maar je kunt dan niet. <a href="${swapLink(c)}" target="_blank" rel="noopener">Vervanger zoeken</a></div>`
           : (m => m ? `<div class="hero-duty">Jij hebt leiding: <b>${dayLabel(m.date)}</b> (${m.onder.includes(db.session) ? 'onderbouw' : 'bovenbouw'})</div>` : '')(myNextSunday()))(myClashes()[0])}
-        <a class="btn btn-primary btn-block" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
-        <button class="btn btn-soft btn-block" style="margin-top:8px" data-action="leaderCheckin">${icon('users')} Leiding inchecken</button>
+        <a class="btn btn-primary btn-block btn-lg" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
+        <a class="home-link" href="#/gebed">${icon('heart')}<span><b>Gebedsverlangens</b>${(n => isSunday(T) || checkinsOn(T).length ? (n ? ` · ${n} gebedspunt${n > 1 ? 'en' : ''}` : '') : '')(prayerPoints(T).length)}</span>${icon('chev','chev')}</a>
       </div>
-      <a class="card row" href="#/gebed" style="border-radius:var(--radius)">
-        <span class="row-icon" style="background:var(--bday-bg);color:var(--bday-text)">${icon('heart')}</span>
-        <span class="row-main"><b>Gebedsverlangens</b><span class="muted">${(n => isSunday(T) || checkinsOn(T).length ? (n ? n + ' gebedspunt' + (n > 1 ? 'en' : '') + ' · wie bidt er?' : 'Wie bidt er vandaag?') : 'Gebedslijst en gebedspunten')(prayerPoints(T).length)}</span></span>${icon('chev','chev')}
-      </a>
       ${terugblikCard()}
       ${(l => l ? `<a class="card row" href="#/planning" style="border-radius:var(--radius)">
         <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('calendar')}</span>
         <span class="row-main"><b>Planning bijna op</b><span class="muted">Ingevuld tot ${fmtDate(l, {day:'numeric', month:'long'})}. Vul hem verder in bij Planning.</span></span>${icon('chev','chev')}</a>` : '')(planRunsOut())}
-      ${isAdmin() && (lastBackupDays() ?? 99) > 35 ? `<a class="card row" href="#/meer" style="border-radius:var(--radius)">
-        <span class="row-icon" style="background:var(--warn-soft);color:var(--warn-text)">${icon('download')}</span>
-        <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">Bewaar af en toe een kopie op je toestel: Meer → Gegevens</span></span>${icon('chev','chev')}</a>` : ''}
-      ${installCard(true)}
     </aside>
     <section>
       <div id="hometab">${homeVandaag()}</div>
@@ -1403,9 +1408,9 @@ function homeBirthdays(){
     .filter(x => x.d && (x.d >= addDays(T, -6) || !x.sung)).sort((a,b) => a.d.localeCompare(b.d));
   if (!list.length) return '';
   return `<h3 class="section-title">🎂 Jarig</h3><div class="card list">${list.map(({k,d,sung}) => `
-    <button class="row" data-action="openKid" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
-      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${d === T ? 'Wordt vandaag' : d > T ? 'Wordt' : 'Werd'} ${age(k.birthdate, d)} jaar${d === T ? '' : ' op ' + fmtDate(d, {weekday:'long', day:'numeric', month:'short'})}</span></span>
-      ${sung ? `<span class="badge ok">${icon('check')} Gezongen</span>` : d <= T ? '<span class="badge grey">🎵 Nog zingen</span>' : ''}${icon('chev','chev')}</button>`).join('')}</div>`;
+    <button class="row compact" data-action="openKid" data-id="${k.id}">
+      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${age(k.birthdate, d)} jaar · ${d === T ? 'vandaag' : fmtDate(d, {day:'numeric', month:'short'})}</span></span>
+      ${sung ? `<span class="badge ok">${icon('check')} Gezongen</span>` : d <= T ? '<span class="badge grey">🎵 Nog zingen</span>' : ''}</button>`).join('')}</div>`;
 }
 /* =====================================================================
    VERGADERING
@@ -1453,7 +1458,7 @@ function terugblikCard(){
     <span class="eyebrow">🎉 Terugblik</span>
     <div class="big">${esc(periodLabel(p))}</div>
     <div class="muted">${t.days} zondag${t.days === 1 ? '' : 'en'} · gemiddeld ${t.avg} kinderen${t.nieuw.length ? ` · ${t.nieuw.length} nieuw` : ''}</div>
-    <button class="btn btn-primary btn-block" style="margin-top:12px" data-action="openTerugblik" data-id="${p.id}">Bekijk de terugblik</button>
+    <button class="btn btn-soft btn-block" style="margin-top:12px" data-action="openTerugblik" data-id="${p.id}">Bekijk de terugblik</button>
   </div>`;
 }
 function openTerugblik(id){
@@ -1574,7 +1579,7 @@ function renderVergadering(){
     <h3 class="section-title">Overige actiepunten</h3>
     <div class="card list">${loose.sort(byDue).map(x => actionRow(x)).join('') || '<div class="empty">Geen overige actiepunten.</div>'}</div>
     <button class="btn btn-soft btn-block" style="margin-top:10px" data-action="addAction" data-meeting="${m.id}">${icon('plus')} Actiepunt toevoegen</button>
-    <div class="banner">${icon('info')}<span>Notulen worden vanzelf opgeslagen terwijl je typt. Iedereen van de leiding kan meelezen en aanvullen.</span></div>
+    ${infoTip(`Notulen worden vanzelf opgeslagen terwijl je typt. Iedereen van de leiding kan meelezen en aanvullen.`)}
     ${isAdmin() ? `<button class="btn btn-danger btn-block" style="margin-top:16px" data-action="delMeeting" data-id="${m.id}">${icon('trash')} Vergadering verwijderen</button>` : ''}
   </div>`;
   growAll();
@@ -1678,7 +1683,7 @@ function renderCheckin(){
       <button class="btn btn-primary" data-action="addKid">${icon('plus')} Kind</button>
     </div>
     <div class="card list" id="kidlist"></div>
-    <div class="banner" id="allbanner"></div>
+    <div class="list-foot" id="allbanner"></div>
   </div>`;
   renderKidList();
 }
@@ -1703,8 +1708,8 @@ function renderKidList(){
     </button>`.replace('class="row"', isActive(k) ? 'class="row"' : 'class="row" style="opacity:.6"'); }).join('')
     : `<div class="empty">${q ? `Geen kind gevonden met “${esc(state.search)}”.` : 'Geen kinderen in deze groep.'}</div>`;
   $('#allbanner').innerHTML = state.showAll
-    ? `${icon('info')}<span>Je ziet nu <b>alle</b> kinderen, ook wie langer dan 60 dagen niet is geweest.</span><button class="btn btn-outline sm" data-action="toggleAll">Alleen recent</button>`
-    : `${icon('info')}<span>Wie het vaakst komt staat bovenaan. Niet gevonden? Je ziet alleen kinderen die in de afgelopen 60 dagen zijn geweest${hidden ? ` (${hidden} verborgen)` : ''}.</span><button class="btn btn-outline sm" data-action="toggleAll">${icon('search')} Alle kinderen</button>`;
+    ? `<span>Je ziet nu <b>alle</b> kinderen.</span><button class="btn btn-outline sm" data-action="toggleAll">Alleen recent</button>`
+    : `<span>Niet gevonden? Je ziet de kinderen van de laatste 60 dagen${hidden ? ` (${hidden} verborgen)` : ''}.</span><button class="btn btn-outline sm" data-action="toggleAll">${icon('search')} Alle kinderen</button>`;
 }
 /* =====================================================================
    SMILEYS EN WAARSCHUWINGEN
@@ -1732,6 +1737,8 @@ function undoMark(kidId, kind){
 const dots = (n, cls = '') => `<span class="sdots ${cls}">${Array.from({ length:SMILEY_GOAL }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
 const warnBadge = w => w ? `<span class="wb ${w === 3 ? 'w3' : ''}">⚠️ ${w}</span>` : '';
 
+/* Uitleg die je niet elke keer hoeft te zien: een klein "ⓘ Uitleg" dat openklapt */
+const infoTip = html => `<details class="info-tip"><summary>${icon('info')} Uitleg</summary><div>${html}</div></details>`;
 function renderSmileys(){
   const T = kkDay();
   if (!state.smTab) state.smTab = GROUPS[me().group] ? me().group : 'alles';
@@ -1748,8 +1755,8 @@ function renderSmileys(){
     <label class="search" style="margin-bottom:14px">${icon('search')}<input id="sm-search" data-input="smSearch" placeholder="Zoek een kind" value="${esc(state.smSearch || '')}" autocomplete="off"></label>
     <div id="sm-results">${smResults()}</div>
     <div id="sm-main" ${state.smSearch ? 'hidden' : ''}>
-    <div class="banner" style="margin:0 0 16px">${icon('info')}<span><b>${SMILEY_GOAL} smileys</b> = iets uit de grabbelbak graaien.
-      Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders of verzorgers in de dienst zitten.</span></div>
+    ${infoTip(`<b>${SMILEY_GOAL} smileys</b> = iets uit de grabbelbak graaien.
+      Waarschuwingen tellen per zondag: 1e naam op het bord, 2e streepje erachter, 3e eruit en bij ouders of verzorgers in de dienst zitten.<br>Per ongeluk getikt? Tik op de naam om het terug te draaien.`)}
     ${grab.length ? `<h3 class="section-title">🎁 Mag graaien uit de grabbelbak</h3>
     <div class="card list">${grab.map(k => `
       <div class="row sm-row"><button class="sm-name" data-action="openSmiley" data-id="${k.id}"><span class="av av-${k.group}">${initials(k.name)}</span>
@@ -1762,7 +1769,6 @@ function renderSmileys(){
     <h3 class="section-title">Ingecheckt ${dayLabel(T)}</h3>
     <div class="card list">${here.length ? here.sort(byName).map(smRow).join('')
       : `<div class="empty">Nog niemand ingecheckt${state.smTab === 'alles' ? '' : ' in deze groep'}. Check eerst kinderen in bij Check-in.</div>`}</div>
-    <p class="muted" style="font-size:13.5px;margin:10px 4px 0">Per ongeluk getikt? Tik op de naam om het terug te draaien.</p>
     <button class="btn btn-outline btn-block" style="margin-top:20px" data-action="smAll">${icon(state.smAll ? 'x' : 'users')} ${state.smAll ? 'Alle kinderen verbergen' : 'Alle kinderen'}${others.length ? ` (${others.length})` : ''}</button>
     ${state.smAll ? `<h3 class="section-title">Alle kinderen (niet ingecheckt)</h3>
     <div class="card list">${others.length ? others.map(smRow).join('') : `<div class="empty">Geen andere kinderen in deze groep.</div>`}</div>` : ''}
@@ -2087,7 +2093,9 @@ function renderMeer(){
     ${groups.map(([title, items], i) => `<h3 class="section-title" ${i ? '' : 'style="margin-top:0"'}>${title}</h3>
     <div class="card list">${items.map(([r,t,s,ic]) => `
       <a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}</b><span class="muted">${s}</span></span>${icon('chev','chev')}</a>`).join('')}</div>`).join('')}
-    ${isAdmin() ? `<h3 class="section-title">Gegevens</h3>
+    ${isAdmin() ? `<h3 class="section-title" id="gegevens">Gegevens</h3>
+    ${backupDue() ? `<button class="card row backup-due" data-action="backupSave"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('download')}</span>
+      <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">${(n => n === null ? 'Je hebt nog geen back-up bewaard' : `Je laatste back-up is van ${n} dagen geleden`)(lastBackupDays())}. Tik om er nu een te maken.</span></span>${icon('chev','chev')}</button>` : ''}
     ${CLOUD ? '' : `<div class="banner" style="margin:0 0 12px;background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span><b>Alles staat nu alleen op dit toestel.</b> Andere leiding ziet het niet, en als je de websitegegevens van Safari wist, is het weg. Maak daarom regelmatig een back-up, tot de database gekoppeld is.</span></div>`}
     <div class="card list">
       <button class="row" data-action="backupSave"><span class="row-icon">${icon('download')}</span>
@@ -2157,7 +2165,7 @@ function renderKinderen(){
           <span class="muted">${GROUPS[k.group]}${k.birthdate ? ' · ' + age(k.birthdate) + ' jaar' : ''} · ${ls ? 'laatst ' + fmtDate(ls, {day:'numeric', month:'short', year:'numeric'}) : 'nog niet ingecheckt'}</span></span>
         <button class="btn ${isActive(k) ? 'btn-outline' : 'btn-soft'} sm" data-action="toggleKidActive" data-id="${k.id}">${isActive(k) ? 'Komt niet meer' : 'Komt weer'}</button></div>`; }).join('')
       || `<div class="empty">${f === 'weg' ? 'Iedereen komt nog.' : f === 'oud' ? `Geen kinderen van ${OLD_AGE} jaar of ouder.` : 'Nog geen kinderen.'}</div>`}</div>
-    <div class="banner">${icon('info')}<span>Tik op een naam om de gegevens aan te passen. Wie niet meer komt, verdwijnt uit check-in, Jarig, Historie en roosters, maar je kunt diegene hier altijd terugzetten.</span></div>
+    ${infoTip(`Tik op een naam om de gegevens aan te passen. Wie niet meer komt, verdwijnt uit check-in, Jarig, Historie en roosters, maar je kunt diegene hier altijd terugzetten.`)}
   </div>`;
 }
 
@@ -2171,7 +2179,7 @@ function renderPunten(){
   <div class="page">
     <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
     <div class="page-head"><h1>Punten</h1></div>
-    <div class="banner" style="margin:0 0 16px">${icon('info')}<span>Bij het inchecken laat de app zien hoeveel punten een kind krijgt: punten voor elk ding dat het heeft meegenomen, bij elkaar opgeteld. Wil je ook punten geven voor alleen aanwezig zijn, vul dat dan in bij <b>Aanwezig</b>. De punten zelf deel je uit zoals altijd.</span></div>
+    ${infoTip(`Bij het inchecken laat de app zien hoeveel punten een kind krijgt: punten voor elk ding dat het heeft meegenomen, bij elkaar opgeteld. Wil je ook punten geven voor alleen aanwezig zijn, vul dat dan in bij <b>Aanwezig</b>. De punten zelf deel je uit zoals altijd.`)}
     <div class="card list" style="overflow-x:auto"><table class="t pt-table">
       <thead><tr><th></th><th class="c">Onder</th><th class="c">Boven</th><th class="c">Bezoek</th></tr></thead>
       <tbody>${rows.map(([id, label]) => `<tr><td><b>${label}</b></td><td class="c">${cell('onder', id)}</td><td class="c">${cell('boven', id)}</td><td class="c">${cell('bezoeker', id)}</td></tr>`).join('')}</tbody>
@@ -2331,7 +2339,7 @@ function renderPlanning(){
     ${!state.planMine || dates.length >= state.planCount ? `<button class="btn btn-soft btn-block" style="margin-top:12px" data-action="morePlan">${icon('plus')} Meer zondagen tonen</button>` : ''}
     ${isAdmin() ? `${(l => l ? `<div class="banner" style="background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span>De planning is ingevuld tot <b>${fmtDate(l, {day:'numeric', month:'long'})}</b>.</span></div>` : '')(planRunsOut())}
       <button class="btn btn-outline btn-block" style="margin-top:10px" data-action="planFill">🔁 Planning verder vullen</button>` : ''}
-    <div class="banner">${icon('info')}<span>Tik op een zondag (of een regel in de tabel) om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Wie de sheets doet, kiest de app op zondag (Meer → Sheets).</span></div>
+    ${infoTip(`Tik op een zondag (of een regel in de tabel) om het thema, de voorbereiding of de leiding aan te passen. Kun je niet? Haal jezelf weg en zet er iemand anders in. Wie de sheets doet, kiest de app op zondag (Meer → Sheets).`)}
   </div>`;
 }
 /* ---------- Planning verder vullen (beheerder) ----------
@@ -2453,9 +2461,9 @@ function renderTeam(){
   <div class="page">
     <div class="page-head"><h1>Team</h1>${isAdmin() ? `<button class="btn btn-primary" data-action="addLeader">${icon('plus')} Leiding</button>` : ''}</div>
     <div class="card list">${section('onder','Onderbouw')}${section('boven','Bovenbouw')}${section('','Algemeen')}</div>
-    <div class="banner">${icon('info')}<span>${isAdmin()
+    ${infoTip(isAdmin()
       ? 'Leiding zonder account staat wel in de planning, maar kan nog niet inloggen. Tik op iemand en kies <b>Uitnodigen</b> om toegang te geven.'
-      : 'Een beheerder kan nieuwe leiding toevoegen en uitnodigen.'}</span></div>
+      : 'Een beheerder kan nieuwe leiding toevoegen en uitnodigen.')}
   </div>`;
 }
 const leaderAccess = x => x.userId ? 'Heeft account' : x.invited ? 'Uitgenodigd' : 'Nog niet uitgenodigd';
@@ -2543,7 +2551,7 @@ function renderHistorie(){
   <div class="page">
     <div class="page-head"><h1>Historie</h1><span class="muted">Gemiddeld ${avg} kinderen per keer</span></div>
     <div class="card chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Aantal kinderen per zondag">${svg}</svg></div>
-    <div class="banner">${icon('info')}<span>Hieronder zie je de kinderen die in de afgelopen 60 dagen zijn geweest. Een vinkje betekent: minstens 4 keer in de laatste 8 weken.</span></div>
+    ${infoTip(`Hieronder zie je de kinderen die in de afgelopen 60 dagen zijn geweest. Een vinkje betekent: minstens 4 keer in de laatste 8 weken.`)}
     ${table('onder')}${table('boven')}${table('bezoeker')}
   </div>`;
 }
@@ -2807,7 +2815,6 @@ const ZSTATUS = { ok:['ok','check','Mag komen'], warn:['warn','alert','Voorzicht
 function renderZiektes(){
   app.innerHTML = `
   <div class="page">
-    <div class="banner" style="margin:0 0 16px">${icon('info')}<span>Check hieronder of een ziek kind welkom is.</span></div>
     <div class="page-head"><h1>Kinderziektes</h1>${isAdmin() ? `<button class="btn btn-primary" data-action="editZiekte" data-id="">${icon('plus')} Ziekte</button>` : ''}</div>
     <div class="toolbar"><label class="search">${icon('search')}<input data-input="zsearch" placeholder="Zoek een ziekte" value="${esc(state.zSearch)}" autocomplete="off"></label></div>
     <div class="card list" id="zlist"></div>
