@@ -21,7 +21,9 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   een klein "ⓘ Uitleg" (`infoTip`, inklapbaar), niet als groot blauw blok. Back-upherinnering niet op Home maar rood stipje op
   Meer + bovenaan Meer → Gegevens (`backupDue`). Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller), geen "Jij hebt leiding" meer (alleen de
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
-  Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact.
+  Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 65: begroeting zonder logo
+  (staat al bovenin), datum klein eronder; doordeweeks eerst het programma van komende zondag en dan de tellers van afgelopen
+  zondag, op zondag eerst de tellers; "geen zondag" is één klein regeltje met een link naar de gebedslijst (`notSundayBanner`).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na
