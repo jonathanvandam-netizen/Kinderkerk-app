@@ -27,9 +27,10 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   Versie 70: Jonathan wil geen verschil tussen zondag en doordeweeks, ook niet in de teksten van de rondleiding.
   Versie 73: Mijn account → "Op Home" zet per toestel Gebedsverlangens, Quizvraag, Wie er is, Programma en Jarig aan/uit
   (localStorage `kk-home` = lijst wat uit staat, `homeShow`); de knop Kinderen inchecken staat er altijd.
-  Versie 74: Mijn account overzichtelijker: kop met naam en "Rol · Groep · e-mail", daaronder één lijst met inklapbare regels
-  (`pf-row`, details/summary met korte stand rechts): Agenda op je telefoon, Op Home, Weergave, Rondleiding
-  starten; Uitloggen onderaan. Rondleidingstappen klappen het juiste blok open (`row` in de stap).
+  Versie 77: Mijn account als instellingenscherm van een goede app (`openProfile(page)`): grote ronde letters, naam, badges Rol + Groep,
+  e-mail; groepen met gekleurde icoontjes (`pf-group`/`pf-item`, waarde rechts + pijltje): Mijn kinderkerk (Mijn beurten → Planning met
+  "Alleen mijn beurten", Agenda op je telefoon), Instellingen (Op Home, Weergave), Hulp (Rondleiding); Uitloggen rood apart; versie onderaan.
+  Rijen openen een subpagina met "‹ Account" (`pfPage`): Op Home = schakelaars, Weergave = lijst met vinkje, Agenda = koppeling.
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
 - Leiding kan in het team staan zonder account (voor de planning). Een beheerder voegt leiding toe, en pas na

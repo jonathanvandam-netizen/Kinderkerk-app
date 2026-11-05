@@ -137,16 +137,35 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .demo-box code{background:var(--card);padding:1px 6px;border-radius:6px}
 .mailicon{width:64px;height:64px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 14px}
 .mailicon svg.i{width:30px;height:30px}
-.pf-list{padding:0}
-.pf-row{border-top:1px solid var(--border)}.pf-row:first-child{border-top:0}
-.pf-row summary,.pf-tour{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;list-style:none;font-weight:700}
-.pf-row summary::-webkit-details-marker{display:none}
-.pf-ic{width:24px;text-align:center;font-size:18px;flex:none}.pf-t{flex:1}
-.pf-sum{color:var(--muted);font-weight:600;font-size:14px;text-align:right}
-.pf-row summary .chev,.pf-tour .chev{width:18px;height:18px;color:var(--muted);transition:transform .2s}
-.pf-row[open] summary .chev{transform:rotate(90deg)}
-.pf-body{padding:0 16px 16px 52px;display:flex;flex-direction:column;gap:8px}
-.pf-tour{width:100%;border-top:1px solid var(--border)}
+.pf-body{background:var(--bg);padding:6px 16px 22px}
+.pf-close{position:sticky;top:0;display:flex;justify-content:flex-end;padding:10px 12px 0;margin-bottom:-34px;z-index:2;pointer-events:none}.pf-close .icon-btn{pointer-events:auto}
+.modal:has(.pf-body){background:var(--bg)}
+.pf-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:0 0 8px}
+.pf-av{width:76px;height:76px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:30px;font-weight:800;box-shadow:0 6px 18px rgba(29,60,156,.25);margin-bottom:4px}
+.pf-hero h2{font-size:24px;font-weight:800}
+.pf-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pf-badge{background:var(--brand);color:#fff;font-weight:800;font-size:12.5px;padding:3px 11px;border-radius:999px}.pf-badge.soft{background:var(--brand-soft);color:var(--brand)}
+.pf-gt{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:22px 4px 7px}
+.pf-group{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.pf-pad{padding:16px;display:flex;flex-direction:column;gap:10px}
+.pf-item{display:flex;align-items:center;gap:13px;width:100%;min-height:54px;padding:9px 14px;background:none;border:0;font:inherit;font-weight:700;font-size:16px;color:var(--text);text-align:left;cursor:pointer;position:relative}
+.pf-item + .pf-item::before{content:"";position:absolute;top:0;right:0;left:58px;border-top:1px solid var(--border)}
+.pf-switch + .pf-switch::before,.pf-radio + .pf-radio::before{left:14px}
+.pf-item:active{background:var(--surface-2)}
+.pf-ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}.pf-ico svg{width:18px;height:18px}
+.pf-t{flex:1;min-width:0}
+.pf-val{color:var(--muted);font-weight:600;font-size:15px}
+.pf-item .chev{width:17px;height:17px;color:var(--muted);flex:none}
+.pf-logout{justify-content:center;color:var(--bad)}
+.pf-note{color:var(--muted);font-size:13px;margin:8px 6px 0}
+.modal-head.pf-subhead{background:var(--bg);border-bottom:0}.pf-subhead h2{text-align:center;font-size:17px}
+.pf-back{display:flex;align-items:center;gap:2px;background:none;border:0;color:var(--brand);font:inherit;font-weight:700;font-size:15px;cursor:pointer;padding:6px 0;flex:none}
+.pf-back .chev{width:18px;height:18px;transform:rotate(180deg)}
+.pf-subhead > div{flex:none}.pf-subhead h2{flex:1}
+.switch{width:50px;height:30px;border-radius:999px;background:var(--surface-3);position:relative;flex:none;transition:background .2s}
+.switch i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.pf-switch.on .switch{background:var(--ok)}.pf-switch.on .switch i{transform:translateX(20px)}
+.pf-check{color:var(--brand);visibility:hidden}.pf-check svg{width:20px;height:20px}.pf-radio.on .pf-check{visibility:visible}
 .cant-box{display:flex;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn-text);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:14.5px}.cant-box span{flex:1}
 .tag.need{background:var(--bad-soft);color:var(--bad-text)}.plan-table .mt.need{color:var(--bad-text)}
 a.hero-duty{display:block;text-decoration:none}
@@ -558,7 +577,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 76';
+const APP_VERSION = '2026-11-05 · 77';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1280,8 +1299,8 @@ const TOUR_ALL = [
   { only:() => canQuiz() && !!quizPeriod(), route:'quiz', el:['.page .card.pad', '.page-head'], t:'De quiz in week 7 (bovenbouw)', p:'Hier staan alle quizvragen van de periode. Met "Quiz spelen in de app" tik je het antwoord aan dat de kinderen kiezen; de app laat zien of het goed of fout is. Of download de quiz als PowerPoint. Tik je op "Google Slides", dan komt de quiz ook in de Google Drive van het one80kids-account (map Kinderkerk quiz) en opent hij meteen.' },
   { route:'roosters', el:['.card.duty'], t:'Sheets', p:'Op zondag tik je op "Kies wie de sheets doet". De app kiest uit de kinderen van de bovenbouw die er zijn: wie het minst vaak is geweest, is eerst aan de beurt.' },
   { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar vind je je instellingen. Die laten we nu zien.' },
-    { only:() => CLOUD, open:() => openProfile(), row:'cal-row', el:['#cal-row'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
-  { open:() => openProfile(), row:'theme-row', el:['#theme-row'], t:'Weergave en meer', p:'Hier kies je licht of donker. "Automatisch" volgt je telefoon. Bij "Op Home" kies je wat er op je beginscherm staat. Daaronder start je deze rondleiding opnieuw, en onderaan log je uit.' },
+    { only:() => CLOUD, open:() => openProfile(), el:['#cal-row'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
+  { open:() => openProfile(), el:['#pf-set'], t:'Instellingen', p:'Bij "Op Home" kies je wat er op je beginscherm staat. Bij "Weergave" kies je licht of donker. Daaronder start je deze rondleiding opnieuw, en helemaal onderaan log je uit.' },
   { route:'home', t:'Klaar! 🎉', p:() => {
       const ios = 'zet de app op je beginscherm via Safari → Deel → Zet op beginscherm.', android = 'installeer de app via het menu van Chrome (⋮) → "App installeren" of "Toevoegen aan startscherm".';
       const tip = isStandalone() ? ''   // staat al op het beginscherm: geen tip meer
@@ -1303,7 +1322,6 @@ function showTourStep(){
   if (!st.open) closeModal();
   if (st.route && state.route !== st.route){ location.hash = '#/' + st.route; return; }   // de router tekent de pagina en daarna de stap
   if (st.open && !$('#modal-root').innerHTML){ st.open(); setTimeout(drawTour, 700); }
-  if (st.row){ document.querySelectorAll('.pf-row').forEach(r => r.open = r.id === st.row); }   // in Mijn account het juiste blok openklappen
   setTimeout(drawTour, 60);
 }
 function drawTour(){
@@ -2060,28 +2078,51 @@ function renderLogin(){
   setTimeout(() => ($('#lg-code') || $('#lg-email') || $('#pf-name'))?.focus(), 50);
 }
 /* Mijn account: per onderwerp één regel met een korte stand; tik om open te klappen (zoals de instellingen van een telefoon) */
-function openProfile(){
-  const u = me();
+/* Mijn account: opgebouwd als een instellingenscherm (kop met foto/letters, groepen met rijen, subpagina's met "‹ Terug"). */
+function openProfile(page = 'main'){
+  const u = me(), next = myNextSunday();
   const parts = HOME_PARTS.filter(([k]) => k !== 'quiz' || canQuiz()), on = parts.filter(([k]) => homeShow(k)).length;
-  const sec = (id, ic, title, sum, body, open) => `<details class="pf-row" id="${id}-row" ${open ? 'open' : ''}><summary><span class="pf-ic">${ic}</span><span class="pf-t">${title}</span><span class="pf-sum" id="${id}-sum">${sum}</span>${icon('chev','chev')}</summary><div class="pf-body">${body}</div></details>`;
+  const THEMES = { auto:'Automatisch', light:'Licht', dark:'Donker' };
+  const row = (id, ic, color, title, value, action = 'pfPage') => `<button type="button" class="pf-item" id="${id}-row" data-action="${action}" data-id="${id}">
+      <span class="pf-ico" style="background:${color}">${ic}</span><span class="pf-t">${title}</span>${value ? `<span class="pf-val">${value}</span>` : ''}${icon('chev','chev')}</button>`;
+  const sub = (title, body) => openModal(`
+    <div class="modal-head pf-subhead"><button class="pf-back" data-action="pfPage" data-id="main">${icon('chev','chev back')} Account</button><h2>${title}</h2><button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body pf-body" id="pf-sub">${body}</div>`);
+  if (page === 'cal'){
+    sub('Agenda op je telefoon', `<div class="pf-group pf-pad" id="cal-box">${CLOUD ? '<span class="muted">Laden…</span>'
+      : '<span class="muted">Je beurten en vergaderingen in je eigen agenda. Dit werkt zodra de database gekoppeld is.</span>'}</div>`);
+    if (CLOUD) loadCalendar();
+    return;
+  }
+  if (page === 'home') return sub('Op Home', `<div class="pf-group">${parts.map(([k, l]) => `<button type="button" class="pf-item pf-switch ${homeShow(k) ? 'on' : ''}" data-action="homePart" data-id="${k}">
+      <span class="pf-t">${l}</span><span class="switch"><i></i></span></button>`).join('')}</div>
+    <p class="pf-note">Alleen op dit toestel. De knop "Kinderen inchecken" staat er altijd.</p>`);
+  if (page === 'theme') return sub('Weergave', `<div class="pf-group">${Object.entries(THEMES).map(([v, l]) => `<button type="button" class="pf-item pf-radio ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">
+      <span class="pf-t">${{ auto:'⚙️', light:'☀️', dark:'🌙' }[v]} ${l}</span><span class="pf-check">${icon('check')}</span></button>`).join('')}</div>
+    <p class="pf-note">Alleen op dit toestel. Automatisch volgt de instelling van je telefoon of tablet.</p>`);
   openModal(`
-    <div class="modal-head"><span class="av av-leiding">${initials(u.name)}</span>
-      <div><h2>${esc(u.name)}</h2><span class="muted">${ROLE_LABEL[u.role] || 'Leiding'} · ${GROUPS[u.group] || 'Algemeen'}${u.email ? ` · ${esc(u.email)}` : ''}</span></div>
-      <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
-    <div class="modal-body">
-      <div class="card list pf-list">
-        ${sec('cal', '📅', 'Agenda op je telefoon', '', `<div class="field" id="cal-box" style="margin:0">${CLOUD ? '<span class="muted" style="font-weight:400">Laden…</span>'
-          : '<span class="muted" style="font-weight:400;font-size:14px">Je beurten en vergaderingen in je eigen agenda. Dit werkt zodra de database gekoppeld is.</span>'}</div>`)}
-        ${sec('home', '🏠', 'Op Home', `${on} van ${parts.length} aan`, `<div class="chips">${parts.map(([k, l]) => `<button type="button" class="chip ${homeShow(k) ? 'on' : ''}" data-action="homePart" data-id="${k}">${l}<span class="tick">✓</span></button>`).join('')}</div>
-          <span class="muted" style="font-size:13px">Op dit toestel. De knop "Kinderen inchecken" staat er altijd.</span>`)}
-        ${sec('theme', '🌙', 'Weergave', { auto:'Automatisch', light:'Licht', dark:'Donker' }[themeChoice()], `<div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
-          `<button type="button" class="chip ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
-          <span class="muted" style="font-size:13px">Op dit toestel. Automatisch volgt je telefoon of tablet.</span>`)}
-        <button class="row pf-tour" data-action="startTour"><span class="pf-ic">🧭</span><span class="pf-t">Rondleiding starten</span>${icon('chev','chev')}</button>
+    <div class="pf-close"><button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+    <div class="modal-body pf-body">
+      <div class="pf-hero"><span class="pf-av">${initials(u.name)}</span><h2>${esc(u.name)}</h2>
+        <div class="pf-badges"><span class="pf-badge">${ROLE_LABEL[u.role] || 'Leiding'}</span>${GROUPS[u.group] ? `<span class="pf-badge soft">${GROUPS[u.group]}</span>` : ''}</div>
+        ${u.email ? `<span class="muted">${esc(u.email)}</span>` : ''}</div>
+      <h3 class="pf-gt">Mijn kinderkerk</h3>
+      <div class="pf-group">
+        ${row('mine', icon('calendar'), 'var(--brand)', 'Mijn beurten', next ? fmtDate(next.date, {day:'numeric', month:'short'}) : 'Geen', 'pfMine')}
+        ${row('cal', icon('download'), '#e5484d', 'Agenda op je telefoon', '')}
       </div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-outline" data-action="logout">Uitloggen</button></div>`);
-  if (CLOUD) loadCalendar();
+      <h3 class="pf-gt">Instellingen</h3>
+      <div class="pf-group" id="pf-set">
+        ${row('home', icon('home'), '#1f9d55', 'Op Home', `${on} van ${parts.length}`)}
+        ${row('theme', icon('monitor'), '#6e56cf', 'Weergave', THEMES[themeChoice()])}
+      </div>
+      <h3 class="pf-gt">Hulp</h3>
+      <div class="pf-group">
+        ${row('tour', icon('help'), '#f08a24', 'Rondleiding starten', '', 'startTour')}
+      </div>
+      <div class="pf-group" style="margin-top:22px"><button type="button" class="pf-item pf-logout" data-action="logout">Uitloggen</button></div>
+      <p class="pf-note" style="text-align:center">Kinderkerk De Deur · versie ${APP_VERSION.split('· ')[1] || APP_VERSION}</p>
+    </div>`);
 }
 /* Agenda-koppeling: persoonlijke link (code in calendar_tokens) naar de Edge Function "agenda".
    De telefoon abonneert zich op die link en haalt wijzigingen in de planning zelf op. */
@@ -3392,13 +3433,11 @@ const actions = {
     const off = homeOff().filter(k => k !== d.id); if (el.classList.contains('on')) off.push(d.id);
     try { localStorage.setItem('kk-home', JSON.stringify(off)); } catch(e){}
     el.classList.toggle('on'); if (state.route === 'home') renderHome();
-    const sum = $('#home-sum'); if (sum) sum.textContent = `${el.parentElement.querySelectorAll('.chip.on').length} van ${el.parentElement.children.length} aan`;
   },
   setTheme: (d, el) => {
     try { if (d.id === 'auto') localStorage.removeItem('kk-theme'); else localStorage.setItem('kk-theme', d.id); } catch(e){}
     applyTheme();
-    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el));
-    const sum = $('#theme-sum'); if (sum) sum.textContent = { auto:'Automatisch', light:'Licht', dark:'Donker' }[d.id];
+    el.parentElement.querySelectorAll('[data-action=setTheme]').forEach(c => c.classList.toggle('on', c === el));
   },
   pickDate: () => { const f = $('#ci-date-field'); f.hidden = false; const i = $('#ci-date'); i.focus(); try { i.showPicker(); } catch(e){} },
   saveCheckin: d => {
@@ -3594,6 +3633,8 @@ const actions = {
     drop('leaders', { id:d.id }); save(); closeModal(); render();
   },
   profile: () => openProfile(),
+  pfPage: d => openProfile(d.id),
+  pfMine: () => { closeModal(); state.planMine = true; if (state.route === 'planning') render(); else location.hash = '#/planning'; },
   startTour: () => startTour(),
   calChoice: d => { try { localStorage.setItem('kk-cal', d.id); } catch(e){} loadCalendar(); },
   calCopy: async () => { try { await navigator.clipboard.writeText(calUrl()); toast('Link gekopieerd'); } catch(e){ prompt('Kopieer deze link:', calUrl()); } },
