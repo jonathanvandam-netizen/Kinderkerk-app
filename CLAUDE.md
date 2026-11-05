@@ -97,13 +97,14 @@ Home (compacte begroeting + grote knop "Kinderen inchecken" met daaronder "Leidi
 het incheckvenster en Meer); de tellers zijn klikbaar (Kinderen/Totaal = "Wie is er?", Leiding = leiding inchecken). Leiding op de planning telt automatisch
 als aanwezig (`leaderPlanned`), extra leiding check je in (`leaderExtra`, tabel leader_checkins); geen tabs meer (Notities weg sinds versie 38: zet zoiets bij agendapunten of actiepunten; tabel `notes` blijft bestaan); tellers in één kaart; "Programma" = thema,
 leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
-Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen; volgorde = wie de
+Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen; onder de naam alleen iets als het opvalt (`ciNote`: "Nog niet geweest",
+"N weken niet geweest" vanaf 3 weken, 🎂 jarig; versie 85); volgorde = wie de
 laatste 12 weken het vaakst kwam bovenaan, gelijk = op naam; ingecheckte kinderen blijven op hun plek; Check-in opent op je eigen groep uit het Team (`state.ciTab`, net als Gedrag), zoeken gaat
 wel door alle groepen; na het inchecken van een nieuw kind is het zoekveld leeg en klaar om de volgende naam te typen),
 leiding check-in, team + uitnodigingen, historie (grafiek + per kind "Periode" = N van M kinderkerkdagen in de huidige periode van 7 weken (nog geen dag → vorige periode),
 ✓ "Vaak" = minstens de helft (versie 84, eerst "8 weken"); tik op een staaf = wie er die dag was, beheerder kan een foute dag weghalen: `histDay`/`histDayDel`), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
 verzoek van Jonathan); daarvoor is Gebed.
-Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
+Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, "N van M deze periode" (`periodDays`), laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
 Jarig zingen: bij het inchecken knop "🎂 Vandaag gezongen" (+100 punten, instelbaar) van 6 dagen vóór tot 4 weken ná
 de verjaardag zolang er nog niet gezongen is (kind trakteert vaak later). Opgeslagen als item 'jarig' in de check-in.
@@ -131,7 +132,8 @@ Meldingen (push) bewust NIET (versie 58 gebouwd, in 59 weer weggehaald): de agen
 Groep nakijken (bovenaan Kinderen beheren, alleen als er iets is): onderbouwkind met leeftijd op 1 september ≥ grens (settings
 'groepsgrens', standaard 8, beheerder past aan in de kaart) → "Naar bovenbouw"; bezoeker met ≥3 check-ins → Onderbouw/Bovenbouw/
 "Blijft bezoeker". "Laat zo" = note `groep-ok:{"kid","sep"}` (geldt dat schooljaar; bezoeker altijd).
-Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in één keer voor iedereen van 13+;
+Kinderen beheren (Meer): lijst met alleen namen (sinds versie 85 geen knop per kind); status "Komt niet meer" (`inactive`) in het
+kindvenster of in één keer voor iedereen van 13+; groepsgrens achter ⓘ in de kaart Groep nakijken;
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**
 zoals het rooster dat de leiding gewend is (Datum | Bovenbouw | Onderbouw | Thema, kopregel per periode; op de telefoon

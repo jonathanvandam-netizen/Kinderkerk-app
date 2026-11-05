@@ -586,7 +586,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 84';
+const APP_VERSION = '2026-11-05 · 85';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1791,10 +1791,13 @@ function renderKidList(){
   kids.sort((a,b) => (freq[b.id] || 0) - (freq[a.id] || 0) || byName(a,b));
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items, c.date)}</span>` : (state.ciTab === 'alles' || q ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
+    // Rustig: onder de naam alleen iets als het opvalt (lang niet geweest, nieuw, jarig); bij "Alles" of zoeken de groep
+    const bd = birthdayNear(k) && !c?.items.includes('jarig') ? '🎂 jarig' : '';
+    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items, c.date)}</span>` + (bd ? ' · 🎂' : '')
+      : [state.ciTab === 'alles' || q ? GROUPS[k.group] : ciNote(k), bd].filter(Boolean).join(' · ');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
-      <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
+      <span class="row-main"><b>${esc(k.name)}</b>${sub ? `<span class="muted">${sub}</span>` : ''}</span>
       ${c ? `<span class="badge ok">${icon('check')} Ingecheckt</span>` : `<span class="btn btn-soft sm">Inchecken</span>`}
     </button>`.replace('class="row"', isActive(k) ? 'class="row"' : 'class="row" style="opacity:.6"'); }).join('')
     : `<div class="empty">${q ? `Geen kind gevonden met “${esc(state.search)}”.` : 'Geen kinderen in deze groep.'}</div>`;
@@ -1906,6 +1909,12 @@ function openSmiley(id){
     </div>
     <div class="modal-foot"><button class="btn btn-primary" data-action="closeModal">Klaar</button></div>`);
 }
+/* Check-inlijst: alleen opvallende dingen (nog nooit geweest, of 3+ weken niet) */
+function ciNote(k){
+  const ls = lastSeen(k.id); if (!ls) return 'Nog niet geweest';
+  const weeks = Math.round((new Date(todayISO()) - new Date(ls)) / 6048e5);
+  return weeks >= 3 ? `${weeks} weken niet geweest` : '';
+}
 function lastSeenText(k){
   const ls = lastSeen(k.id);
   if (!ls) return 'Nog niet geweest';
@@ -1954,10 +1963,10 @@ function openCheckin(kidId, date = kkDay()){
 function openKid(id){
   const k = kidById(id); if (!k) return;
   const visits = db.checkins.filter(c => c.kidId === id).sort((a,b) => b.date.localeCompare(a.date));
-  const n8 = visits.filter(c => c.date > addDays(todayISO(), -56)).length;
+  const { days:pd } = periodDays(), np = visits.filter(c => pd.includes(c.date)).length;
   openModal(`
     <div class="modal-head"><span class="av av-${k.group}">${initials(k.name)}</span>
-      <div><h2>${esc(k.name)}</h2><span class="muted">${k.birthdate ? age(k.birthdate) + ' jaar · ' : ''}${n8}× in de laatste 8 weken · ${lastSeenText(k).toLowerCase()}</span></div>
+      <div><h2>${esc(k.name)}</h2><span class="muted">${k.birthdate ? age(k.birthdate) + ' jaar · ' : ''}${pd.length ? `${np} van ${pd.length} deze periode · ` : ''}${lastSeenText(k).toLowerCase()}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
       <label class="field"><span>Naam</span><input id="kd-name" value="${esc(k.name)}" autocomplete="off"></label>
@@ -2256,7 +2265,7 @@ function groupHintCard(){
       <span class="gh-btns"><button class="btn btn-soft sm" data-action="setKidGroup" data-id="${k.id}" data-group="boven">Naar bovenbouw</button><button class="btn btn-outline sm" data-action="groupOk" data-id="${k.id}">Laat zo</button></span></div>`).join('')}
     ${visit.map(k => `<div class="gh-row"><span><b>${esc(k.name)}</b> kwam al ${db.checkins.filter(c => c.kidId === k.id).length} keer als bezoeker. Vast kind maken?</span>
       <span class="gh-btns">${['onder','boven'].map(g => `<button class="btn ${g === sugg(k) ? 'btn-soft' : 'btn-outline'} sm" data-action="setKidGroup" data-id="${k.id}" data-group="${g}">${g === 'onder' ? 'Onderbouw' : 'Bovenbouw'}</button>`).join('')}<button class="btn btn-outline sm" data-action="groupOk" data-id="${k.id}">Blijft bezoeker</button></span></div>`).join('')}
-    <div class="muted" style="font-size:13px;margin-top:6px">Bovenbouw vanaf ${isAdmin() ? `<input type="number" min="4" max="14" class="gh-limit" value="${groupLimit()}" data-change="groupLimit">` : `<b>${groupLimit()}</b>`} jaar (leeftijd op 1 september, begin van het schooljaar).</div>
+    <div style="margin-top:8px">${infoTip(`Een kind gaat naar de bovenbouw vanaf ${isAdmin() ? `<input type="number" min="4" max="14" class="gh-limit" value="${groupLimit()}" data-change="groupLimit">` : `<b>${groupLimit()}</b>`} jaar (leeftijd op 1 september, begin van het schooljaar). "Laat zo" geldt voor dit schooljaar.`)}</div>
   </div>`;
 }
 
@@ -2277,12 +2286,11 @@ function renderKinderen(){
     ${f === 'oud' && oud.length ? `<div class="banner" style="margin:0 0 12px">${icon('info')}<span>Deze kinderen zijn ${OLD_AGE} jaar of ouder. Gaan ze niet meer naar de kinderkerk? Zet ze dan allemaal in één keer op <b>Komt niet meer</b>.</span>
       <button class="btn btn-primary sm" data-action="retireOld">Allemaal: komt niet meer</button></div>` : ''}
     <div class="card list">${list.map(k => { const ls = lastSeen(k.id); return `
-      <div class="row static"><span class="av av-${k.group}" ${isActive(k) ? '' : 'style="opacity:.55"'}>${initials(k.name)}</span>
-        <span class="row-main" data-action="openKid" data-id="${k.id}" style="cursor:pointer"><b>${esc(k.name)}</b>
-          <span class="muted">${GROUPS[k.group]}${k.birthdate ? ' · ' + age(k.birthdate) + ' jaar' : ''} · ${ls ? 'laatst ' + fmtDate(ls, {day:'numeric', month:'short', year:'numeric'}) : 'nog niet ingecheckt'}</span></span>
-        <button class="btn ${isActive(k) ? 'btn-outline' : 'btn-soft'} sm" data-action="toggleKidActive" data-id="${k.id}">${isActive(k) ? 'Komt niet meer' : 'Komt weer'}</button></div>`; }).join('')
+      <button class="row" data-action="openKid" data-id="${k.id}"><span class="av av-${k.group}" ${isActive(k) ? '' : 'style="opacity:.55"'}>${initials(k.name)}</span>
+        <span class="row-main"><b>${esc(k.name)}</b>
+          <span class="muted">${GROUPS[k.group]}${k.birthdate ? ' · ' + age(k.birthdate) + ' jaar' : ''}${f === 'weg' ? '' : ls ? ' · laatst ' + fmtDate(ls, {day:'numeric', month:'short'}) : ' · nog niet geweest'}</span></span>${icon('chev','chev')}</button>`; }).join('')
       || `<div class="empty">${f === 'weg' ? 'Iedereen komt nog.' : f === 'oud' ? `Geen kinderen van ${OLD_AGE} jaar of ouder.` : 'Nog geen kinderen.'}</div>`}</div>
-    ${infoTip(`Tik op een naam om de gegevens aan te passen. Wie niet meer komt, verdwijnt uit check-in, Jarig, Historie en roosters, maar je kunt diegene hier altijd terugzetten.`)}
+    ${infoTip(`Tik op een naam om de gegevens aan te passen, of om te zetten dat een kind niet meer komt. Wie niet meer komt, verdwijnt uit check-in, Jarig, Historie en roosters, maar je kunt diegene onder "Gestopt" altijd terugzetten.`)}
   </div>`;
 }
 
@@ -2660,6 +2668,14 @@ function openEditLeader(id){
 }
 
 /* ---------- Historie ---------- */
+/* Kinderkerkdagen (dagen met check-ins) van de huidige periode t/m vandaag; nog geen dag → vorige periode */
+function periodDays(){
+  const T = todayISO(), per = periodsSorted().filter(x => x.start <= T);
+  const pDays = p => p ? [...new Set(db.checkins.map(c => c.date))].filter(d => d >= p.start && d <= addDays(periodEnd(p), 6) && d <= T).sort() : [];
+  let P = per[per.length - 1], days = pDays(P);
+  if (!days.length && per.length > 1){ P = per[per.length - 2]; days = pDays(P); }
+  return { P, days };
+}
 function renderHistorie(){
   const T = todayISO();
   const from = addDays(T, -7*16);
@@ -2685,11 +2701,7 @@ function renderHistorie(){
 
   // Telt per periode van 7 weken (niet "8 weken"): zondagen van deze periode t/m vandaag waarop er kinderkerk was.
   // Nog geen zondag in deze periode? Dan de vorige periode.
-  const per = periodsSorted().filter(x => x.start <= T);
-  const pDays = p => p ? [...new Set(db.checkins.map(c => c.date))].filter(d => d >= p.start && d <= addDays(periodEnd(p), 6) && d <= T).sort() : [];
-  let P = per[per.length - 1], days = pDays(P);
-  if (!days.length && per.length > 1){ P = per[per.length - 2]; days = pDays(P); }
-  const m = days.length;
+  const { P, days } = periodDays(), m = days.length;
   const rows = grp => db.kids.filter(k => k.group === grp && isRecent(k)).sort(byName).map(k => {
     const n = db.checkins.filter(c => c.kidId === k.id && days.includes(c.date)).length;
     return `<tr class="click" data-action="openKid" data-id="${k.id}"><td><b>${esc(k.name)}</b></td><td class="muted">${lastSeen(k.id) ? fmtDate(lastSeen(k.id), {day:'numeric', month:'short'}) : '—'}</td>
