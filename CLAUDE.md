@@ -24,8 +24,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 69: Home heeft altijd dezelfde indeling (herkenbaar, past zonder scrollen):
   begroetingskaart (knop Kinderen inchecken + regels Gebedsverlangens en Quiz `homeQuizLink`), tellers (van kkDay, altijd met de dag als klein kopje, ook op zondag "Vandaag"; onder Kinderen "12 onder · 2 boven"), kort programma `planMini`
-  (thema + leiding; op zondag vandaag, anders komende zondag; tik = venster van die zondag met alle details (`editPlan`; leiding
-  alleen-lezen met week, onderwerp, Bijbelgedeelte, leiding, sheets, voorbereiding) + knop "Hele planning", versie 82) en Jarig als één regel (`homeBirthdays(true)`).
+  (thema + leiding; op zondag vandaag, anders komende zondag; tik = altijd eerst het leesvenster van die zondag (`viewPlan` →
+  `openViewPlan`: week, onderwerp, Bijbelgedeelte, leiding, sheets, voorbereiding; planner krijgt daar "Aanpassen") + "Hele planning", versie 83) en Jarig als één regel (`homeBirthdays(true)`).
   Versie 70: Jonathan wil geen verschil tussen zondag en doordeweeks, ook niet in de teksten van de rondleiding.
   Versie 80: op zondag (`kkDay()` = vandaag) staat in de begroetingskaart "Sheets · <voornaam>" (of "kiezen"; tik = Sheets-pagina,
   `homeSheetsLink`), naast "Gebed · N" in één regel van twee helften (`home-pair`), zodat Home op het scherm blijft passen.
@@ -136,6 +136,8 @@ Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is w
 zoals het rooster dat de leiding gewend is (Datum | Bovenbouw | Onderbouw | Thema, kopregel per periode; op de telefoon
 staat het thema onder de namen), of "Uitgebreid" (kaarten; keuze per toestel in localStorage `kk-planview`), met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; alleen planner/beheerder
 past aan; leiding geeft "Ik kan niet" door. Home toont de planning van deze zondag en "Jij hebt leiding: …".
+Bewerkvenster zondag (versie 83, rustig): één onderwerp + Bijbelgedeelte, "+ Ander onderwerp voor bovenbouw" en "+ Voorbereiding"
+alleen als het leeg is; per groep alleen de eigen leiding (zonder verlof) en wie al gekozen is, de rest achter "+ Andere leiding".
 Planning verder vullen (planner/beheerder, knop onder de planning): `planPattern` zoekt per groep in de laatste 12 ingevulde zondagen de
 kleinste cyclus (1–6 weken) waarbij ≥75% klopt (losse ruilen storen niet), `planFillPlan` vult alleen lege zondagen tot een half jaar
 vooruit (of tot het eind van de laatste periode); bevestigen met uitleg van het gevonden patroon. Herinnering voor beheerders op Home

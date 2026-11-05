@@ -445,6 +445,7 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 /* ---------- Modal ---------- */
 .overlay{position:fixed;inset:0;background:var(--overlay);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
 .modal{background:var(--card);width:100%;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;animation:up .2s ease-out;padding-bottom:env(safe-area-inset-bottom)}
+.modal:has(> .modal-foot){padding-bottom:0}.modal > .modal-foot{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
 @media(min-width:640px){.overlay{align-items:center;padding:24px}.modal{max-width:560px;border-radius:20px}}
 .modal-head{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1}
 .modal-head h2{font-size:19px;font-weight:800}
@@ -452,6 +453,9 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .modal-body{padding:18px 20px}
 .modal-foot{display:flex;gap:10px;justify-content:space-between;padding:14px 20px 18px;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--card)}
 .modal-foot .btn-primary{margin-left:auto}
+.plan-edit .field > span .gdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.plan-edit .more-chips{display:contents}.plan-edit .more-chip{border-style:dashed;color:var(--muted)}
+.plan-more{display:flex;flex-wrap:wrap;gap:6px 18px}.plan-more .textlink{font-size:14.5px;color:var(--brand);font-weight:700}
 @keyframes fade{from{opacity:0}}
 @keyframes up{from{transform:translateY(24px);opacity:.5}}
 
@@ -582,7 +586,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 82';
+const APP_VERSION = '2026-11-05 · 83';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1467,7 +1471,7 @@ function planMini(date){
   const s = sundayOf(date), w = weekInfo(date), o = sundayTopic(date, 'onder'), b = sundayTopic(date, 'boven');
   const theme = o.theme === b.theme ? esc(o.theme || 'Nog geen thema') : `${esc(o.theme || '–')} / ${esc(b.theme || '–')}`;
   const names = ids => ids.map(leaderById).filter(Boolean).map(l => l.id === db.session ? '<b>Jij</b>' : esc(l.name)).join(' & ') || '<span class="muted">nog niemand</span>';
-  return `<a class="card plan-mini" href="#/planning" data-action="editPlan" data-date="${date}">
+  return `<a class="card plan-mini" href="#/planning" data-action="viewPlan" data-date="${date}">
       <div class="pm-top"><span>${date === todayISO() ? 'Vandaag' : cap(dayLabel(date))}</span>${w ? `<span class="muted">week ${w.week}</span>` : ''}${isGolden(date) ? '<span class="tag gold">✨ Gouden week</span>' : ''}${icon('chev','chev')}</div>
       <div class="pm-theme">${theme}</div>
       <div class="pm-lead"><span>Onder</span> ${names(s.onder)} <span class="sep">·</span> <span>Boven</span> ${names(s.boven)}</div>
@@ -2551,30 +2555,36 @@ function openViewPlan(date){
       <div class="lead" style="margin-top:12px"><span>Onderbouw</span><span>${leaderNames(s.onder, date)}</span><span>Bovenbouw</span><span>${leaderNames(s.boven, date)}</span>
         ${(r => { const k = r && kidById(r.kidId); return `<span>Sheets</span><span>${k ? esc(k.name) : `<span class="muted">${date >= todayISO() ? 'kiest de app op zondag' : 'niemand'}</span>`}</span>`; })(db.rosters.sheets.find(x => x.date === date))}</div>
       ${s.prep ? `<div class="prep" style="margin-top:10px">📝 ${esc(s.prep)}</div>` : ''}
-      <p class="muted" style="font-size:13.5px;margin:14px 0 0">Alleen een planner kan de planning aanpassen.</p>
-      ${state.route !== 'planning' ? `<button class="btn btn-soft btn-block" style="margin-top:14px" data-action="goPlanning">${icon('calendar')} Hele planning bekijken</button>` : ''}
+      ${canPlan() ? `<button class="btn btn-primary btn-block" style="margin-top:16px" data-action="planEditOpen" data-date="${date}">${icon('edit')} Aanpassen</button>`
+        : '<p class="muted" style="font-size:13.5px;margin:14px 0 0">Alleen een planner kan de planning aanpassen.</p>'}
+      ${state.route !== 'planning' ? `<button class="btn btn-soft btn-block" style="margin-top:10px" data-action="goPlanning">${icon('calendar')} Hele planning bekijken</button>` : ''}
     </div>`);
 }
 function openEditPlan(date){
   const s = sundayOf(date), w = weekInfo(date), split = w && periodSplit(w.p);
-  const chips = (grp, on) => [...db.leaders].sort((a,b) => (a.group === grp ? 0 : 1) - (b.group === grp ? 0 : 1) || byName(a,b)).map(l =>
-    `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away || absentOn(l.id, date) ? `title="${esc(absentOn(l.id, date) ? 'Kan niet' : l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' ' + awayIcon(l.away) : ''}${absentOn(l.id, date) ? ' ⚠️' : ''}<span class="tick">✓</span></button>`).join('');
-  const mine = date >= todayISO() && plannedOn(db.session, date);
+  // Rustig: eerst alleen de leiding van die groep (en wie al gekozen is); de rest achter "+ Andere leiding"
+  const chips = (grp, on) => { const all = [...db.leaders].sort(byName), main = all.filter(l => (l.group === grp && !l.away) || on.includes(l.id)), rest = all.filter(l => !main.includes(l));
+    const chip = l => `<button type="button" class="chip ${on.includes(l.id) ? 'on' : ''}" data-action="toggleChip" data-id="${l.id}" ${l.away || absentOn(l.id, date) ? `title="${esc(absentOn(l.id, date) ? 'Kan niet' : l.away)}" style="opacity:.6"` : ''}>${esc(l.name)}${l.away ? ' ' + awayIcon(l.away) : ''}${absentOn(l.id, date) ? ' ⚠️' : ''}<span class="tick">✓</span></button>`;
+    return main.map(chip).join('') + (rest.length ? `<button type="button" class="chip more-chip" data-action="moreChips">+ Andere leiding</button><span class="more-chips" hidden>${rest.map(chip).join('')}</span>` : ''); };
+  const bovenOwn = split || s.themeBoven || s.passageBoven;
   openModal(`
     <div class="modal-head"><div><h2>${cap(fmtDate(date, {weekday:'long', day:'numeric', month:'long'}))}</h2><span class="muted">${(w => w ? `Week ${w.week} van ${PERIOD_WEEKS} · ${esc(periodLabel(w.p))}` : 'Thema en leiding')(weekInfo(date))}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
-    <div class="modal-body">
+    <div class="modal-body plan-edit">
       ${cantBlock(date)}
-      <div class="subhead" style="border-top:0;padding-top:0"><i style="background:var(--onder)"></i>Onderbouw</div>
       <label class="field"><span>Onderwerp</span><input id="pl-theme" value="${esc(s.theme)}" placeholder="${esc(defaultTheme(date, 'onder') || 'Bijv. Dag 1 t/m 3')}" autocomplete="off"></label>
       <label class="field"><span>Bijbelgedeelte</span><input id="pl-passage" value="${esc(s.passage)}" placeholder="Bijv. Genesis 1" autocomplete="off"></label>
-      <div class="field"><span>Leiding</span><div class="chips" id="pl-onder">${chips('onder', s.onder)}</div></div>
-      <div class="subhead"><i style="background:var(--boven)"></i>Bovenbouw</div>
-      <label class="field"><span>Onderwerp</span><input id="pl-theme-boven" value="${esc(s.themeBoven || '')}" placeholder="${esc(split ? defaultTheme(date, 'boven') : 'Leeg = zelfde als onderbouw')}" autocomplete="off"></label>
-      <label class="field"><span>Bijbelgedeelte</span><input id="pl-passage-boven" value="${esc(s.passageBoven || '')}" placeholder="${split ? 'Bijv. Genesis 1' : 'Leeg = zelfde als onderbouw'}" autocomplete="off"></label>
-      <div class="field"><span>Leiding</span><div class="chips" id="pl-boven">${chips('boven', s.boven)}</div></div>
-      <div class="subhead">📝 Voorbereiding</div>
-      <label class="field"><textarea id="pl-prep" rows="3" placeholder="Wat moet er klaargezet of meegenomen worden?">${esc(s.prep)}</textarea></label>
+      <div id="pl-boven-own" ${bovenOwn ? '' : 'hidden'}>
+        <label class="field"><span>Onderwerp bovenbouw</span><input id="pl-theme-boven" value="${esc(s.themeBoven || '')}" placeholder="${esc(split ? defaultTheme(date, 'boven') : 'Leeg = zelfde als hierboven')}" autocomplete="off"></label>
+        <label class="field"><span>Bijbelgedeelte bovenbouw</span><input id="pl-passage-boven" value="${esc(s.passageBoven || '')}" placeholder="${split ? 'Bijv. Genesis 1' : 'Leeg = zelfde als hierboven'}" autocomplete="off"></label>
+      </div>
+      <div class="field"><span><i class="gdot" style="background:var(--onder)"></i>Leiding onderbouw</span><div class="chips" id="pl-onder">${chips('onder', s.onder)}</div></div>
+      <div class="field"><span><i class="gdot" style="background:var(--boven)"></i>Leiding bovenbouw</span><div class="chips" id="pl-boven">${chips('boven', s.boven)}</div></div>
+      <label class="field" id="pl-prep-f" ${s.prep ? '' : 'hidden'}><span>📝 Voorbereiding</span><textarea id="pl-prep" rows="3" placeholder="Wat moet er klaargezet of meegenomen worden?">${esc(s.prep)}</textarea></label>
+      <div class="plan-more">
+        ${bovenOwn ? '' : `<button type="button" class="textlink" data-action="planShow" data-id="pl-boven-own">+ Ander onderwerp voor bovenbouw</button>`}
+        ${s.prep ? '' : `<button type="button" class="textlink" data-action="planShow" data-id="pl-prep-f">+ Voorbereiding</button>`}
+      </div>
     </div>
     <div class="modal-foot">${state.route !== 'planning' ? `<button class="btn btn-outline" data-action="goPlanning">Hele planning</button>` : ''}<button class="btn btn-primary" data-action="savePlan" data-date="${date}">Opslaan</button></div>`);
 }
@@ -3534,6 +3544,10 @@ const actions = {
     if (outcome !== 'accepted') render();
   },
   hideInstall: () => { try { localStorage.setItem('kk-install-hidden', '1'); } catch(e){} render(); toast('Je vindt dit ook onder Meer'); },
+  moreChips: (d, el) => { el.nextElementSibling.hidden = false; el.remove(); },
+  planShow: (d, el) => { const f = $('#' + d.id); f.hidden = false; el.remove(); f.querySelector('input,textarea')?.focus(); },
+  planEditOpen: d => openEditPlan(d.date),
+  viewPlan: (d, el, e) => { e.preventDefault(); openViewPlan(d.date); },
   goPlanning: () => { closeModal(); location.hash = '#/planning'; },
   editPlan: (d, el, e) => { e.preventDefault(); canPlan() ? openEditPlan(d.date) : openViewPlan(d.date); },
   editPeriod: d => { if (canPlan()) openEditPeriod(d.id); },
