@@ -135,6 +135,16 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .demo-box code{background:var(--card);padding:1px 6px;border-radius:6px}
 .mailicon{width:64px;height:64px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 14px}
 .mailicon svg.i{width:30px;height:30px}
+.pf-list{padding:0}
+.pf-row{border-top:1px solid var(--border)}.pf-row:first-child{border-top:0}
+.pf-row summary,.pf-tour{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;list-style:none;font-weight:700}
+.pf-row summary::-webkit-details-marker{display:none}
+.pf-ic{width:24px;text-align:center;font-size:18px;flex:none}.pf-t{flex:1}
+.pf-sum{color:var(--muted);font-weight:600;font-size:14px;text-align:right}
+.pf-row summary .chev,.pf-tour .chev{width:18px;height:18px;color:var(--muted);transition:transform .2s}
+.pf-row[open] summary .chev{transform:rotate(90deg)}
+.pf-body{padding:0 16px 16px 52px;display:flex;flex-direction:column;gap:8px}
+.pf-tour{width:100%;border-top:1px solid var(--border)}
 .role{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--brand-soft);color:var(--brand);margin-left:6px;vertical-align:1px}
 
 /* ---------- Pagina's ---------- */
@@ -543,7 +553,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 73';
+const APP_VERSION = '2026-11-05 · 74';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1258,9 +1268,9 @@ const TOUR_ALL = [
   { only:() => canQuiz() && !!quizPeriod(), route:'quiz', el:['.page .card.pad', '.page-head'], t:'De quiz in week 7 (bovenbouw)', p:'Hier staan alle quizvragen van de periode. Met "Quiz spelen in de app" tik je het antwoord aan dat de kinderen kiezen; de app laat zien of het goed of fout is. Of download de quiz als PowerPoint. Tik je op "Google Slides", dan komt de quiz ook in de Google Drive van het one80kids-account (map Kinderkerk quiz) en opent hij meteen.' },
   { route:'roosters', el:['.card.duty'], t:'Sheets', p:'Op zondag tik je op "Kies wie de sheets doet". De app kiest uit de kinderen van de bovenbouw die er zijn: wie het minst vaak is geweest, is eerst aan de beurt.' },
   { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar vind je je instellingen. Die laten we nu zien.' },
-  { open:() => openProfile(), el:['#absent-box'], t:'Wanneer kan ik niet?', p:'Weet je al dat je er een keer niet bent, bijvoorbeeld door vakantie? Zet het hier. In de planning staat dan ⚠️ achter je naam, en sta je toch ingepland, dan waarschuwt de app je op Home.' },
-  { only:() => CLOUD, open:() => openProfile(), el:['#cal-box a.btn', '#cal-box'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
-  { open:() => openProfile(), el:['.modal .chips'], t:'Donkere modus', p:'Hier kies je licht of donker. "Automatisch" volgt je telefoon. Daaronder start je deze rondleiding opnieuw, en onderaan log je uit.' },
+  { open:() => openProfile(), row:'absent-row', el:['#absent-row'], t:'Wanneer kan ik niet?', p:'Weet je al dat je er een keer niet bent, bijvoorbeeld door vakantie? Zet het hier. In de planning staat dan ⚠️ achter je naam, en sta je toch ingepland, dan waarschuwt de app je op Home.' },
+  { only:() => CLOUD, open:() => openProfile(), row:'cal-row', el:['#cal-row'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
+  { open:() => openProfile(), row:'theme-row', el:['#theme-row'], t:'Weergave en meer', p:'Hier kies je licht of donker. "Automatisch" volgt je telefoon. Bij "Op Home" kies je wat er op je beginscherm staat. Daaronder start je deze rondleiding opnieuw, en onderaan log je uit.' },
   { route:'home', t:'Klaar! 🎉', p:() => {
       const ios = 'zet de app op je beginscherm via Safari → Deel → Zet op beginscherm.', android = 'installeer de app via het menu van Chrome (⋮) → "App installeren" of "Toevoegen aan startscherm".';
       const tip = isStandalone() ? ''   // staat al op het beginscherm: geen tip meer
@@ -1282,6 +1292,7 @@ function showTourStep(){
   if (!st.open) closeModal();
   if (st.route && state.route !== st.route){ location.hash = '#/' + st.route; return; }   // de router tekent de pagina en daarna de stap
   if (st.open && !$('#modal-root').innerHTML){ st.open(); setTimeout(drawTour, 700); }
+  if (st.row){ document.querySelectorAll('.pf-row').forEach(r => r.open = r.id === st.row); }   // in Mijn account het juiste blok openklappen
   setTimeout(drawTour, 60);
 }
 function drawTour(){
@@ -2041,7 +2052,7 @@ function renderLogin(){
 function absentBox(){
   const list = absences(db.session).filter(x => (x.a.to || x.a.from) >= todayISO());
   const span = a => fmtDate(a.from, {day:'numeric', month:'short'}) + (a.to && a.to !== a.from ? ' t/m ' + fmtDate(a.to, {day:'numeric', month:'short'}) : '');
-  return `<span>Wanneer kan ik niet?</span>
+  return `
     ${list.map(x => `<div class="absent-row"><span>🗓️ <b>${span(x.a)}</b>${x.a.why ? ` · ${esc(x.a.why)}` : ''}</span><button type="button" class="icon-btn sm" title="Weghalen" data-action="absentDel" data-id="${x.n.id}">${icon('x')}</button></div>`).join('')}
     <div id="absent-form" hidden>
       <div class="absent-dates"><label><span class="muted">Van</span><input type="date" id="ab-from"></label><label><span class="muted">Tot en met</span><input type="date" id="ab-to"></label></div>
@@ -2051,28 +2062,28 @@ function absentBox(){
     <button type="button" class="btn btn-outline sm" id="absent-add" data-action="absentAdd" style="align-self:flex-start">${icon('plus')} Datum toevoegen</button>
     <span class="muted" style="font-weight:400;font-size:13px">De planning laat dan zien dat je niet kunt.</span>`;
 }
+/* Mijn account: per onderwerp één regel met een korte stand; tik om open te klappen (zoals de instellingen van een telefoon) */
+function profileSummaryAbsent(){ const n = absences(db.session).filter(x => (x.a.to || x.a.from) >= todayISO()).length; return n ? `${n} datum${n > 1 ? 's' : ''}` : 'Niets doorgegeven'; }
 function openProfile(){
   const u = me();
+  const parts = HOME_PARTS.filter(([k]) => k !== 'quiz' || canQuiz()), on = parts.filter(([k]) => homeShow(k)).length;
+  const sec = (id, ic, title, sum, body, open) => `<details class="pf-row" id="${id}-row" ${open ? 'open' : ''}><summary><span class="pf-ic">${ic}</span><span class="pf-t">${title}</span><span class="pf-sum" id="${id}-sum">${sum}</span>${icon('chev','chev')}</summary><div class="pf-body">${body}</div></details>`;
   openModal(`
     <div class="modal-head"><span class="av av-leiding">${initials(u.name)}</span>
-      <div><h2>${esc(u.name)}${u.role === 'beheerder' ? '<span class="role">Beheerder</span>' : ''}</h2><span class="muted">${esc(u.email)}</span></div>
+      <div><h2>${esc(u.name)}</h2><span class="muted">${u.role === 'beheerder' ? 'Beheerder' : 'Leiding'} · ${GROUPS[u.group] || 'Algemeen'}${u.email ? ` · ${esc(u.email)}` : ''}</span></div>
       <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
     <div class="modal-body">
-      <div class="list card">
-        <div class="row static"><span class="row-main"><span class="muted">Rol</span><b>${u.role === 'beheerder' ? 'Beheerder' : 'Leiding'}</b></span></div>
-        <div class="row static"><span class="row-main"><span class="muted">Groep</span><b>${GROUPS[u.group] || 'Algemeen'}</b></span></div>
-      </div>
-      <div class="field" style="margin:18px 0 0" id="absent-box">${absentBox()}</div>
-      <div class="field" style="margin:18px 0 0"><span>Op Home <span class="muted" style="font-weight:400">(op dit toestel)</span></span>
-        <div class="chips">${HOME_PARTS.filter(([k]) => k !== 'quiz' || canQuiz()).map(([k, l]) => `<button type="button" class="chip ${homeShow(k) ? 'on' : ''}" data-action="homePart" data-id="${k}">${l}<span class="tick">✓</span></button>`).join('')}</div>
-        <span class="muted" style="font-weight:400;font-size:13px">De knop "Kinderen inchecken" staat er altijd.</span></div>
-      <div class="field" style="margin:18px 0 0"><span>Weergave <span class="muted" style="font-weight:400">(op dit toestel)</span></span>
-        <div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
+      <div class="card list pf-list">
+        ${sec('absent', '🗓️', 'Wanneer kan ik niet?', profileSummaryAbsent(), `<div class="field" id="absent-box" style="margin:0">${absentBox()}</div>`)}
+        ${sec('cal', '📅', 'Agenda op je telefoon', '', `<div class="field" id="cal-box" style="margin:0">${CLOUD ? '<span class="muted" style="font-weight:400">Laden…</span>'
+          : '<span class="muted" style="font-weight:400;font-size:14px">Je beurten en vergaderingen in je eigen agenda. Dit werkt zodra de database gekoppeld is.</span>'}</div>`)}
+        ${sec('home', '🏠', 'Op Home', `${on} van ${parts.length} aan`, `<div class="chips">${parts.map(([k, l]) => `<button type="button" class="chip ${homeShow(k) ? 'on' : ''}" data-action="homePart" data-id="${k}">${l}<span class="tick">✓</span></button>`).join('')}</div>
+          <span class="muted" style="font-size:13px">Op dit toestel. De knop "Kinderen inchecken" staat er altijd.</span>`)}
+        ${sec('theme', '🌙', 'Weergave', { auto:'Automatisch', light:'Licht', dark:'Donker' }[themeChoice()], `<div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
           `<button type="button" class="chip ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
-        <span class="muted" style="font-weight:400;font-size:13px">Automatisch volgt de instelling van je telefoon of tablet.</span></div>
-      <div class="field" style="margin:18px 0 0" id="cal-box"><span>Agenda op je telefoon</span>${CLOUD ? '<span class="muted" style="font-weight:400">Laden…</span>'
-        : '<span class="muted" style="font-weight:400;font-size:14px">Je beurten en vergaderingen in je eigen agenda. Dit werkt zodra de database gekoppeld is.</span>'}</div>
-      <button class="btn btn-soft btn-block" style="margin-top:18px" data-action="startTour">🧭 Rondleiding starten</button>
+          <span class="muted" style="font-size:13px">Op dit toestel. Automatisch volgt je telefoon of tablet.</span>`)}
+        <button class="row pf-tour" data-action="startTour"><span class="pf-ic">🧭</span><span class="pf-t">Rondleiding starten</span>${icon('chev','chev')}</button>
+      </div>
     </div>
     <div class="modal-foot"><button class="btn btn-outline" data-action="logout">Uitloggen</button></div>`);
   if (CLOUD) loadCalendar();
@@ -2093,10 +2104,10 @@ async function loadCalendar(fresh){
     }
   } catch(e){
     console.error(e);
-    box.innerHTML = '<span>Agenda op je telefoon</span><span class="muted" style="font-weight:400;font-size:14px">De agenda-koppeling is nog niet ingesteld. Vraag de beheerder (stap 4 van installeren).</span>';
+    box.innerHTML = '<span class="muted" style="font-weight:400;font-size:14px">De agenda-koppeling is nog niet ingesteld. Vraag de beheerder (stap 4 van installeren).</span>';
     return;
   }
-  box.innerHTML = `<span>Agenda op je telefoon</span>
+  box.innerHTML = `
     <div class="chips">${[['mijn','Alleen mijn beurten'],['alles','Alle zondagen']].map(([v,l]) => `<button type="button" class="chip ${calChoice() === v ? 'on' : ''}" data-action="calChoice" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
     <a class="btn btn-primary btn-block" style="margin-top:4px" href="${calUrl().replace(/^https:/, 'webcal:')}">📅 Zet in mijn agenda</a>
     <button type="button" class="btn btn-outline btn-block" data-action="calCopy">Link kopiëren (voor Google Agenda)</button>
@@ -3079,13 +3090,13 @@ const actions = {
     if (to < from) return toast('"Tot en met" ligt vóór "Van"');
     const n = { id:newId(), date:from, author:me().name, text:ABSENT_PREFIX + JSON.stringify({ leader:db.session, from, to, why }) };
     db.notes.push(n); put('notes', n); save();
-    $('#absent-box').innerHTML = absentBox(); render();
+    $('#absent-box').innerHTML = absentBox(); $('#absent-sum').textContent = profileSummaryAbsent(); render();
     const c = myClashes().filter(d => d >= from && d <= to);
     toast(c.length ? `⚠️ Je staat op ${c.map(d => fmtDate(d, {day:'numeric', month:'short'})).join(', ')} ingepland` : 'Opgeslagen');
   },
   absentDel: d => {
     db.notes = db.notes.filter(n => n.id !== d.id); drop('notes', { id:d.id }); save();
-    $('#absent-box').innerHTML = absentBox(); render();
+    $('#absent-box').innerHTML = absentBox(); $('#absent-sum').textContent = profileSummaryAbsent(); render();
   },
   groupLimit: (d, el) => {
     const v = Math.max(4, Math.min(14, +el.value || 8)); if (!isAdmin()) return;
@@ -3373,11 +3384,13 @@ const actions = {
     const off = homeOff().filter(k => k !== d.id); if (el.classList.contains('on')) off.push(d.id);
     try { localStorage.setItem('kk-home', JSON.stringify(off)); } catch(e){}
     el.classList.toggle('on'); if (state.route === 'home') renderHome();
+    const sum = $('#home-sum'); if (sum) sum.textContent = `${el.parentElement.querySelectorAll('.chip.on').length} van ${el.parentElement.children.length} aan`;
   },
   setTheme: (d, el) => {
     try { if (d.id === 'auto') localStorage.removeItem('kk-theme'); else localStorage.setItem('kk-theme', d.id); } catch(e){}
     applyTheme();
     el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el));
+    const sum = $('#theme-sum'); if (sum) sum.textContent = { auto:'Automatisch', light:'Licht', dark:'Donker' }[d.id];
   },
   pickDate: () => { const f = $('#ci-date-field'); f.hidden = false; const i = $('#ci-date'); i.focus(); try { i.showPicker(); } catch(e){} },
   saveCheckin: d => {
