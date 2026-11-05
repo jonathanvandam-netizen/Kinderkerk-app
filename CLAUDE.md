@@ -88,7 +88,8 @@ het incheckvenster en Meer); de tellers zijn klikbaar (Kinderen/Totaal = "Wie is
 als aanwezig (`leaderPlanned`), extra leiding check je in (`leaderExtra`, tabel leader_checkins); geen tabs meer (Notities weg sinds versie 38: zet zoiets bij agendapunten of actiepunten; tabel `notes` blijft bestaan); tellers in één kaart; "Programma" = thema,
 leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per kind (Bijbel/Werkblad/Geld,
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen; volgorde = wie de
-laatste 12 weken het vaakst kwam bovenaan, gelijk = op naam; ingecheckte kinderen blijven op hun plek),
+laatste 12 weken het vaakst kwam bovenaan, gelijk = op naam; ingecheckte kinderen blijven op hun plek; Check-in opent op je eigen groep uit het Team (`state.ciTab`, net als Gedrag), zoeken gaat
+wel door alle groepen; na het inchecken van een nieuw kind is het zoekveld leeg en klaar om de volgende naam te typen),
 leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"; tik op een staaf = wie er die dag was, beheerder kan een foute dag weghalen: `histDay`/`histDayDel`), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
 verzoek van Jonathan); daarvoor is Gebed.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;

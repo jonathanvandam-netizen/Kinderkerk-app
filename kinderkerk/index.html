@@ -543,7 +543,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 71';
+const APP_VERSION = '2026-11-05 · 72';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1186,7 +1186,7 @@ function swapLink(date){
 const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.onder.includes(db.session) || s.boven.includes(db.session))).sort((a,b) => a.date.localeCompare(b.date))[0];
 
 /* ---------- UI-state ---------- */
-const state = { prayDates:6, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', ciTab:'alles', search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { prayDates:6, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', ciTab:null, search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
@@ -1697,6 +1697,7 @@ function openWhoIsIn(){
    ===================================================================== */
 function renderCheckin(){
   const T = kkDay();
+  if (!state.ciTab) state.ciTab = GROUPS[me().group] ? me().group : 'alles';   // standaard je eigen groep (uit het Team)
   const tabs = [['alles','Alles'],['onder','Onderbouw'],['boven','Bovenbouw'],['bezoeker','Bezoekers']];
   const countIn = grp => checkinsOn(T).filter(c => grp === 'alles' || kidById(c.kidId).group === grp).length;
   app.innerHTML = `
@@ -1717,7 +1718,8 @@ function renderCheckin(){
 function renderKidList(){
   const T = kkDay();
   const q = state.search.trim().toLowerCase();
-  let kids = db.kids.filter(k => (state.ciTab === 'alles' || k.group === state.ciTab) && (isActive(k) || state.showAll));
+  // zoeken gaat altijd door alle groepen, zodat je ook een kind uit de andere groep of een bezoeker vindt
+  let kids = db.kids.filter(k => (q || state.ciTab === 'alles' || k.group === state.ciTab) && (isActive(k) || state.showAll));
   const hidden = kids.filter(k => !isRecent(k)).length;
   if (!state.showAll && !q) kids = kids.filter(isRecent);
   if (q) kids = kids.filter(k => k.name.toLowerCase().includes(q));
@@ -1727,7 +1729,7 @@ function renderKidList(){
   kids.sort((a,b) => (freq[b.id] || 0) - (freq[a.id] || 0) || byName(a,b));
   $('#kidlist').innerHTML = kids.length ? kids.map(k => {
     const c = checkinFor(k.id, T);
-    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items, c.date)}</span>` : (state.ciTab === 'alles' ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
+    const sub = !isActive(k) ? '<span style="color:var(--warn-text)">Komt niet meer</span>' : (c ? (c.items.map(itemEmoji).join(' ') || 'Ingecheckt') + (c.prayer ? ' · 🙏' : '') + ` · <span class="pts">⭐ ${pointsFor(k.group, c.items, c.date)}</span>` : (state.ciTab === 'alles' || q ? GROUPS[k.group] : lastSeenText(k))) + (birthdayNear(k) && !c?.items.includes('jarig') ? ' · 🎂' : '');
     return `<button class="row" data-action="openCheckin" data-id="${k.id}">
       <span class="av av-${k.group}">${initials(k.name)}</span>
       <span class="row-main"><b>${esc(k.name)}</b><span class="muted">${sub}</span></span>
@@ -3374,7 +3376,10 @@ const actions = {
     const c = ex ? Object.assign(ex, { items, prayer }) : { id:newId(), kidId:d.id, date, items, prayer, by:me().name };
     if (!ex) db.checkins.push(c);
     put('checkins', c);
+    // Meteen door naar het volgende kind: zoekveld leeg en klaar om te typen
+    if (!ex && state.route === 'checkin') state.search = '';
     save(); closeModal(); render();
+    if (!ex && state.route === 'checkin') setTimeout(() => $('#ci-search')?.focus(), 50);
     toast(`${firstName(kidById(d.id).name)} is ${ex ? 'bijgewerkt' : 'ingecheckt'} ✓`);
   },
   histDay: d => {
@@ -3572,7 +3577,7 @@ const actions = {
       try { localStorage.removeItem(CACHE_KEY); } catch(e){}
       await sb.auth.signOut().catch(() => {}); db = emptyDb(); syncBadge();
     }
-    db.session = null; save(); closeModal(); state.auth = { step:'email' }; location.hash = '#/home'; render();
+    db.session = null; save(); closeModal(); state.auth = { step:'email' }; state.ciTab = null; state.smTab = null; location.hash = '#/home'; render();
   },
   sendLink: async () => {
     const email = $('#lg-email').value.trim().toLowerCase();
