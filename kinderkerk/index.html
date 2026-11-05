@@ -543,7 +543,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 72';
+const APP_VERSION = '2026-11-05 · 73';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1378,8 +1378,8 @@ function renderHome(){
         ${(c => c ? `<div class="hero-duty clash">⚠️ Je staat ingepland op <b>${fmtDate(c, {day:'numeric', month:'long'})}</b>, maar je kunt dan niet. <a href="${swapLink(c)}" target="_blank" rel="noopener">Vervanger zoeken</a></div>`
           : '')(myClashes()[0])}
         <a class="btn btn-primary btn-block btn-lg" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
-        <a class="home-link" href="#/gebed">${icon('heart')}<span><b>Gebedsverlangens</b>${(n => isSunday(T) || checkinsOn(T).length ? (n ? ` · ${n} gebedspunt${n > 1 ? 'en' : ''}` : '') : '')(prayerPoints(T).length)}</span>${icon('chev','chev')}</a>
-        ${homeQuizLink()}
+        ${homeShow('gebed') ? `<a class="home-link" href="#/gebed">${icon('heart')}<span><b>Gebedsverlangens</b>${(n => isSunday(T) || checkinsOn(T).length ? (n ? ` · ${n} gebedspunt${n > 1 ? 'en' : ''}` : '') : '')(prayerPoints(T).length)}</span>${icon('chev','chev')}</a>` : ''}
+        ${homeShow('quiz') ? homeQuizLink() : ''}
       </div>
       ${terugblikCard()}
       ${(l => l ? `<a class="card row" href="#/planning" style="border-radius:var(--radius)">
@@ -1400,20 +1400,24 @@ function homeQuizLink(){
 }
 /* Home heeft altijd dezelfde indeling (herkenbaar): tellers, kort programma, jarig. Alleen de inhoud past zich aan:
    op zondag gaat alles over vandaag, doordeweeks tellen de tellers van afgelopen zondag en het programma van komende zondag. */
+/* Wat er op Home staat, per toestel aan/uit te zetten in Mijn account (localStorage kk-home). "Kinderen inchecken" staat er altijd. */
+const HOME_PARTS = [['gebed','Gebedsverlangens'], ['quiz','Quizvraag (bovenbouw)'], ['tellers','Wie er is'], ['programma','Programma'], ['jarig','Jarig']];
+const homeOff = () => { try { return JSON.parse(localStorage.getItem('kk-home') || '[]'); } catch(e){ return []; } };
+const homeShow = part => !homeOff().includes(part);
 function homeVandaag(){
   const T = todayISO(), D = kkDay(), S = nextSunday(T);
   const cs = checkinsOn(D), leaders = db.leaders.filter(l => leaderIn(l.id, D)).length;
   const grp = g => cs.filter(c => kidById(c.kidId).group === g).length;
   const split = [['onder','onder'],['boven','boven'],['bezoeker','bezoek']].filter(([k]) => grp(k)).map(([k, l]) => `${grp(k)} ${l}`).join(' · ');
   return `
-    <div class="card stats1">
+    ${homeShow('tellers') ? `<div class="card stats1">
       <div class="stats-cap">${cap(dayLabel(D))}</div>
       <button class="cell" data-action="whoIsIn" title="Welke kinderen zijn er?"><div class="lbl">Kinderen ${icon('chev')}</div><div class="num">${cs.length}</div>${split ? `<div class="sub">${split}</div>` : ''}</button>
       <button class="cell" data-action="leaderCheckin" title="Welke leiding is er?"><div class="lbl">Leiding ${icon('chev')}</div><div class="num">${leaders}</div></button>
       <button class="cell" data-action="whoIsIn" title="Wie is er?"><div class="lbl">Totaal ${icon('chev')}</div><div class="num">${cs.length + leaders}</div></button>
-    </div>
-    ${planMini(S)}
-    ${homeBirthdays(true)}`;
+    </div>` : ''}
+    ${homeShow('programma') ? planMini(S) : ''}
+    ${homeShow('jarig') ? homeBirthdays(true) : ''}`;
 }
 /* Kort programma voor Home: thema en wie er leiding heeft */
 function planMini(date){
@@ -2059,6 +2063,9 @@ function openProfile(){
         <div class="row static"><span class="row-main"><span class="muted">Groep</span><b>${GROUPS[u.group] || 'Algemeen'}</b></span></div>
       </div>
       <div class="field" style="margin:18px 0 0" id="absent-box">${absentBox()}</div>
+      <div class="field" style="margin:18px 0 0"><span>Op Home <span class="muted" style="font-weight:400">(op dit toestel)</span></span>
+        <div class="chips">${HOME_PARTS.filter(([k]) => k !== 'quiz' || canQuiz()).map(([k, l]) => `<button type="button" class="chip ${homeShow(k) ? 'on' : ''}" data-action="homePart" data-id="${k}">${l}<span class="tick">✓</span></button>`).join('')}</div>
+        <span class="muted" style="font-weight:400;font-size:13px">De knop "Kinderen inchecken" staat er altijd.</span></div>
       <div class="field" style="margin:18px 0 0"><span>Weergave <span class="muted" style="font-weight:400">(op dit toestel)</span></span>
         <div class="chips">${[['auto','Automatisch'],['light','☀️ Licht'],['dark','🌙 Donker']].map(([v,l]) =>
           `<button type="button" class="chip ${themeChoice() === v ? 'on' : ''}" data-action="setTheme" data-id="${v}">${l}<span class="tick">✓</span></button>`).join('')}</div>
@@ -3361,6 +3368,11 @@ const actions = {
     const text = meetingText(m);
     if (navigator.share){ try { await navigator.share({ title:meetingKindLabel(m.kind), text }); return; } catch(e){ if (e.name === 'AbortError') return; } }
     try { await navigator.clipboard.writeText(text); toast('Notulen gekopieerd'); } catch(e){ toast('Kopiëren lukte niet'); }
+  },
+  homePart: (d, el) => {
+    const off = homeOff().filter(k => k !== d.id); if (el.classList.contains('on')) off.push(d.id);
+    try { localStorage.setItem('kk-home', JSON.stringify(off)); } catch(e){}
+    el.classList.toggle('on'); if (state.route === 'home') renderHome();
   },
   setTheme: (d, el) => {
     try { if (d.id === 'auto') localStorage.removeItem('kk-theme'); else localStorage.setItem('kk-theme', d.id); } catch(e){}
