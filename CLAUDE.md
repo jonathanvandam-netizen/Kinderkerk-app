@@ -24,7 +24,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 69: Home heeft altijd dezelfde indeling (herkenbaar, past zonder scrollen):
   begroetingskaart (knop Kinderen inchecken + regels Gebedsverlangens en Quiz `homeQuizLink`), tellers (van kkDay, altijd met de dag als klein kopje, ook op zondag "Vandaag"; onder Kinderen "12 onder · 2 boven"), kort programma `planMini`
-  (thema + leiding; op zondag vandaag, anders komende zondag; tik = Planning) en Jarig als één regel (`homeBirthdays(true)`).
+  (thema + leiding; op zondag vandaag, anders komende zondag; tik = venster van die zondag met alle details (`editPlan`; leiding
+  alleen-lezen met week, onderwerp, Bijbelgedeelte, leiding, sheets, voorbereiding) + knop "Hele planning", versie 82) en Jarig als één regel (`homeBirthdays(true)`).
   Versie 70: Jonathan wil geen verschil tussen zondag en doordeweeks, ook niet in de teksten van de rondleiding.
   Versie 80: op zondag (`kkDay()` = vandaag) staat in de begroetingskaart "Sheets · <voornaam>" (of "kiezen"; tik = Sheets-pagina,
   `homeSheetsLink`), naast "Gebed · N" in één regel van twee helften (`home-pair`), zodat Home op het scherm blijft passen.
