@@ -28,7 +28,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   Versie 73: Mijn account → "Op Home" zet per toestel Gebedsverlangens, Quizvraag, Wie er is, Programma en Jarig aan/uit
   (localStorage `kk-home` = lijst wat uit staat, `homeShow`); de knop Kinderen inchecken staat er altijd.
   Versie 74: Mijn account overzichtelijker: kop met naam en "Rol · Groep · e-mail", daaronder één lijst met inklapbare regels
-  (`pf-row`, details/summary met korte stand rechts): Wanneer kan ik niet?, Agenda op je telefoon, Op Home, Weergave, Rondleiding
+  (`pf-row`, details/summary met korte stand rechts): Agenda op je telefoon, Op Home, Weergave, Rondleiding
   starten; Uitloggen onderaan. Rondleidingstappen klappen het juiste blok open (`row` in de stap).
 - Fun zone is bewust weggelaten.
 - Logo: `kinderkerk/logo-512.png` / `logo-192.png` (het echte logo, kinderen rond een wereldbol met vlam).
@@ -110,10 +110,15 @@ hoofdletters/accenten, alleen voornaam, of kleine typfout bij (bijna) gelijke vo
 achternaam níet): waarschuwing tijdens typen en bevestigen bij opslaan.
 Meer is ingedeeld in Algemeen (Team), Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten), Kinderen
 (Kinderen beheren, Historie) en Gegevens (beheerder).
-Afwezig + vervanger (bewust rustig): Mijn account → "Wanneer kan ik niet?" (van/t/m/reden; opslag in tabel `notes`,
-text = `afwezig:{"leader","from","to","why"}`, `absentOn`). Planning zet ⚠️ achter die naam (tabel, kaarten, chips). Op Home alleen
-bij een botsing een gele regel met "Vervanger zoeken" (`myClashes`); in het venster van een zondag waarop jij leiding hebt de knop
-"🔁 Kun je niet? Vervanger zoeken via WhatsApp" (`swapLink` = wa.me met kant-en-klare tekst).
+Rol **planner** (versie 75): rollen Leiding / Planner / Beheerder (`ROLE_LABEL`, `canPlan()` = beheerder of planner). Alleen planner en
+beheerder passen de planning aan (leiding per zondag, onderwerp, periodes, gouden week, planning vullen); gewone leiding ziet een
+alleen-lezen venster (`openViewPlan`). Database: `supabase/rollen.sql` (rol-check met 'planner', `is_planner()`, sundays/periods schrijven
+alleen planner, settings 'gouden' ook planner; installeren.html stap 9). Getest op lokale Postgres.
+"Ik kan niet" (bewust rustig): in het venster van een zondag waarop jij leiding hebt de knop "🙋 Ik kan niet" (`cantBlock`, actie `cantGo`;
+"Toch wel" = `canGo`). Opslag als afwezig-notitie in tabel `notes` (van = t/m = die zondag; text = `afwezig:{"leader","from","to","why"}`,
+`absentOn`), zodat gewone leiding geen schrijfrecht op de planning nodig heeft. Planning zet ⚠️ achter de naam en "⚠️ Vervanger nodig"
+(`needSub`); op Home ziet alleen een planner/beheerder een rode regel "Vervanger nodig: …" (`needList`, 8 weken vooruit).
+De WhatsApp-vervangerknop en "Wanneer kan ik niet?" in Mijn account zijn weggehaald (versie 75, te vaag voor Jonathan).
 Meldingen (push) bewust NIET (versie 58 gebouwd, in 59 weer weggehaald): de agenda-koppeling herinnert al aan beurten en vergaderingen.
 Groep nakijken (bovenaan Kinderen beheren, alleen als er iets is): onderbouwkind met leeftijd op 1 september ≥ grens (settings
 'groepsgrens', standaard 8, beheerder past aan in de kaart) → "Naar bovenbouw"; bezoeker met ≥3 check-ins → Onderbouw/Bovenbouw/
@@ -122,13 +127,13 @@ Kinderen beheren (Meer): status "Komt niet meer" (`inactive`) per kind of in é�
 gestopte kinderen verdwijnen uit check-in, Jarig, Historie en roosters (gegevens blijven, terugzetten kan).
 Planning (eigen knop in de menubalk): periodethema bovenaan, daaronder "Wie is wanneer aan de beurt": standaard een **tabel**
 zoals het rooster dat de leiding gewend is (Datum | Bovenbouw | Onderbouw | Thema, kopregel per periode; op de telefoon
-staat het thema onder de namen), of "Uitgebreid" (kaarten; keuze per toestel in localStorage `kk-planview`), met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; iedereen
-mag aanpassen (ruilen = jezelf weghalen, ander erin). Home toont de planning van deze zondag en "Jij hebt leiding: …".
-Planning verder vullen (beheerder, knop onder de planning): `planPattern` zoekt per groep in de laatste 12 ingevulde zondagen de
+staat het thema onder de namen), of "Uitgebreid" (kaarten; keuze per toestel in localStorage `kk-planview`), met per zondag thema, Bijbelgedeelte, voorbereiding en leiding onderbouw/bovenbouw, sheets en bidden, en een filter "Alleen mijn beurten"; alleen planner/beheerder
+past aan; leiding geeft "Ik kan niet" door. Home toont de planning van deze zondag en "Jij hebt leiding: …".
+Planning verder vullen (planner/beheerder, knop onder de planning): `planPattern` zoekt per groep in de laatste 12 ingevulde zondagen de
 kleinste cyclus (1–6 weken) waarbij ≥75% klopt (losse ruilen storen niet), `planFillPlan` vult alleen lege zondagen tot een half jaar
 vooruit (of tot het eind van de laatste periode); bevestigen met uitleg van het gevonden patroon. Herinnering voor beheerders op Home
 en Planning als de planning binnen 8 weken op is (`planRunsOut`). Getest: 0 afwijkingen van het echte rooster (`dienst()`).
-Periodes (Planning, alleen beheerder): 7 weken, thema per groep (bovenbouw leeg = zelfde als onderbouw); week 6 = bidden, week 7 =
+Periodes (Planning, alleen planner/beheerder): 7 weken, thema per groep (bovenbouw leeg = zelfde als onderbouw); week 6 = bidden, week 7 =
 puntenwinkeltje + vergadering, om en om klein/groot (nieuwe periode stelt start +7 weken en de andere vergadering voor).
 Per zondag onderwerp + Bijbelgedeelte per groep (leeg = periodethema; bovenbouw leeg = als onderbouw, tenzij de
 periode voor bovenbouw een eigen thema heeft). Echte stand: periode "Scheppingsverhaal" begon 11-10-2026
@@ -193,7 +198,7 @@ geen zondag. Zoek je de gebedslijst? Klik hier." Sheets (Meer → Sheets, `#/roo
 eerlijk (`fairPick` + `sheetTurns`) uit de ingecheckte bovenbouw; "Ander kind" en "Zelf een kind kiezen" kunnen ook.
 Overzicht "Hoe vaak al?" en "Eerdere keren". Opslag blijft `rosters` (kind 'sheets'). In de planning staat voor
 toekomstige zondagen "kiest de app op zondag". Migratie demoRev 4 haalde oude vooruit-planning weg.
-Rondleiding (`TOUR_ALL`, 17 stappen voor leiding, tot 20 voor bovenbouw/beheerder: "Quizvraag bedenken" en "De quiz in week 7" (Google Slides → Drive van het one80kids-account, `only:() => canQuiz()`), "Planning verder vullen" (`only:() => isAdmin()`); voor iedereen ook vervanger zoeken en "Wanneer kan ik niet?"): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
+Rondleiding (`TOUR_ALL`, 17 stappen voor leiding, tot 20 voor bovenbouw/beheerder: "Quizvraag bedenken" en "De quiz in week 7" (Google Slides → Drive van het one80kids-account, `only:() => canQuiz()`), "Planning verder vullen" (`only:() => canPlan()`); voor iedereen ook "Kun je niet?"): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
 Mijn account → "Rondleiding starten". Gaat echt langs de pagina's (stap: `nav` = menuknop, `route` = pagina openen,
 `el` = wat oplichten, eerste die bestaat; `open` = venster openen, bijv. Mijn account; `only` = voorwaarde, bijv. de
 agenda-stap alleen in databasemodus). Legt ook de agenda-koppeling uit (past zich vanzelf aan). Voortgangsbalk "Stap x van y".

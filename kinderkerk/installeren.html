@@ -158,6 +158,14 @@ textarea{width:100%;height:120px;font:13px/1.4 ui-monospace,monospace;border:1px
       <li>Kopieer de <b>URL van de web-app</b> (eindigt op <code>/exec</code>) en stuur hem naar Claude, dan zet die hem in de app. Die URL is niet geheim: het script laat alleen ingelogde leiding toe.</li>
     </ol>
   </section>
+  <section class="card">
+    <h2><span class="num">9</span> Rol planner</h2>
+    <p style="margin:0">Daarna kun je iemand de rol <b>Planner</b> geven. Die mag de planning aanpassen (leiding, thema's, periodes, gouden week). Gewone leiding kan de planning alleen bekijken en "Ik kan niet" doorgeven.</p>
+    <ol>
+      <li><button class="soft" data-file="rollen.sql">Kopieer de planner-code</button>, ga naar <b>SQL Editor → New query</b>, plak en tik op <b>Run</b>.</li>
+      <li>In de app: <b>Meer → Team</b> → tik op iemand → bij Rol kies je <b>Planner</b>.</li>
+    </ol>
+  </section>
 </main>
 <script>
 const TEXT = {
@@ -184,7 +192,7 @@ $('#copy-sql').addEventListener('click', e => {
   copy(schema.replace('JOUW-EMAIL@voorbeeld.nl', email), e.target, '✓ Gekopieerd, nu plakken in Supabase');
 });
 const files = {};
-['agenda.sql', 'agenda-functie.txt', 'backup.sql', 'uitnodigen.sql', 'slides-script.txt'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
+['agenda.sql', 'agenda-functie.txt', 'backup.sql', 'uitnodigen.sql', 'rollen.sql', 'slides-script.txt'].forEach(f => fetch(f, { cache:'no-cache' }).then(r => r.ok ? r.text() : '').then(t => { files[f] = t; }));
 document.querySelectorAll('[data-file]').forEach(b => b.addEventListener('click', () => files[b.dataset.file]
   ? copy(files[b.dataset.file], b, '✓ Gekopieerd') : alert('Nog aan het laden. Probeer het zo nog een keer.')));
 document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy(TEXT[b.dataset.copy], b, '✓ Gekopieerd')));

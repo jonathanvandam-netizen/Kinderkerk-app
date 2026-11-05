@@ -30,6 +30,7 @@ jobs:
           cp supabase/agenda.sql kinderkerk/agenda.sql
           cp supabase/backup.sql kinderkerk/backup.sql
           cp supabase/uitnodigen.sql kinderkerk/uitnodigen.sql
+          cp supabase/rollen.sql kinderkerk/rollen.sql
           cp supabase/functions/agenda/index.ts kinderkerk/agenda-functie.txt
           cp google/quiz-naar-slides.gs kinderkerk/slides-script.txt
       - uses: actions/upload-pages-artifact@v3
