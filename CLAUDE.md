@@ -18,7 +18,8 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   (glazig, over de hele breedte; sinds versie 63, eerst zwevend) met alleen Home, Check-in, Gedrag en Meer (sinds versie 64).
   Planning en Vergadering staan bovenaan in Meer (Algemeen), met "← Meer" op die pagina's; Meer-knop is actief op die routes.
 - Rust (feedback versie 63): per scherm krijgt de hoofdactie de aandacht, de rest gaat achter een menu. Uitleg staat achter
-  een klein "ⓘ Uitleg" (`infoTip`, inklapbaar), niet als groot blauw blok. Back-upherinnering niet op Home maar rood stipje op
+  een klein "ⓘ Uitleg" (`infoTip`, inklapbaar), niet als groot blauw blok. Versie 79: elke pagina met iets uit te leggen heeft zo'n
+  uitleg (ook Check-in met de icoontjes, Sheets, Quiz en Vergadering), want de rondleiding is kort en mensen klikken hem door. Back-upherinnering niet op Home maar rood stipje op
   Meer + bovenaan Meer → Gegevens (`backupDue`). Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller), geen "Jij hebt leiding" meer (alleen de
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 69: Home heeft altijd dezelfde indeling (herkenbaar, past zonder scrollen):

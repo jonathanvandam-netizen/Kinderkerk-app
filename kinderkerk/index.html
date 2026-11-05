@@ -578,7 +578,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 78';
+const APP_VERSION = '2026-11-05 · 79';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1579,7 +1579,10 @@ function actionRow(a, showMeeting){
 const agendaAddForm = (date, kind) => `<form class="addrow" data-submit="addAgenda" data-date="${date}" data-kind="${kind}">
   <input id="ag-new" placeholder="Nieuw agendapunt…" autocomplete="off"><button class="btn btn-primary sm" type="submit">${icon('plus')} Toevoegen</button></form>`;
 function renderVergaderingen(){
-  app.innerHTML = `<div class="page"><a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a><div class="page-head"><h1>Vergadering</h1></div>${vergaderOverzicht()}</div>`;
+  app.innerHTML = `<div class="page"><a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a><div class="page-head"><h1>Vergadering</h1></div>
+    <div style="margin:-4px 0 12px">${infoTip(`In week 7 van elke periode is er een vergadering, om en om klein en groot. Zet hieronder alvast agendapunten klaar; dat mag iedereen.
+      Tijdens de vergadering tik je op "Agenda en notulen openen": de notulist typt de notulen, de rest leest mee. Actiepunten die over hun datum zijn, worden rood.
+      Met "Delen" stuur je het verslag via WhatsApp of mail. Na week 7 staat hier een terugblik op de periode.`)}</div>${vergaderOverzicht()}</div>`;
 }
 function vergaderOverzicht(){
   const T = todayISO(), n = nextMeetingInfo();
@@ -1748,6 +1751,10 @@ function renderCheckin(){
       <button class="btn btn-primary" data-action="addKid">${icon('plus')} Kind</button>
     </div>
     <div class="card list" id="kidlist"></div>
+    <div style="margin-top:12px">${infoTip(`Tik op een kind om het in te checken en vink aan wat het mee heeft. De app telt de punten.<br>
+      📖 Bijbel · 📄 Werkblad · 💰 Geld · 💬 Bijbeltekst · 🙏 gebedsverlangen · ⭐ punten · 🎂 jarig<br>
+      Wie het vaakst komt, staat bovenaan. Je ziet de kinderen van de laatste 60 dagen; met "Alle kinderen" zie je iedereen. Zoeken gaat door alle groepen.
+      Is een kind jarig? Bij het inchecken staat de knop "Vandaag gezongen". Leiding die op de planning staat, is vanzelf ingecheckt.`)}</div>
     <div class="list-foot" id="allbanner"></div>
   </div>`;
   renderKidList();
@@ -2721,6 +2728,9 @@ function renderQuiz(){
     ${back}
     <div class="page-head"><div><h1>Quiz</h1><span class="muted">${esc(periodLabel(p))} · quiz op ${fmtDate(periodEnd(p), {day:'numeric', month:'long'})}</span></div>
       <button class="btn btn-primary sm" data-action="quizNew">${icon('plus')} Vraag</button></div>
+    <div style="margin:-4px 0 12px">${infoTip(`Zet tijdens de periode vragen klaar met "+ Vraag": een open vraag, of meerkeuze A–D (meer goede antwoorden mag). Tik op een vraag om hem aan te passen of weg te halen.<br>
+      In week 7: met "Quiz spelen in de app" tik je het antwoord aan dat de kinderen kiezen; de app laat zien of het goed of fout is.
+      Of download de quiz als PowerPoint. "Google Slides" zet de quiz in de Google Drive van het one80kids-account (map Kinderkerk quiz) en opent hem meteen.`)}</div>
     ${list.length ? `<div class="card pad" style="margin-bottom:16px">
       <button class="btn ${w7 ? 'btn-primary' : 'btn-soft'} btn-block" data-action="quizPlay">▶️ Quiz spelen in de app (${quizCount(list.length)})</button>
       <div class="btn-row" style="margin-top:10px"><button class="btn btn-outline" style="flex:1" data-action="quizPptx" data-id="pptx">${icon('download')} PowerPoint</button><button class="btn btn-outline" style="flex:1" data-action="quizPptx" data-id="slides">${icon('share')} Google Slides</button></div></div>` : ''}
@@ -2875,6 +2885,7 @@ function renderRoosters(){
   app.innerHTML = `
   <div class="page">
     <div class="page-head"><h1>Sheets</h1><span class="muted">Bovenbouw · ${dayLabel(D)}</span></div>
+    <div style="margin:-4px 0 12px">${infoTip(`Tik op "Kies wie de sheets doet". De app kiest uit de kinderen van de bovenbouw die er vandaag zijn: wie het minst vaak de sheets deed, is eerst aan de beurt. Past het niet? Tik op "Ander kind", of kies zelf een kind.`)}</div>
     ${D !== T ? `<div class="banner" style="margin:0 0 16px">${icon('info')}<span>Vandaag is het geen zondag. Je ziet ${fmtDate(D, {weekday:'long', day:'numeric', month:'long'})}.</span></div>` : ''}
     <div class="card duty" style="margin-bottom:12px"><span class="row-icon">${icon('monitor')}</span>
       <span style="flex:1"><small>${cap(dayLabel(D))} doet de sheets</small><b>${k ? esc(k.name) : 'Nog niemand gekozen'}</b></span>
@@ -2882,7 +2893,6 @@ function renderRoosters(){
     ${!k ? (boven.length ? `<button class="btn btn-primary btn-block" data-action="pickSheets" data-day="${D}">🎲 Kies wie de sheets doet</button>`
       : `<div class="card empty">Nog geen kinderen van de bovenbouw ingecheckt.</div>`) : ''}
     <div style="text-align:center;margin-top:8px"><button class="textlink" style="font-size:14px;color:var(--brand)" data-action="editRoster" data-date="${D}">Zelf een kind kiezen</button></div>
-    <p class="muted" style="font-size:13.5px;margin:10px 4px 0">De app kiest uit de kinderen van de bovenbouw die er zijn: wie het minst vaak de sheets heeft gedaan, is eerst aan de beurt. Zo komt iedereen even vaak aan de beurt, ook wie niet vaak komt.</p>
     ${counts.length ? `<h3 class="section-title">Hoe vaak al?</h3>
     <div class="card list">${counts.map(({ k:x, n }) => `<div class="row static"><span class="av av-boven">${initials(x.name)}</span>
       <span class="row-main"><b>${esc(x.name)}</b></span><span class="badge ${n ? 'grey' : 'ok'}">${n ? n + '×' : 'Nog niet'}</span></div>`).join('')}</div>` : ''}
