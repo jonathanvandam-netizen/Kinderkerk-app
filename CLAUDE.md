@@ -143,7 +143,8 @@ periode voor bovenbouw een eigen thema heeft). Echte stand: periode "Scheppingsv
 Vergadering (eigen knop in de menubalk, `#/vergadering`; bewust niet op Home): volgende vergadering = week 7 van de periode (of zelf gepland), agendapunten
 vooraf (iedereen), pagina `#/vergadering/<id>` met notulen per agendapunt (autosave), actiepunten (wat/wie/vóór,
 afvinken; open actiepunten op het overzicht; over de vóór-datum = `isLate`: rood vlak + "⚠️ Te laat", kop "· N te laat", bovenaan door `byDue`), eerdere vergaderingen, Delen = notulen als tekst (WhatsApp/mail).
-Agendapunten verplaatsen met pijltjes omhoog/omlaag (overzicht én vergaderpagina, `moveAgenda` nummert `sort` opnieuw).
+Agendapunten verplaatsen met pijltjes omhoog/omlaag (overzicht én vergaderpagina, `moveAgenda` nummert `sort` opnieuw); sinds versie 78
+staan pijltjes en prullenbak pas in beeld na de knop "Aanpassen" (`state.agEdit`, `agTools`).
 Tabellen `meetings`, `agenda_items`, `actions`. Schrijfacties naar Supabase gaan via een wachtrij (volgorde blijft).
 Per vergadering een notulist; actiepunten met één of meer personen (`who` = lijst). Notulen typt alleen de notulist;
 anderen zien ze alleen-lezen en live ("Toch typen" kan, `state.notesOpen`), zodat niemand elkaars tekst overschrijft. Delen geeft een verslag zoals de
@@ -188,7 +189,7 @@ Opslag settings 'gouden' = { periode-id: weeknummer } (alleen beheerder). Period
 bij een nieuwe periode kiest de app willekeurig uit week 1–5 (`GOLD_WEEKS`), aanpasbaar. In die week (`goldNow()` = zondag van deze
 week): gouden randje om de app (`html.golden`), badge op Home, tag "✨ Gouden week · dubbele punten" bij het programma, gouden regel
 in de planningtabel, en in het incheckvenster een gouden puntenkaart "×2". Het puntenwinkeltje zelf blijft fysiek.
-Gebed (`#/gebed`, in Meer bovenaan + kaart op Home; bewust niet in de menubalk, die is vol): gebedspunten van vandaag (of
+Gebed (`#/gebed`, gebedslijst toont standaard 2 zondagen ("Ouder tonen"), uitleg achter ⓘ; in Meer bovenaan + kaart op Home; bewust niet in de menubalk, die is vol): gebedspunten van vandaag (of
 de laatste zondag als het geen zondag is). Bij kinderkerk bidden kinderen voor de gebedspunten van het inchecken + 1 kind
 van de onderbouw voor de collecte. "Kies wie er bidden" kiest per gebedspunt een ingecheckt kind (alle groepen, liefst niet
 het kind zelf) en een onderbouwkind voor de collecte; "Ander kind" kiest opnieuw. "Zelf kiezen" = naam typen (`openPrayPick`/`pickList`: eerst ingecheckte kinderen, typen zoekt in
@@ -200,7 +201,7 @@ geen zondag. Zoek je de gebedslijst? Klik hier." Sheets (Meer → Sheets, `#/roo
 eerlijk (`fairPick` + `sheetTurns`) uit de ingecheckte bovenbouw; "Ander kind" en "Zelf een kind kiezen" kunnen ook.
 Overzicht "Hoe vaak al?" en "Eerdere keren". Opslag blijft `rosters` (kind 'sheets'). In de planning staat voor
 toekomstige zondagen "kiest de app op zondag". Migratie demoRev 4 haalde oude vooruit-planning weg.
-Rondleiding (`TOUR_ALL`, 17 stappen voor leiding, tot 20 voor bovenbouw/beheerder: "Quizvraag bedenken" en "De quiz in week 7" (Google Slides → Drive van het one80kids-account, `only:() => canQuiz()`), "Planning verder vullen" (`only:() => canPlan()`); voor iedereen ook "Kun je niet?"): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
+Rondleiding (`TOUR_ALL`, versie 78 bewust kort: 8 stappen voor leiding, 1–2 zinnen per stap: Welkom, Kinderen inchecken, Een kind inchecken, Gedrag, Meer, Kun je niet?, Mijn account, Klaar; plus "Quizvraag (bovenbouw)" (`only:() => canQuiz()`) en "Voor de planner" (`only:() => canPlan()`)): start vanzelf de eerste keer op een toestel (localStorage `kk-tour`), en via
 Mijn account → "Rondleiding starten". Gaat echt langs de pagina's (stap: `nav` = menuknop, `route` = pagina openen,
 `el` = wat oplichten, eerste die bestaat; `open` = venster openen, bijv. Mijn account; `only` = voorwaarde, bijv. de
 agenda-stap alleen in databasemodus). Legt ook de agenda-koppeling uit (past zich vanzelf aan). Voortgangsbalk "Stap x van y".

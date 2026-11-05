@@ -105,6 +105,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .bottomnav a.active{color:var(--brand);background:var(--glass-active)}
 .nav-dot{position:absolute;top:5px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px var(--card)}
 .mainnav .nav-dot{top:4px;left:auto;right:6px}
+.sec-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.btn.ag-edit{background:none;border:0;box-shadow:none;color:var(--brand);font-weight:700;padding:4px 6px}
 .row-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-left:7px;vertical-align:2px}
 .need-sub{display:block;color:var(--bad);font-weight:700;font-size:13.5px}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
@@ -577,7 +578,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 77';
+const APP_VERSION = '2026-11-05 · 78';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1227,7 +1228,7 @@ function cantBlock(date){
 const myNextSunday = () => db.sundays.filter(s => s.date >= todayISO() && (s.onder.includes(db.session) || s.boven.includes(db.session))).sort((a,b) => a.date.localeCompare(b.date))[0];
 
 /* ---------- UI-state ---------- */
-const state = { prayDates:6, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', ciTab:null, search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
+const state = { prayDates:2, smTab:null, smAll:false, planCount:8, planMine:false, route:'home', ciTab:null, search:'', showAll:false, rosterTab:'sheets', zSearch:'', auth:{ step:'email' } };
 
 /* ---------- Navigatie ---------- */
 const NAV = [
@@ -1282,32 +1283,21 @@ window.addEventListener('appinstalled', () => { installPrompt = null; toast('De 
 /* Elke stap: nav = knop in de menubalk, route = pagina openen, el = wat oplichten (eerste die bestaat),
    open = venster openen (bijv. Mijn account), only = alleen tonen als dit klopt. */
 const TOUR_ALL = [
-  { t:'Welkom bij de Kinderkerk-app! 👋', p:'Deze rondleiding laat stap voor stap zien wat je met de app kunt. Het duurt een paar minuten. Je kunt altijd stoppen en hem later opnieuw starten via je account (rechtsboven).' },
-  { nav:'home', route:'home', t:'Home', p:'Hier begin je. Je ziet het overzicht van vandaag. In de balk onderin staan de dingen die je op zondag gebruikt: Home, Check-in en Gedrag. De rest vind je onder Meer.' },
-  { route:'home', el:['.hello a.btn[href="#/checkin"]'], t:'Kinderen inchecken', p:'Met deze knop check je de kinderen in. Leiding die op de planning staat, is automatisch ingecheckt. Komt er iemand extra? Tik dan op de teller "Leiding".' },
-  { route:'home', el:['#hometab', '.card.stats1'], t:'Wie er is en het programma', p:'Hier zie je hoeveel kinderen en leiding er waren op de laatste zondag; tik op een teller voor de namen. Daaronder het thema en wie er leiding heeft op de volgende zondag, en wie er jarig is.' },
-  { only:() => canQuiz(), route:'home', el:['.quiz-link'], t:'Quizvraag bedenken (bovenbouw)', p:'Alleen voor de bovenbouw: met deze regel zet je een vraag klaar voor de quiz in week 7, bijvoorbeeld tijdens de preek. Kies een open vraag, of meerkeuze A–D. Bij meerkeuze tik je de letter van het goede antwoord aan; zijn er meer goed, tik ze dan allemaal aan.' },
-  { route:'home', el:['.home-link', 'a[href="#/gebed"]'], t:'Gebedsverlangens', p:'Hier vind je de gebedsverlangens van vandaag. De app kiest eerlijk welke kinderen ervoor bidden, en een kind van de onderbouw voor de collecte. Ook kinderen die niet vaak komen, zijn zo even vaak aan de beurt.' },
-  { nav:'checkin', route:'checkin', el:['.toolbar'], t:'Check-in', p:'Zoek een kind, of voeg een nieuw kind toe met + Kind. Wie het vaakst komt, staat bovenaan. Je ziet de kinderen van de laatste 60 dagen; met "Alle kinderen" onderaan zie je iedereen. Een nieuw kind krijgt meteen 50 punten.' },
-  { route:'checkin', el:['#kidlist .row', '#kidlist'], t:'Een kind inchecken', p:'Tik op een kind en vink aan wat het heeft meegenomen: Bijbel, werkblad, geld. Vul eventueel gebedspunten in. De app rekent de punten uit. Is het kind jarig? Dan zie je de knop "Vandaag gezongen".' },
-  { nav:'gedrag', route:'gedrag', el:['.sm-row', '#app .card.list'], t:'Gedrag', p:'Geef een smiley 😊 voor goed gedrag. Bij 7 smileys mag een kind iets uit de grabbelbak pakken. Een waarschuwing ⚠️: 1e = naam op het bord, 2e = streepje erachter, 3e = eruit en naar de ouders in de dienst. Per ongeluk getikt? Tik op de naam om het terug te draaien.' },
-  { route:'planning', el:['.seg'], t:'Planning', p:'Te vinden bovenaan in Meer. Wie wanneer aan de beurt is. Kies "Tabel" voor het overzicht, of "Uitgebreid" voor ook het Bijbelgedeelte en de voorbereiding. Met "Alleen mijn beurten" zie je alleen jouw zondagen.' },
-  { route:'planning', el:['.plan-table tr.click', '.stack .card.plan'], t:'Kun je niet?', p:'Tik op een zondag om alles te zien. Sta je zelf ingepland en kun je niet? Tik op "Ik kan niet". In de planning staat dan "Vervanger nodig" en de planner regelt iemand anders. Alleen een planner kan de planning aanpassen.' },
-  { only:() => canPlan(), route:'planning', el:['[data-action=planFill]'], t:'Planning verder vullen (planner)', p:'Alleen voor planners en beheerders: met deze knop vult de app de lege zondagen volgens jullie vaste patroon, tot een half jaar vooruit. Wat al is ingevuld, blijft staan. Is de planning bijna op, dan zie je dat vanzelf op Home.' },
-  { route:'vergadering', el:['.meet-next', '#app .card'], t:'Vergadering', p:'Ook te vinden in Meer. De volgende vergadering staat in week 7 van elke periode. Zet hier alvast agendapunten klaar. Tijdens de vergadering maak je de notulen per agendapunt en de actiepunten. Een actiepunt over zijn datum wordt rood. Met "Delen" stuur je het verslag via WhatsApp of mail. In week 7 verschijnt hier ook een terugblik op de periode.' },
-  { nav:'meer', route:'meer', el:['#app .card.list'], t:'Meer', p:() => `Hier vind je bovenaan de Planning, de Vergadering en het Team, en onder "Op zondag" de Gebedsverlangens, Sheets, Kinderziektes (mag een ziek kind komen?)${canQuiz() ? ', de Punten en de Quiz' : ' en de Punten'}. Onder "Kinderen" zie je wie er nog komt en de Historie.` },
-  { only:() => canQuiz() && !!quizPeriod(), route:'quiz', el:['.page .card.pad', '.page-head'], t:'De quiz in week 7 (bovenbouw)', p:'Hier staan alle quizvragen van de periode. Met "Quiz spelen in de app" tik je het antwoord aan dat de kinderen kiezen; de app laat zien of het goed of fout is. Of download de quiz als PowerPoint. Tik je op "Google Slides", dan komt de quiz ook in de Google Drive van het one80kids-account (map Kinderkerk quiz) en opent hij meteen.' },
-  { route:'roosters', el:['.card.duty'], t:'Sheets', p:'Op zondag tik je op "Kies wie de sheets doet". De app kiest uit de kinderen van de bovenbouw die er zijn: wie het minst vaak is geweest, is eerst aan de beurt.' },
-  { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar vind je je instellingen. Die laten we nu zien.' },
-    { only:() => CLOUD, open:() => openProfile(), el:['#cal-row'], t:'Agenda op je telefoon', p:'Kies "Alleen mijn beurten" of "Alle zondagen" en tik op "Zet in mijn agenda". Je beurten en de vergaderingen komen dan in je telefoonagenda. Wijzigt de planning, dan past je agenda zich vanzelf aan, meestal binnen een uur.' },
-  { open:() => openProfile(), el:['#pf-set'], t:'Instellingen', p:'Bij "Op Home" kies je wat er op je beginscherm staat. Bij "Weergave" kies je licht of donker. Daaronder start je deze rondleiding opnieuw, en helemaal onderaan log je uit.' },
+  { t:'Welkom! 👋', p:'In een minuut laten we zien hoe de app werkt. Stoppen kan altijd.' },
+  { route:'home', el:['.hello a.btn[href="#/checkin"]'], t:'Kinderen inchecken', p:'Op zondag begin je hier. Tik op deze knop om de kinderen in te checken.' },
+  { nav:'checkin', route:'checkin', el:['#kidlist .row', '#kidlist'], t:'Een kind inchecken', p:'Tik op een kind en vink aan wat het mee heeft. De app telt de punten. Nieuw kind? Tik op "+ Kind".' },
+  { nav:'gedrag', route:'gedrag', el:['.sm-row', '#app .card.list'], t:'Gedrag', p:'Geef een smiley 😊 of een waarschuwing ⚠️. Bij 7 smileys mag een kind graaien.' },
+  { only:() => canQuiz(), route:'home', el:['.quiz-link'], t:'Quizvraag (bovenbouw)', p:'Bedenk alvast een vraag voor de quiz in week 7. Die speel je dan in de app, of als PowerPoint of Google Slides.' },
+  { nav:'meer', route:'meer', el:['#app .card.list'], t:'Meer', p:'Hier staat de rest: Planning, Vergadering, Gebed, Sheets en meer.' },
+  { route:'planning', el:['.plan-table tr.click', '.stack .card.plan'], t:'Kun je niet?', p:'Tik in de Planning op jouw zondag en dan op "Ik kan niet". De planner zoekt een vervanger.' },
+  { only:() => canPlan(), route:'planning', el:['[data-action=planFill]'], t:'Voor de planner', p:'Jij past de planning aan. Met deze knop vult de app de lege zondagen volgens het vaste rooster.' },
+  { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar zet je je beurten in je agenda, kies je wat er op Home staat en start je deze rondleiding opnieuw.' },
   { route:'home', t:'Klaar! 🎉', p:() => {
-      const ios = 'zet de app op je beginscherm via Safari → Deel → Zet op beginscherm.', android = 'installeer de app via het menu van Chrome (⋮) → "App installeren" of "Toevoegen aan startscherm".';
       const tip = isStandalone() ? ''   // staat al op het beginscherm: geen tip meer
-        : isIOS() ? `Tip: ${ios} Dan opent hij als een echte app, met de knoppen onderin. `
-        : /android/i.test(navigator.userAgent) ? `Tip: ${android} Dan opent hij als een echte app, met de knoppen onderin. `
-        : `Tip voor je telefoon: op een iPhone of iPad ${ios} Op Android ${android} `;
-      return tip + 'Weet je iets niet? Start de rondleiding opnieuw via je account. Veel plezier op de kinderkerk!'; } },
+        : isIOS() ? 'Tip: zet de app op je beginscherm via Safari → Deel → Zet op beginscherm. '
+        : /android/i.test(navigator.userAgent) ? 'Tip: zet de app op je beginscherm via Chrome (⋮) → App installeren. '
+        : 'Tip: zet de app op je telefoon op je beginscherm. ';
+      return tip + 'Veel plezier op de kinderkerk!'; } },
 ];
 let TOUR = TOUR_ALL, tourStep = -1;
 function tourTarget(st){
@@ -1564,6 +1554,9 @@ function ensureMeeting(date, kind){
   return m;
 }
 /* Agendapunten op volgorde zetten: pijltje omhoog/omlaag ruilt met de buur; daarna krijgen alle punten een nieuwe 'sort' */
+/* Omhoog/omlaag/weghalen staan pas in beeld na "Aanpassen" (rustiger). */
+const agEditBtn = n => n > 0 ? `<button class="btn btn-ghost sm ag-edit" data-action="agEdit">${state.agEdit ? 'Klaar' : 'Aanpassen'}</button>` : '';
+const agTools = (a, i, n, title) => state.agEdit ? moveBtns(a, i, n) + `<button class="icon-btn sm" title="${title}" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button>` : '';
 const moveBtns = (a, i, n) => `<span class="ag-move"><button class="icon-btn sm" title="Omhoog" data-action="moveAgenda" data-id="${a.id}" data-dir="-1" ${i ? '' : 'disabled'}>${icon('up')}</button>
   <button class="icon-btn sm" title="Omlaag" data-action="moveAgenda" data-id="${a.id}" data-dir="1" ${i < n - 1 ? '' : 'disabled'}>${icon('down')}</button></span>`;
 const agendaOf = id => db.agenda.filter(a => a.meetingId === id).sort((a,b) => a.sort - b.sort);
@@ -1603,10 +1596,10 @@ function vergaderOverzicht(){
         <div class="muted">${cap(fmtDate(n.date, {weekday:'long', day:'numeric', month:'long'}))} · ${days === 0 ? 'vandaag' : days === 1 ? 'morgen' : `over ${days} dagen`}</div>
         <button class="btn ${days === 0 ? 'btn-primary' : 'btn-soft'} btn-block" data-action="openMeeting" data-date="${n.date}" data-kind="${n.kind}">${icon('note')} ${days === 0 ? 'Vergadering starten' : 'Agenda en notulen openen'}</button>
       </div>` : `<div class="card empty">Nog geen vergadering gepland.<br>Stel een periode in onder Planning, of plan hieronder zelf een vergadering.</div>`}
-    ${n ? `<h3 class="section-title">Agendapunten</h3>
+    ${n ? `<h3 class="section-title sec-row">Agendapunten${agEditBtn(items.length)}</h3>
     <div class="card list">${items.map(a => `<div class="row static"><span class="row-icon" style="width:32px;height:32px;border-radius:50%;font-weight:800;font-size:14px">${items.indexOf(a) + 1}</span>
         <span class="row-main"><b style="white-space:normal">${esc(a.title)}</b><span class="muted">door ${esc(a.author || '—')}</span></span>
-        ${moveBtns(a, items.indexOf(a), items.length)}<button class="icon-btn sm" title="Verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>`).join('')}
+        ${agTools(a, items.indexOf(a), items.length, 'Verwijderen')}</div>`).join('')}
       ${agendaAddForm(n.date, n.kind)}</div>` : ''}
     <h3 class="section-title">Open actiepunten${(n => n ? ` <span class="late-count">· ${n} te laat</span>` : '')(open.filter(isLate).length)}</h3>
     <div class="card list">${open.map(a => actionRow(a, true)).join('') || '<div class="empty">Geen open actiepunten. 🎉</div>'}</div>
@@ -1636,11 +1629,12 @@ function renderVergadering(){
       ${[...db.leaders].sort(byName).map(l => `<option value="${l.id}" ${l.id === m.notulist ? 'selected' : ''}>${esc(l.name)}${l.id === db.session ? ' (jij)' : ''}</option>`).join('')}</select></label>
     ${locked ? `<div class="banner" style="margin:0 0 14px">${icon('info')}<span><b>${esc(nl.name)}</b> typt de notulen. Je leest live mee; zo raakt er geen tekst kwijt.</span>
       <button class="btn btn-outline sm" data-action="notesOpen" data-id="${m.id}">Toch typen</button></div>` : ''}
+    ${items.length > 1 ? `<div class="sec-row" style="margin:0 2px 6px"><span class="muted" style="font-size:14px">${items.length} agendapunten</span>${agEditBtn(items.length)}</div>` : ''}
     <div class="stack">${items.map((a, i) => `
       <div class="card agenda">
         <div class="ag-head"><span class="num">${i + 1}</span>
           <textarea class="ag-title" rows="1" data-input="agTitle" data-id="${a.id}" aria-label="Agendapunt">${esc(a.title)}</textarea>
-          ${moveBtns(a, i, items.length)}<button class="icon-btn sm" title="Agendapunt verwijderen" data-action="delAgenda" data-id="${a.id}">${icon('trash')}</button></div>
+          ${agTools(a, i, items.length, 'Agendapunt verwijderen')}</div>
         <textarea data-input="agNotes" data-id="${a.id}" placeholder="${locked ? 'Nog geen notulen' : 'Notulen bij dit punt…'}" ${locked ? 'readonly' : ''}>${esc(a.notes || '')}</textarea>
         ${(acts => acts.length ? `<div class="acts">${acts.map(x => actionRow(x)).join('')}</div>` : '')(db.actions.filter(x => x.agendaId === a.id).sort(byDue))}
         <button class="textlink add-act" data-action="addAction" data-meeting="${m.id}" data-agenda="${a.id}">${icon('plus')} Actiepunt</button>
@@ -3034,7 +3028,7 @@ function renderGebed(){
     </div>
     ${here && (open.length || (onder && !coll)) ? `<button class="btn btn-primary btn-block" style="margin-top:12px" data-action="pickAll" data-day="${D}">🎲 Kies wie er bidden</button>` : ''}
     <button class="btn btn-outline btn-block" style="margin-top:10px" data-action="addPrayer" data-day="${D}">${icon('plus')} Gebedspunt toevoegen</button>
-    <p class="muted" style="font-size:13.5px;margin:10px 4px 0">De app kiest eerlijk uit de kinderen die er zijn: wie het minst vaak heeft gebeden, is eerst aan de beurt. Zo komen ook kinderen die niet vaak komen aan de beurt.</p>
+    <div style="margin:10px 2px 0">${infoTip('De app kiest eerlijk uit de kinderen die er zijn: wie het minst vaak heeft gebeden, is eerst aan de beurt. Zo komen ook kinderen die niet vaak komen aan de beurt.')}</div>
     <h3 class="section-title">Gebedslijst</h3>
     ${Object.keys(byDate).length ? Object.keys(byDate).sort().reverse().slice(0, state.prayDates).map(d => `
       <h4 class="muted" style="margin:14px 4px 6px;font-size:13.5px">${cap(fmtDate(d, {weekday:'long', day:'numeric', month:'long'}))}</h4>
@@ -3216,6 +3210,7 @@ const actions = {
   smTab: d => { state.smTab = d.id; render(); },
   smAll: () => { state.smAll = !state.smAll; render(); },
   openSmiley: d => openSmiley(d.id),
+  agEdit: () => { state.agEdit = !state.agEdit; render(); },
   moveAgenda: d => {
     const a = db.agenda.find(x => x.id === d.id); if (!a) return;
     const list = agendaOf(a.meetingId), i = list.indexOf(a), j = i + Number(d.dir);
