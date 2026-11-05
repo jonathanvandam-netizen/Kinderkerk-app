@@ -20,7 +20,7 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
 - Rust (feedback versie 63): per scherm krijgt de hoofdactie de aandacht, de rest gaat achter een menu. Uitleg staat achter
   een klein "ⓘ Uitleg" (`infoTip`, inklapbaar), niet als groot blauw blok. Versie 79: elke pagina met iets uit te leggen heeft zo'n
   uitleg (ook Check-in met de icoontjes, Sheets, Quiz en Vergadering), want de rondleiding is kort en mensen klikken hem door. Back-upherinnering niet op Home maar rood stipje op
-  Meer + bovenaan Meer → Gegevens (`backupDue`). Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller), geen "Jij hebt leiding" meer (alleen de
+  Meer + bij Meer → Back-ups (`backupDue`), alleen voor beheerders. Home: alleen de knop "Kinderen inchecken" (Leiding inchecken via de teller), geen "Jij hebt leiding" meer (alleen de
   gele waarschuwing bij een botsing; de agenda herinnert al aan beurten),
   Gebedsverlangens als kleine regel in de begroetingskaart, geen installeerkaart, Jarig compact. Versie 69: Home heeft altijd dezelfde indeling (herkenbaar, past zonder scrollen):
   begroetingskaart (knop Kinderen inchecken + regels Gebedsverlangens en Quiz `homeQuizLink`), tellers (van kkDay, altijd met de dag als klein kopje, ook op zondag "Vandaag"; onder Kinderen "12 onder · 2 boven"), kort programma `planMini`
@@ -112,8 +112,9 @@ Nieuw kind: item 'nieuw' (🌟, standaard 50 punten per groep, instelbaar bij Pu
 zonder check-ins krijgen de knop níet (keuze van Jonathan). Naam lijkt op een bestaand kind (`similarKids`: zelfde naam zonder
 hoofdletters/accenten, alleen voornaam, of kleine typfout bij (bijna) gelijke voornaam; broertjes/zusjes met dezelfde
 achternaam níet): waarschuwing tijdens typen en bevestigen bij opslaan.
-Meer is ingedeeld in Algemeen (Team), Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten), Kinderen
-(Kinderen beheren, Historie) en Gegevens (beheerder).
+Meer is ingedeeld in Algemeen (Planning, Vergadering, Team), Op zondag (Gebedsverlangens, Sheets, Kinderziektes, Punten, Quiz), Kinderen
+(Kinderen beheren, Historie) en Beheer (alleen beheerder: "Back-ups" → pagina `#/gegevens`, `renderGegevens`). Sinds versie 81 in dezelfde
+stijl als Mijn account (gekleurde icoontjes, geen uitlegregel per knop; rood stipje + "Vervanger nodig" / "Nu maken" rechts).
 Rol **planner** (versie 75): rollen Leiding / Planner / Beheerder (`ROLE_LABEL`, `canPlan()` = beheerder of planner). Alleen planner en
 beheerder passen de planning aan (leiding per zondag, onderwerp, periodes, gouden week, planning vullen); gewone leiding ziet een
 alleen-lezen venster (`openViewPlan`). Database: `supabase/rollen.sql` (rol-check met 'planner', `is_planner()`, sundays/periods schrijven

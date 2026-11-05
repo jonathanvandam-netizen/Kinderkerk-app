@@ -158,6 +158,7 @@ body.loggedout .topbar,body.loggedout .bottomnav{display:none}
 .pf-val{color:var(--muted);font-weight:600;font-size:15px}
 .pf-item .chev{width:17px;height:17px;color:var(--muted);flex:none}
 .pf-logout{justify-content:center;color:var(--bad)}
+a.pf-item{text-decoration:none}.need-val{color:var(--bad);font-weight:700;font-size:14px}.pf-item .row-dot{margin-left:0}
 .pf-note{color:var(--muted);font-size:13px;margin:8px 6px 0}
 .modal-head.pf-subhead{background:var(--bg);border-bottom:0}.pf-subhead h2{text-align:center;font-size:17px}
 .pf-back{display:flex;align-items:center;gap:2px;background:none;border:0;color:var(--brand);font:inherit;font-weight:700;font-size:15px;cursor:pointer;padding:6px 0;flex:none}
@@ -581,7 +582,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 80';
+const APP_VERSION = '2026-11-05 · 81';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1240,7 +1241,7 @@ const NAV = [
   { id:'gedrag', label:'Gedrag', icon:'smile' },
   { id:'meer', label:'Meer', icon:'menu' },   // Planning en Vergadering staan bovenaan in Meer (menubalk alleen voor wat je op zondag gebruikt)
 ];
-const MEER_ROUTES = ['meer','planning','vergadering','quiz','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
+const MEER_ROUTES = ['meer','gegevens','planning','vergadering','quiz','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'smileys' ? 'gedrag' : state.route;
   const dot = n => n.id === 'meer' && (backupDue() || planNeed().length) ? `<i class="nav-dot" title="${planNeed().length ? 'Vervanger nodig' : 'Tijd voor een back-up'}"></i>` : '';
@@ -1249,7 +1250,7 @@ function renderNav(){
   $('#bottomnav').innerHTML = html;
 }
 
-const routes = { gebed:renderGebed, gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, quiz:renderQuiz };
+const routes = { gebed:renderGebed, gedrag:renderSmileys, smileys:renderSmileys, kinderen:renderKinderen, punten:renderPunten, import:renderImport, vergadering:renderVergadering, planning:renderPlanning, home:renderHome, checkin:renderCheckin, meer:renderMeer, team:renderTeam, historie:renderHistorie, ziektes:renderZiektes, roosters:renderRoosters, quiz:renderQuiz, gegevens:renderGegevens };
 function router(){
   const [r, sub] = location.hash.replace(/^#\/?/, '').split('/');
   state.meetingId = sub || null;
@@ -1291,7 +1292,7 @@ const TOUR_ALL = [
   { nav:'checkin', route:'checkin', el:['#kidlist .row', '#kidlist'], t:'Een kind inchecken', p:'Tik op een kind en vink aan wat het mee heeft. De app telt de punten. Nieuw kind? Tik op "+ Kind".' },
   { nav:'gedrag', route:'gedrag', el:['.sm-row', '#app .card.list'], t:'Gedrag', p:'Geef een smiley 😊 of een waarschuwing ⚠️. Bij 7 smileys mag een kind graaien.' },
   { only:() => canQuiz(), route:'home', el:['.quiz-link'], t:'Quizvraag (bovenbouw)', p:'Bedenk alvast een vraag voor de quiz in week 7. Die speel je dan in de app, of als PowerPoint of Google Slides.' },
-  { nav:'meer', route:'meer', el:['#app .card.list'], t:'Meer', p:'Hier staat de rest: Planning, Vergadering, Gebed, Sheets en meer.' },
+  { nav:'meer', route:'meer', el:['#app .pf-group'], t:'Meer', p:'Hier staat de rest: Planning, Vergadering, Gebed, Sheets en meer.' },
   { route:'planning', el:['.plan-table tr.click', '.stack .card.plan'], t:'Kun je niet?', p:'Tik in de Planning op jouw zondag en dan op "Ik kan niet". De planner zoekt een vervanger.' },
   { only:() => canPlan(), route:'planning', el:['[data-action=planFill]'], t:'Voor de planner', p:'Jij past de planning aan. Met deze knop vult de app de lege zondagen volgens het vaste rooster.' },
   { nav:'#avatar', route:'home', t:'Mijn account', p:'Tik op je letter rechtsboven. Daar zet je je beurten in je agenda, kies je wat er op Home staat en start je deze rondleiding opnieuw.' },
@@ -2170,30 +2171,44 @@ async function loadCalendar(fresh){
    MEER
    ===================================================================== */
 function renderMeer(){
+  const C = { brand:'var(--brand)', red:'#e5484d', green:'#1f9d55', purple:'#6e56cf', orange:'#f08a24', teal:'#0f8b8d', pink:'#d6409f', gray:'#6b7280' };
   const groups = [
     ['Algemeen', [
-      ['planning','Planning','Wie wanneer leiding heeft, thema per zondag','calendar'],
-      ['vergadering','Vergadering','Agendapunten, notulen en actiepunten','note'],
-      ['team','Team','Alle leiding per groep','users']]],
+      ['planning','Planning','calendar',C.brand],
+      ['vergadering','Vergadering','note',C.purple],
+      ['team','Team','users',C.teal]]],
     ['Op zondag', [
-      ['gebed','Gebedsverlangens','Wie bidt er, en alle gebedsverlangens','heart'],
-      ['roosters','Sheets','Wie doet de sheets? (bovenbouw)','monitor'],
-      ['ziektes','Kinderziektes','Is een ziek kind welkom?','thermo'],
-      ['punten','Punten','Hoeveel punten een kind krijgt','check'],
-      ...(canQuiz() ? [['quiz','Quiz','Vragen voor de quiz in week 7 (bovenbouw)','help']] : [])]],
+      ['gebed','Gebedsverlangens','heart',C.pink],
+      ['roosters','Sheets','monitor',C.orange],
+      ['ziektes','Kinderziektes','thermo',C.red],
+      ['punten','Punten','check',C.green],
+      ...(canQuiz() ? [['quiz','Quiz','help',C.purple]] : [])]],
     ['Kinderen', [
-      ['kinderen','Kinderen beheren','Wie komt er nog? Leeftijd en groep','user'],
-      ['historie','Historie','Aantallen en wie er regelmatig komt','chart']]],
+      ['kinderen','Kinderen beheren','user',C.brand],
+      ['historie','Historie','chart',C.teal]]],
+    ...(isAdmin() ? [['Beheer', [['gegevens','Back-ups','download',C.gray]]]] : []),
   ];
+  const extra = r => {
+    if (r === 'planning'){ const need = planNeed(); return need.length ? `<i class="row-dot"></i><span class="pf-val need-val">Vervanger nodig</span>` : ''; }
+    if (r === 'gegevens' && backupDue()) return `<i class="row-dot"></i><span class="pf-val need-val">Nu maken</span>`;
+    return '';
+  };
   app.innerHTML = `
-  <div class="page">
+  <div class="page meer-page">
     <div class="page-head"><h1>Meer</h1></div>
     ${showInstall() ? `<div style="margin-bottom:16px">${installCard(false)}</div>` : ''}
-    ${groups.map(([title, items], i) => `<h3 class="section-title" ${i ? '' : 'style="margin-top:0"'}>${title}</h3>
-    <div class="card list">${items.map(([r,t,s,ic]) => { const need = r === 'planning' ? planNeed() : [];
-      return `<a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}${need.length ? '<i class="row-dot"></i>' : ''}</b>${need.length
-        ? `<span class="need-sub">⚠️ Vervanger nodig: ${need.map(d => fmtDate(d, {day:'numeric', month:'short'})).join(', ')}</span>` : `<span class="muted">${s}</span>`}</span>${icon('chev','chev')}</a>`; }).join('')}</div>`).join('')}
-    ${isAdmin() ? `<h3 class="section-title" id="gegevens">Gegevens</h3>
+    ${groups.map(([title, items], i) => `<h3 class="pf-gt" ${i ? '' : 'style="margin-top:0"'}>${title}</h3>
+    <div class="pf-group">${items.map(([r,t,ic,c]) => `<a class="pf-item" href="#/${r}"><span class="pf-ico" style="background:${c}">${icon(ic)}</span><span class="pf-t">${t}</span>${extra(r)}${icon('chev','chev')}</a>`).join('')}</div>`).join('')}
+    <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
+  </div>`;
+}
+
+function renderGegevens(){
+  if (!isAdmin()){ location.hash = '#/meer'; return; }
+  app.innerHTML = `
+  <div class="page">
+    <a class="textlink" href="#/meer" style="margin-bottom:12px">← Meer</a>
+    <div class="page-head"><h1>Back-ups</h1></div>
     ${backupDue() ? `<button class="card row backup-due" data-action="backupSave"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('download')}</span>
       <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">${(n => n === null ? 'Je hebt nog geen back-up bewaard' : `Je laatste back-up is van ${n} dagen geleden`)(lastBackupDays())}. Tik om er nu een te maken.</span></span>${icon('chev','chev')}</button>` : ''}
     ${CLOUD ? '' : `<div class="banner" style="margin:0 0 12px;background:var(--warn-soft);color:var(--warn-text)">${icon('alert')}<span><b>Alles staat nu alleen op dit toestel.</b> Andere leiding ziet het niet, en als je de websitegegevens van Safari wist, is het weg. Maak daarom regelmatig een back-up, tot de database gekoppeld is.</span></div>`}
@@ -2211,9 +2226,7 @@ function renderMeer(){
       ${db.kids.some(isDemoKid) ? `<button class="row" data-action="removeDemoKids"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('trash')}</span>
         <span class="row-main"><b>Demokinderen weghalen</b><span class="muted">${db.kids.filter(isDemoKid).length} verzonnen kinderen; jouw eigen kinderen blijven staan</span></span></button>` : ''}
     </div>
-    <input type="file" id="backup-file" accept=".json,application/json" hidden data-change="backupFile">` : ''}
-    <p class="muted" style="text-align:center;font-size:12.5px;margin-top:24px">Kinderkerk · versie ${APP_VERSION}</p>
-  </div>`;
+    <input type="file" id="backup-file" accept=".json,application/json" hidden data-change="backupFile">  </div>`;
 }
 
 /* ---------- Groep nakijken ----------
