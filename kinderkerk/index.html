@@ -453,7 +453,10 @@ table.t.pt-table th,table.t.pt-table td{padding:10px 4px}table.t.pt-table th{tex
 .modal-body{padding:18px 20px}
 .modal-foot{display:flex;gap:10px;justify-content:space-between;padding:14px 20px 18px;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--card)}
 .modal-foot .btn-primary{margin-left:auto}
-.bd-ask{background:var(--bday-bg);border-radius:14px;padding:12px 14px}.bd-ask > span{color:var(--bday-text)}.bd-ask small{display:block;font-weight:500;font-size:13px;opacity:.85;margin-top:1px}.bd-ask input{background:var(--card)}
+.bd-ask{background:var(--bday-bg);border-radius:14px;padding:12px 14px}.bd-ask > span{color:var(--bday-text)}.bd-ask small{display:block;font-weight:500;font-size:13px;opacity:.85;margin-top:1px}.bd-pick{position:relative;display:flex;align-items:center;min-height:48px;margin-top:8px;padding:0 14px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.bd-pick b{display:flex;align-items:center;gap:8px;color:var(--brand);font-weight:700;font-size:16px}.bd-pick b .i{width:18px;height:18px}
+.bd-pick input{position:absolute;inset:0;width:100%;height:100%;min-width:0;opacity:0;margin:0;padding:0;border:0;-webkit-appearance:none;appearance:none;cursor:pointer}
+input[type=date]{min-width:0;max-width:100%}
 .plan-edit .field > span .gdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .plan-edit .more-chips{display:contents}.plan-edit .more-chip{border-style:dashed;color:var(--muted)}
 .plan-more{display:flex;flex-wrap:wrap;gap:6px 18px}.plan-more .textlink{font-size:14.5px;color:var(--brand);font-weight:700}
@@ -587,7 +590,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 86';
+const APP_VERSION = '2026-11-05 · 87';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1951,7 +1954,7 @@ function openCheckin(kidId, date = kkDay()){
         <div class="chips">${ITEMS.filter(i => !i.special && (!i.boven || k.group === 'boven')).map(i =>
           `<button type="button" class="chip ${items.has(i.id) ? 'on' : ''}" data-action="toggleChip" data-id="${i.id}">${i.emoji} ${i.label}<span class="tick">✓</span></button>`).join('')}</div></div>
       ${k.birthdate ? '' : `<label class="field bd-ask"><span>🎂 Wanneer is ${esc(firstName(k.name))} jarig? <small>Staat nog niet in de app, vraag het even</small></span>
-        <input type="date" id="ci-birth" max="${todayISO()}"></label>`}
+        <span class="bd-pick"><b id="ci-birth-txt">${icon('calendar')} Kies de datum</b><input type="date" id="ci-birth" max="${todayISO()}" data-change="birthPick" aria-label="Geboortedatum"></span></label>`}
       <label class="field"><span>Gebedsverlangens</span><textarea id="ci-prayer" rows="3" placeholder="Vul hier eventueel gebedsverlangens in">${esc(ex?.prayer || '')}</textarea></label>
       <div class="hint soft">${icon('help')} Vraag of ${esc(firstName(k.name))} naar de wc moet</div>
       <div class="points-card ${isGolden(date) ? 'gold' : ''}" id="ci-points" data-group="${k.group}" data-date="${date}"><span class="muted">${esc(firstName(k.name))} krijgt${isGolden(date) ? ' <b class="gold-tag">✨ Gouden week ×2</b>' : ''}</span><b><span id="ci-points-n">${pointsFor(k.group, [...items], date)}</span> punten</b></div>
@@ -3505,6 +3508,7 @@ const actions = {
     el.parentElement.querySelectorAll('[data-action=setTheme]').forEach(c => c.classList.toggle('on', c === el));
   },
   pickDate: () => { const f = $('#ci-date-field'); f.hidden = false; const i = $('#ci-date'); i.focus(); try { i.showPicker(); } catch(e){} },
+  birthPick: (d, el) => { const t = $('#ci-birth-txt'); if (t) t.innerHTML = el.value ? `🎂 ${fmtDate(el.value, {day:'numeric', month:'long', year:'numeric'})} <small style="font-weight:600;color:var(--muted)">(${age(el.value)} jaar) · wijzig</small>` : `${icon('calendar')} Kies de datum`; },
   saveCheckin: d => {
     const date = $('#ci-date').value || kkDay();
     const items = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.id);
@@ -3829,6 +3833,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   if (e.target.dataset?.change === 'importPreview') renderImportPreview();
   if (e.target.dataset?.change === 'groupLimit') actions.groupLimit(e.target.dataset, e.target);
+  if (e.target.dataset?.change === 'birthPick') actions.birthPick(e.target.dataset, e.target);
   if (e.target.dataset?.change === 'backupFile' && e.target.files[0]) (CLOUD ? cloudImportFile : restoreBackup)(e.target.files[0]);
   if (e.target.dataset?.change === 'notulist'){ const m = db.meetings.find(x => x.id === e.target.dataset.id); if (m){ m.notulist = e.target.value || null; put('meetings', m); save(); toast('Notulist opgeslagen'); } }
   if (e.target.dataset?.change === 'ciDate') openCheckin(e.target.dataset.id, e.target.value || kkDay());

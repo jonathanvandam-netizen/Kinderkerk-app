@@ -104,7 +104,7 @@ wel door alle groepen; na het inchecken van een nieuw kind is het zoekveld leeg 
 leiding check-in, team + uitnodigingen, historie (grafiek + per kind "Periode" = N van M kinderkerkdagen in de huidige periode van 7 weken (nog geen dag → vorige periode),
 ✓ "Vaak" = minstens de helft (versie 84, eerst "8 weken"); tik op een staaf = wie er die dag was, beheerder kan een foute dag weghalen: `histDay`/`histDayDel`), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
 verzoek van Jonathan); daarvoor is Gebed.
-Geboortedatum onbekend? Dan vraagt het incheckvenster "🎂 Wanneer is <naam> jarig?" (datumveld `#ci-birth`, roze vak onder
+Geboortedatum onbekend? Dan vraagt het incheckvenster "🎂 Wanneer is <naam> jarig?" (knop "Kies de datum" met onzichtbaar datumveld `#ci-birth` erover, `bd-pick`, want een leeg datumveld is op iOS een lege balk; roze vak onder
 Meegenomen); invullen + Inchecken bewaart hem bij het kind, leeg laten mag (versie 86).
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, "N van M deze periode" (`periodDays`), laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.
