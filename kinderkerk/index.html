@@ -105,6 +105,8 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .bottomnav a.active{color:var(--brand);background:var(--glass-active)}
 .nav-dot{position:absolute;top:5px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px var(--card)}
 .mainnav .nav-dot{top:4px;left:auto;right:6px}
+.row-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-left:7px;vertical-align:2px}
+.need-sub{display:block;color:var(--bad);font-weight:700;font-size:13.5px}
 .topbar{background:var(--topbar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
 body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 @media(min-width:1000px){
@@ -556,7 +558,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 75';
+const APP_VERSION = '2026-11-05 · 76';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1194,6 +1196,8 @@ const plannedOn = (id, d) => { const s = sundayOf(d); return s.onder.includes(id
 /* "Ik kan niet" voor één zondag = afwezig-notitie met van = tot = die datum. De planning toont dan "Vervanger nodig". */
 const cantNote = (id, date) => absences(id).find(x => x.a.from === date && (x.a.to || x.a.from) === date);
 const needSub = date => { const s = sundayOf(date); return [...s.onder, ...s.boven].some(id => absentOn(id, date)); };
+/* Voor de planner: zondagen waarvoor een vervanger nodig is (rood stipje op Meer en bij Planning). */
+const planNeed = () => canPlan() ? needList() : [];
 const needList = () => db.sundays.filter(s => s.date >= todayISO() && s.date <= addDays(todayISO(), 7 * 8) && needSub(s.date)).map(s => s.date).sort();
 function cantBlock(date){
   if (date < todayISO() || !plannedOn(db.session, date)) return '';
@@ -1216,7 +1220,7 @@ const NAV = [
 const MEER_ROUTES = ['meer','planning','vergadering','quiz','kinderen','import','punten','team','historie','ziektes','roosters','gebed'];
 function renderNav(){
   const active = MEER_ROUTES.includes(state.route) ? 'meer' : state.route === 'smileys' ? 'gedrag' : state.route;
-  const dot = n => n.id === 'meer' && backupDue() ? '<i class="nav-dot" title="Tijd voor een back-up"></i>' : '';
+  const dot = n => n.id === 'meer' && (backupDue() || planNeed().length) ? `<i class="nav-dot" title="${planNeed().length ? 'Vervanger nodig' : 'Tijd voor een back-up'}"></i>` : '';
   const html = NAV.map(n => `<a href="#/${n.id}" class="${n.id === active ? 'active' : ''}">${icon(n.icon)}<span>${n.label}</span>${dot(n)}</a>`).join('');
   $('#mainnav').innerHTML = html;
   $('#bottomnav').innerHTML = html;
@@ -2131,8 +2135,9 @@ function renderMeer(){
     <div class="page-head"><h1>Meer</h1></div>
     ${showInstall() ? `<div style="margin-bottom:16px">${installCard(false)}</div>` : ''}
     ${groups.map(([title, items], i) => `<h3 class="section-title" ${i ? '' : 'style="margin-top:0"'}>${title}</h3>
-    <div class="card list">${items.map(([r,t,s,ic]) => `
-      <a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}</b><span class="muted">${s}</span></span>${icon('chev','chev')}</a>`).join('')}</div>`).join('')}
+    <div class="card list">${items.map(([r,t,s,ic]) => { const need = r === 'planning' ? planNeed() : [];
+      return `<a class="row" href="#/${r}"><span class="row-icon">${icon(ic)}</span><span class="row-main"><b>${t}${need.length ? '<i class="row-dot"></i>' : ''}</b>${need.length
+        ? `<span class="need-sub">⚠️ Vervanger nodig: ${need.map(d => fmtDate(d, {day:'numeric', month:'short'})).join(', ')}</span>` : `<span class="muted">${s}</span>`}</span>${icon('chev','chev')}</a>`; }).join('')}</div>`).join('')}
     ${isAdmin() ? `<h3 class="section-title" id="gegevens">Gegevens</h3>
     ${backupDue() ? `<button class="card row backup-due" data-action="backupSave"><span class="row-icon" style="background:var(--bad-soft);color:var(--bad)">${icon('download')}</span>
       <span class="row-main"><b>Tijd voor een back-up</b><span class="muted">${(n => n === null ? 'Je hebt nog geen back-up bewaard' : `Je laatste back-up is van ${n} dagen geleden`)(lastBackupDays())}. Tik om er nu een te maken.</span></span>${icon('chev','chev')}</button>` : ''}

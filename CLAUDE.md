@@ -117,7 +117,8 @@ alleen planner, settings 'gouden' ook planner; installeren.html stap 9). Getest 
 "Ik kan niet" (bewust rustig): in het venster van een zondag waarop jij leiding hebt de knop "🙋 Ik kan niet" (`cantBlock`, actie `cantGo`;
 "Toch wel" = `canGo`). Opslag als afwezig-notitie in tabel `notes` (van = t/m = die zondag; text = `afwezig:{"leader","from","to","why"}`,
 `absentOn`), zodat gewone leiding geen schrijfrecht op de planning nodig heeft. Planning zet ⚠️ achter de naam en "⚠️ Vervanger nodig"
-(`needSub`); op Home ziet alleen een planner/beheerder een rode regel "Vervanger nodig: …" (`needList`, 8 weken vooruit).
+(`needSub`); op Home ziet alleen een planner/beheerder een rode regel "Vervanger nodig: …" (`needList`, 8 weken vooruit), plus (versie 76)
+rood stipje op Meer en bij Planning in Meer met "⚠️ Vervanger nodig: 1 nov" (`planNeed`).
 De WhatsApp-vervangerknop en "Wanneer kan ik niet?" in Mijn account zijn weggehaald (versie 75, te vaag voor Jonathan).
 Meldingen (push) bewust NIET (versie 58 gebouwd, in 59 weer weggehaald): de agenda-koppeling herinnert al aan beurten en vergaderingen.
 Groep nakijken (bovenaan Kinderen beheren, alleen als er iets is): onderbouwkind met leeftijd op 1 september ≥ grens (settings
