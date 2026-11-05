@@ -543,7 +543,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-02 · 70';
+const APP_VERSION = '2026-11-05 · 71';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2564,7 +2564,8 @@ function renderHistorie(){
     svg += `<line x1="${pl}" x2="${W-10}" y1="${y}" y2="${y}" style="stroke:var(--border)"/><text x="${pl-8}" y="${y+4}" text-anchor="end" font-size="11" style="fill:var(--muted)">${v}</text>`; }
   dates.forEach((d,i) => {
     const x = pl + (i + .5) * cw / dates.length, h = counts[d] / top * ch, y = pt + ch - h;
-    svg += `<rect x="${x - bw/2}" y="${y}" width="${bw}" height="${h}" rx="5" style="fill:${d === T ? 'var(--brand)' : 'color-mix(in srgb, var(--brand) 50%, var(--card))'}"><title>${fmtDate(d)}: ${counts[d]} kinderen</title></rect>
+    svg += `<rect x="${x - cw / dates.length / 2}" y="${pt}" width="${cw / dates.length}" height="${ch + pb}" fill="transparent" style="cursor:pointer" data-action="histDay" data-date="${d}"></rect>
+      <rect x="${x - bw/2}" y="${y}" width="${bw}" height="${h}" rx="5" pointer-events="none" style="fill:${d === T ? 'var(--brand)' : 'color-mix(in srgb, var(--brand) 50%, var(--card))'}"><title>${fmtDate(d)}: ${counts[d]} kinderen</title></rect>
       <text x="${x}" y="${y - 5}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text)">${counts[d]}</text>
       <text x="${x}" y="${H - 12}" text-anchor="middle" font-size="10.5" style="fill:var(--muted)">${fmtDate(d, {day:'numeric', month:'short'}).replace('.', '')}</text>`;
   });
@@ -2581,7 +2582,7 @@ function renderHistorie(){
   <div class="page">
     <div class="page-head"><h1>Historie</h1><span class="muted">Gemiddeld ${avg} kinderen per keer</span></div>
     <div class="card chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Aantal kinderen per zondag">${svg}</svg></div>
-    ${infoTip(`Hieronder zie je de kinderen die in de afgelopen 60 dagen zijn geweest. Een vinkje betekent: minstens 4 keer in de laatste 8 weken.`)}
+    ${infoTip(`Tik op een staaf in de grafiek om te zien wie er die dag was. Hieronder zie je de kinderen die in de afgelopen 60 dagen zijn geweest. Een vinkje betekent: minstens 4 keer in de laatste 8 weken.`)}
     ${table('onder')}${table('boven')}${table('bezoeker')}
   </div>`;
 }
@@ -3375,6 +3376,27 @@ const actions = {
     put('checkins', c);
     save(); closeModal(); render();
     toast(`${firstName(kidById(d.id).name)} is ${ex ? 'bijgewerkt' : 'ingecheckt'} ✓`);
+  },
+  histDay: d => {
+    const cs = db.checkins.filter(c => c.date === d.date && kidById(c.kidId));
+    const grp = g => cs.filter(c => kidById(c.kidId).group === g).length;
+    openModal(`
+      <div class="modal-head"><div><h2>${cap(fmtDate(d.date, {weekday:'long', day:'numeric', month:'long', year:'numeric'}))}</h2>
+        <span class="muted">${cs.length} kind${cs.length === 1 ? '' : 'eren'} ingecheckt · ${grp('onder')} onder · ${grp('boven')} boven${grp('bezoeker') ? ` · ${grp('bezoeker')} bezoek` : ''}</span></div>
+        <button class="icon-btn" data-action="closeModal">${icon('x')}</button></div>
+      <div class="modal-body">
+        <div class="card list" style="box-shadow:none;border:1px solid var(--border)">${cs.map(c => kidById(c.kidId)).sort(byName).map(k => `<div class="row static compact"><span class="row-main"><b>${esc(k.name)}</b><span class="muted">${GROUPS[k.group]}</span></span></div>`).join('')}</div>
+        ${isAdmin() ? `<p class="muted" style="font-size:14px;margin:14px 0 0">Klopt deze dag niet, bijvoorbeeld omdat hier een test of een vergissing staat? Dan kun je hem weghalen uit de historie.</p>` : ''}
+      </div>
+      ${isAdmin() ? `<div class="modal-foot"><button class="btn btn-danger" data-action="histDayDel" data-date="${d.date}">${icon('trash')} Deze dag weghalen</button></div>` : ''}`);
+  },
+  histDayDel: d => {
+    if (!isAdmin()) return;
+    const cs = db.checkins.filter(c => c.date === d.date);
+    if (!confirm(`Alle ${cs.length} check-ins van ${fmtDate(d.date, {day:'numeric', month:'long'})} weghalen? Dit kan niet ongedaan worden gemaakt.`)) return;
+    cs.forEach(c => drop('checkins', { id:c.id }));
+    db.checkins = db.checkins.filter(c => c.date !== d.date);
+    save(); closeModal(); render(); toast(`${fmtDate(d.date, {day:'numeric', month:'long'})} is weggehaald`);
   },
   removeCheckin: d => {
     const c = db.checkins.find(x => x.id === d.id);
