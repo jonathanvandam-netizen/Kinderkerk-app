@@ -192,7 +192,10 @@ a.hero-duty{display:block;text-decoration:none}
 .btn-lg{padding:15px 18px;font-size:17px}
 .home-link{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 4px 0;border-top:1px solid var(--border);color:var(--text);text-decoration:none;font-size:15px}
 button.home-link{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;text-align:left;cursor:pointer}
-.home-link.quiz-link{margin-top:0;padding-top:10px}.home-link .qi{flex:none;width:20px;text-align:center;font-size:16px}
+.home-link.quiz-link{margin-top:0;padding-top:10px}
+.home-pair{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-top:12px;border-top:1px solid var(--border)}.home-pair .home-link{margin-top:0;border-top:0;min-width:0}
+.home-link span.qi{flex:none}.home-pair .home-link span:not(.qi){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-pair .home-link + .home-link{border-left:1px solid var(--border);padding-left:12px}.home-pair .home-link{gap:8px}.home-pair .home-link .chev{display:none}
+.sheets-link > .i:first-child{color:var(--brand);width:20px;height:20px}.home-link .qi{flex:none;width:20px;text-align:center;font-size:16px}
 .home-link > .i:first-child{color:var(--bday-text);width:20px;height:20px}.home-link span{flex:1}.home-link b{font-weight:800}.home-link .chev{width:18px;height:18px;color:var(--muted)}
 .list-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 4px 0;font-size:14px;color:var(--muted)}.list-foot .btn{flex:none}
 .info-tip{margin:12px 0 14px;font-size:14px;color:var(--muted)}
@@ -578,7 +581,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 79';
+const APP_VERSION = '2026-11-05 · 80';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1407,7 +1410,11 @@ function renderHome(){
           <div class="hello-date">${cap(fmtDate(T, {weekday:'long', day:'numeric', month:'long'}))}${(w => w ? ` · week ${w.week} van ${PERIOD_WEEKS}` : '')(weekInfo(nextSunday(T)))}</div></div></div>
         ${(l => l.length ? `<a class="hero-duty clash" href="#/planning">⚠️ Vervanger nodig: <b>${l.map(d => fmtDate(d, {day:'numeric', month:'short'})).join(', ')}</b></a>` : '')(canPlan() ? needList() : [])}
         <a class="btn btn-primary btn-block btn-lg" href="#/checkin">${icon('checkin')} Kinderen inchecken</a>
-        ${homeShow('gebed') ? `<a class="home-link" href="#/gebed">${icon('heart')}<span><b>Gebedsverlangens</b>${(n => isSunday(T) || checkinsOn(T).length ? (n ? ` · ${n} gebedspunt${n > 1 ? 'en' : ''}` : '') : '')(prayerPoints(T).length)}</span>${icon('chev','chev')}</a>` : ''}
+        ${(() => {   // op zondag staan Gebed en Sheets naast elkaar, zodat Home op het scherm blijft passen
+          const sh = homeShow('sheets') ? homeSheetsLink() : '', n = prayerPoints(T).length, sun = isSunday(T) || checkinsOn(T).length;
+          const gb = homeShow('gebed') ? (sh ? `<a class="home-link" href="#/gebed">${icon('heart')}<span><b>Gebed</b>${sun && n ? ` · ${n}` : ''}</span>${icon('chev','chev')}</a>`
+            : `<a class="home-link" href="#/gebed">${icon('heart')}<span><b>Gebedsverlangens</b>${sun && n ? ` · ${n} gebedspunt${n > 1 ? 'en' : ''}` : ''}</span>${icon('chev','chev')}</a>`) : '';
+          return gb && sh ? `<div class="home-pair">${gb}${sh}</div>` : gb + sh; })()}
         ${homeShow('quiz') ? homeQuizLink() : ''}
       </div>
       ${terugblikCard()}
@@ -1421,6 +1428,12 @@ function renderHome(){
   </div></div>`;
 }
 /* Quiz voor de bovenbouw: één regel op Home (week 7: spelen of downloaden, anders een vraag bedenken voor deze zondag) */
+/* Op zondag (of als er vandaag al check-ins zijn): wie doet vandaag de sheets? Tik = Sheets-pagina. */
+function homeSheetsLink(){
+  const T = todayISO(); if (kkDay() !== T) return '';
+  const r = db.rosters.sheets.find(x => x.date === T), k = r && kidById(r.kidId);
+  return `<a class="home-link sheets-link" href="#/roosters">${icon('monitor')}<span><b>Sheets</b> · ${k ? esc(firstName(k.name)) : '<span class="muted">kiezen</span>'}</span>${icon('chev','chev')}</a>`;
+}
 function homeQuizLink(){
   const S = nextSunday(todayISO()), w = canQuiz() && weekInfo(S); if (!w) return '';
   if (w.week === 7) return `<a class="home-link quiz-link" href="#/quiz"><span class="qi">❓</span><span><b>Quiz van vandaag</b> · spelen of downloaden</span>${icon('chev','chev')}</a>`;
@@ -1430,7 +1443,7 @@ function homeQuizLink(){
 /* Home heeft altijd dezelfde indeling (herkenbaar): tellers, kort programma, jarig. Alleen de inhoud past zich aan:
    op zondag gaat alles over vandaag, doordeweeks tellen de tellers van afgelopen zondag en het programma van komende zondag. */
 /* Wat er op Home staat, per toestel aan/uit te zetten in Mijn account (localStorage kk-home). "Kinderen inchecken" staat er altijd. */
-const HOME_PARTS = [['gebed','Gebedsverlangens'], ['quiz','Quizvraag (bovenbouw)'], ['tellers','Wie er is'], ['programma','Programma'], ['jarig','Jarig']];
+const HOME_PARTS = [['gebed','Gebedsverlangens'], ['sheets','Sheets (op zondag)'], ['quiz','Quizvraag (bovenbouw)'], ['tellers','Wie er is'], ['programma','Programma'], ['jarig','Jarig']];
 const homeOff = () => { try { return JSON.parse(localStorage.getItem('kk-home') || '[]'); } catch(e){ return []; } };
 const homeShow = part => !homeOff().includes(part);
 function homeVandaag(){

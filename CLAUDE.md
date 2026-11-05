@@ -26,7 +26,9 @@ die door iemand anders wordt beheerd. Communiceer met Jonathan in het Nederlands
   begroetingskaart (knop Kinderen inchecken + regels Gebedsverlangens en Quiz `homeQuizLink`), tellers (van kkDay, altijd met de dag als klein kopje, ook op zondag "Vandaag"; onder Kinderen "12 onder · 2 boven"), kort programma `planMini`
   (thema + leiding; op zondag vandaag, anders komende zondag; tik = Planning) en Jarig als één regel (`homeBirthdays(true)`).
   Versie 70: Jonathan wil geen verschil tussen zondag en doordeweeks, ook niet in de teksten van de rondleiding.
-  Versie 73: Mijn account → "Op Home" zet per toestel Gebedsverlangens, Quizvraag, Wie er is, Programma en Jarig aan/uit
+  Versie 80: op zondag (`kkDay()` = vandaag) staat in de begroetingskaart "Sheets · <voornaam>" (of "kiezen"; tik = Sheets-pagina,
+  `homeSheetsLink`), naast "Gebed · N" in één regel van twee helften (`home-pair`), zodat Home op het scherm blijft passen.
+  Versie 73: Mijn account → "Op Home" zet per toestel Gebedsverlangens, Sheets, Quizvraag, Wie er is, Programma en Jarig aan/uit
   (localStorage `kk-home` = lijst wat uit staat, `homeShow`); de knop Kinderen inchecken staat er altijd.
   Versie 77: Mijn account als instellingenscherm van een goede app (`openProfile(page)`): grote ronde letters, naam, badges Rol + Groep,
   e-mail; groepen met gekleurde icoontjes (`pf-group`/`pf-item`, waarde rechts + pijltje): Mijn kinderkerk (Mijn beurten → Planning met
