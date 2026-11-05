@@ -100,7 +100,8 @@ leiding en sheets van deze zondag; iPad vanaf 760px twee kolommen), check-in per
 Bijbeltekst alleen bovenbouw, gebedsverlangens, wc-hint, standaard alleen kinderen van de laatste 60 dagen; volgorde = wie de
 laatste 12 weken het vaakst kwam bovenaan, gelijk = op naam; ingecheckte kinderen blijven op hun plek; Check-in opent op je eigen groep uit het Team (`state.ciTab`, net als Gedrag), zoeken gaat
 wel door alle groepen; na het inchecken van een nieuw kind is het zoekveld leeg en klaar om de volgende naam te typen),
-leiding check-in, team + uitnodigingen, historie (grafiek + "komt min. 1x/2wk"; tik op een staaf = wie er die dag was, beheerder kan een foute dag weghalen: `histDay`/`histDayDel`), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
+leiding check-in, team + uitnodigingen, historie (grafiek + per kind "Periode" = N van M kinderkerkdagen in de huidige periode van 7 weken (nog geen dag → vorige periode),
+✓ "Vaak" = minstens de helft (versie 84, eerst "8 weken"); tik op een staaf = wie er die dag was, beheerder kan een foute dag weghalen: `histDay`/`histDayDel`), Sheets (alleen bovenbouw, zie hieronder), kinderziektes (beheerder kan aanpassen). Het rooster "Bidden bovenbouw" is weg (op
 verzoek van Jonathan); daarvoor is Gebed.
 Kindgegevens (potloodje in check-in, of klik in historie): naam/groep/geboortedatum, leeftijd, laatste keren;
 verwijderen alleen beheerder. Verjaardagen (binnen 6 dagen) op Home, in de check-inlijst (🎂) en bij het inchecken.

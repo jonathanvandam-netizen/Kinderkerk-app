@@ -586,7 +586,7 @@ table.t tr.click:hover td{background:var(--surface-2)}
    Later vervangen we de "db"-laag door een echte database.
    ===================================================================== */
 
-const APP_VERSION = '2026-11-05 · 83';
+const APP_VERSION = '2026-11-05 · 84';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2683,19 +2683,25 @@ function renderHistorie(){
       <text x="${x}" y="${H - 12}" text-anchor="middle" font-size="10.5" style="fill:var(--muted)">${fmtDate(d, {day:'numeric', month:'short'}).replace('.', '')}</text>`;
   });
 
-  const eightWeeks = addDays(T, -56);
+  // Telt per periode van 7 weken (niet "8 weken"): zondagen van deze periode t/m vandaag waarop er kinderkerk was.
+  // Nog geen zondag in deze periode? Dan de vorige periode.
+  const per = periodsSorted().filter(x => x.start <= T);
+  const pDays = p => p ? [...new Set(db.checkins.map(c => c.date))].filter(d => d >= p.start && d <= addDays(periodEnd(p), 6) && d <= T).sort() : [];
+  let P = per[per.length - 1], days = pDays(P);
+  if (!days.length && per.length > 1){ P = per[per.length - 2]; days = pDays(P); }
+  const m = days.length;
   const rows = grp => db.kids.filter(k => k.group === grp && isRecent(k)).sort(byName).map(k => {
-    const n = db.checkins.filter(c => c.kidId === k.id && c.date > eightWeeks).length;
+    const n = db.checkins.filter(c => c.kidId === k.id && days.includes(c.date)).length;
     return `<tr class="click" data-action="openKid" data-id="${k.id}"><td><b>${esc(k.name)}</b></td><td class="muted">${lastSeen(k.id) ? fmtDate(lastSeen(k.id), {day:'numeric', month:'short'}) : '—'}</td>
-      <td class="c">${n}×</td><td class="c">${n >= 4 ? `<span class="okmark">${icon('check')}</span>` : '<span class="muted">–</span>'}</td></tr>`; }).join('');
+      <td class="c">${m ? `${n} van ${m}` : '–'}</td><td class="c">${m && n * 2 >= m ? `<span class="okmark">${icon('check')}</span>` : '<span class="muted">–</span>'}</td></tr>`; }).join('');
   const table = (grp) => `<h3 class="section-title">${GROUPS[grp]}</h3><div class="card list" style="overflow-x:auto"><table class="t">
-    <thead><tr><th>Naam</th><th>Laatst</th><th class="c">8 wkn</th><th class="c">1×/2 wk</th></tr></thead><tbody>${rows(grp) || '<tr><td colspan="4" class="muted">Geen kinderen</td></tr>'}</tbody></table></div>`;
+    <thead><tr><th>Naam</th><th>Laatst</th><th class="c">Periode</th><th class="c">Vaak</th></tr></thead><tbody>${rows(grp) || '<tr><td colspan="4" class="muted">Geen kinderen</td></tr>'}</tbody></table></div>`;
 
   app.innerHTML = `
   <div class="page">
     <div class="page-head"><h1>Historie</h1><span class="muted">Gemiddeld ${avg} kinderen per keer</span></div>
     <div class="card chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Aantal kinderen per zondag">${svg}</svg></div>
-    ${infoTip(`Tik op een staaf in de grafiek om te zien wie er die dag was. Hieronder zie je de kinderen die in de afgelopen 60 dagen zijn geweest. Een vinkje betekent: minstens 4 keer in de laatste 8 weken.`)}
+    ${infoTip(`Tik op een staaf in de grafiek om te zien wie er die dag was. Hieronder zie je de kinderen die in de afgelopen 60 dagen zijn geweest.${P ? ` "Periode" = hoe vaak een kind kwam in de periode ${esc(periodLabel(P))} (zondagen tot nu toe).` : ''} Een vinkje betekent: minstens de helft van die zondagen geweest.`)}
     ${table('onder')}${table('boven')}${table('bezoeker')}
   </div>`;
 }
